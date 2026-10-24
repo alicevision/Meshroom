@@ -25,8 +25,10 @@ BaseLayer {
     // Rectangle height from handleHeight position
     property real rectangleHeight: Math.max(1.0, Math.abs(handleCenter.y - handleHeight.y) * 2)
 
-    // Commit the move of the rectangle
+    // Commit the move of the rectangle (and of the other selected shapes)
     function commitMove() {
+        if (commitSelectionMove())
+            return
         _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
             center: {
                 x: handleCenter.x + draggableRectangle.x,

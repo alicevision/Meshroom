@@ -23,8 +23,10 @@ BaseLayer {
     property real circleRadius: Math.max(1.0, Math.sqrt(Math.pow(handleRadius.x - handleCenter.x, 2) +
                                                         Math.pow(handleRadius.y - handleCenter.y, 2)))
 
-    // Commit the move of the circle
+    // Commit the move of the circle (and of the other selected shapes)
     function commitMove() {
+        if (commitSelectionMove())
+            return
         _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
             center: {
                 x: handleCenter.x + draggableShape.x,

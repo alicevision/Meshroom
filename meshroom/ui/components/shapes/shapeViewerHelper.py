@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, QPointF
 from shiboken6 import isValid
 
 from meshroom.common import BaseObject, Property, Variant, Signal, Slot
@@ -11,6 +11,7 @@ class ShapeViewerHelper(BaseObject):
     - Handle shape selection (a list of shape names, ready for multiple selection).
     - Handle shape observation initialization.
     - Handle shape placement (click-to-place or click-to-move observation in the 2d Viewer).
+    - Handle the move of a multiple selection (shared drag offset, then a single translation).
     """
 
     def __init__(self, activeProject, parent=None):
@@ -23,6 +24,8 @@ class ShapeViewerHelper(BaseObject):
         self._containerWidth = 0.0
         self._containerHeight = 0.0
         self._containerScale = 0.0
+        self._selectionMoveSource = ""  # Name of the selected shape dragged to move the whole selection
+        self._selectionMoveOffset = QPointF()
         self._activeProject.selectedViewIdChanged.connect(self.placementChanged)
         self._activeProject.selectedNodeChanged.connect(self.cancelPlacement)
 
@@ -306,6 +309,60 @@ class ShapeViewerHelper(BaseObject):
         return None
 
     @staticmethod
+    def getTranslatedObservation(shapeType: str, observation: dict, dx: float, dy: float) -> dict:
+        """
+        Translate a shape observation by the given offset.
+
+        Args:
+            shapeType: the shape type (Point2d, Line2d, Circle, Rectangle).
+            observation: the current observation, kept unchanged.
+            dx, dy: the offset in image coordinates.
+
+        Returns:
+            The translated observation dict, or None for an unknown shape type.
+        """
+        match shapeType:
+            case "Point2d":
+                return {"x": observation["x"] + dx, "y": observation["y"] + dy}
+            case "Line2d":
+                a, b = observation["a"], observation["b"]
+                return {"a": {"x": a["x"] + dx, "y": a["y"] + dy},
+                        "b": {"x": b["x"] + dx, "y": b["y"] + dy}}
+            case "Circle" | "Rectangle":
+                center = observation["center"]
+                return {**observation, "center": {"x": center["x"] + dx, "y": center["y"] + dy}}
+        return None
+
+    @Slot(str, float, float)
+    def setSelectionMoveOffset(self, shapeName: str, dx: float, dy: float):
+        """
+        Share the drag offset of the given selected shape, so that the other selected shapes follow it.
+        A null offset ends the selection move.
+        """
+        self._selectionMoveSource = shapeName if (dx or dy) else ""
+        self._selectionMoveOffset = QPointF(dx, dy)
+        self.selectionMoveChanged.emit()
+
+    @Slot(float, float)
+    def moveSelectedShapes(self, dx: float, dy: float):
+        """
+        Translate the current view observation of all the editable selected shapes by the given offset
+        (single undo step), and end the selection move.
+        """
+        graph = self._activeProject.graph
+        viewId = self._activeProject.selectedViewId
+        if graph is not None and (dx or dy):
+            with self._activeProject.groupedGraphModification("Move Shapes"):
+                for shapeName in self._selectedShapeNames:
+                    shape = graph.anyAttribute(shapeName)
+                    if shape is None or isinstance(shape, ShapeListAttribute) or not self._isShapeEditable(shape):
+                        continue
+                    observation = self.getTranslatedObservation(shape.type, shape.geometry.getObservation(viewId), dx, dy)
+                    if observation is not None:
+                        self._activeProject.setObservation(shape, viewId, observation)
+        self.setSelectionMoveOffset("", 0.0, 0.0)
+
+    @staticmethod
     def getObservationBounds(shapeType: str, observation: dict):
         """
         Compute the bounding box of a shape observation.
@@ -405,6 +462,10 @@ class ShapeViewerHelper(BaseObject):
 
     containerScaleChanged = Signal()
     containerScale = Property(float, _getContainerScale, _setContainerScale, notify=containerScaleChanged)
+
+    selectionMoveChanged = Signal()
+    selectionMoveSource = Property(str, lambda self: self._selectionMoveSource, notify=selectionMoveChanged)
+    selectionMoveOffset = Property(QPointF, lambda self: self._selectionMoveOffset, notify=selectionMoveChanged)
 
     placementChanged = Signal()
     isShapeListSelected = Property(bool, _isShapeListSelected, notify=placementChanged)

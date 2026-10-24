@@ -35,11 +35,39 @@ Item {
     // Shape is selected
     property bool selected: ShapeViewerHelper.selectedShapeNames.indexOf(name) >= 0
 
-    // Shape default color 
+    // Shape default color
     readonly property color defaultColor: "#3366cc"
 
     // Item moved by the shape move drags (set by each layer)
     property Item moveTarget: null
+
+    // Shape is part of a multiple selection: moving it moves all the selected shapes
+    readonly property bool inMultipleSelection: selected && ShapeViewerHelper.selectedShapeNames.length > 1
+
+    // Follow the move of another selected shape
+    readonly property bool followsSelectionMove: selected && ShapeViewerHelper.selectionMoveSource !== ""
+                                                 && ShapeViewerHelper.selectionMoveSource !== name
+    transform: Translate {
+        x: baseLayer.followsSelectionMove ? ShapeViewerHelper.selectionMoveOffset.x : 0
+        y: baseLayer.followsSelectionMove ? ShapeViewerHelper.selectionMoveOffset.y : 0
+    }
+
+    // Share the drag offset with the other selected shapes
+    Connections {
+        target: baseLayer.moveTarget
+        enabled: baseLayer.inMultipleSelection
+        function onXChanged() { ShapeViewerHelper.setSelectionMoveOffset(baseLayer.name, baseLayer.moveTarget.x, baseLayer.moveTarget.y) }
+        function onYChanged() { ShapeViewerHelper.setSelectionMoveOffset(baseLayer.name, baseLayer.moveTarget.x, baseLayer.moveTarget.y) }
+    }
+
+    // Commit the move of the moveTarget for all the selected shapes in a multiple selection
+    // Returns false if the shape is selected alone, to let the layer commit its own move
+    function commitSelectionMove() {
+        if (!inMultipleSelection)
+            return false
+        ShapeViewerHelper.moveSelectedShapes(moveTarget.x, moveTarget.y)
+        return true
+    }
 
     // Request selection: Ctrl toggles the shape in the selection, otherwise select it alone
     // Take the focus so that the 2d Viewer receives key events (e.g. Delete)

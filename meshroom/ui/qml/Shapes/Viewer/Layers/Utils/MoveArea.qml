@@ -4,7 +4,7 @@ import QtQuick
 * MoveArea
 *
 * @biref Shape area to select a shape and move it directly.
-*        Press selects the shape and drag moves it.
+*        Press selects the shape and drag moves it (with all the selected shapes if it is part of the selection).
 *        Ctrl+press only toggles the shape in the selection, without drag.
 * @param shapeLayer - the shape layer (BaseLayer)
 */
@@ -29,7 +29,11 @@ MouseArea {
 
     onPressed: function(mouse) {
         toggling = (mouse.modifiers & Qt.ControlModifier) !== 0
-        shapeLayer.selectionRequested(mouse.modifiers)
+        // Keep a multiple selection on press, so that a drag moves all the selected shapes
+        if (toggling || !shapeLayer.selected)
+            shapeLayer.selectionRequested(mouse.modifiers)
+        else
+            shapeLayer.forceActiveFocus()
     }
 
     onReleased: function(mouse) {
@@ -39,5 +43,7 @@ MouseArea {
         // Note: the layer is rebuilt on observation change, which resets the drag offset
         if (shapeLayer.moveTarget.x !== 0 || shapeLayer.moveTarget.y !== 0)
             root.moved()
+        else if (shapeLayer.inMultipleSelection)
+            shapeLayer.selectionRequested(mouse.modifiers)  // Click without drag: select the shape alone
     }
 }

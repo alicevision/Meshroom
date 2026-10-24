@@ -30,7 +30,8 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 │                               # submitter lives in meshroom/submitters/localFarm/ (Unix-only, uses fork)
 ├── meshroom/                   # MAIN SOURCE CODE DIRECTORY
 │   ├── common/                 # Qt/headless backend abstraction (BaseObject, models) used across the engine
-│   ├── core/                   # Engine logic (Graph, Node, Attribute, execution, (de)serialization)
+│   ├── core/                   # Engine logic (Graph, Node, Attribute, execution, (de)serialization,
+│   │                           #   graphLayout.py: tree layout of the nodes along their connections, key L)
 │   │   └── desc/               # Node/attribute DESCRIPTORS: desc.Node, desc.CommandLineNode, desc.*Param
 │   │                           #   (imported as `from meshroom.core import desc`)
 │   ├── nodes/                  # Concrete node types, grouped by category (e.g. general/)

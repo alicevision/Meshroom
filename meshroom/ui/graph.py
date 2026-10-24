@@ -1139,6 +1139,40 @@ class UIGraph(QObject):
                 x = startX + i * (nodeWidth + nodePadding)
                 self.moveNode(selectedNode, Position(x, meanY))
 
+    @Slot("QVariant")
+    def layoutNodes(self, sizes=None):
+        """
+        Lay out the selected nodes (all the nodes without selection) following their connections, as one
+        undoable change (see meshroom.core.graphLayout): left to right, the inputs of a node stacked in
+        the order of its input attributes. The backdrops are left out.
+
+        Args:
+            sizes: {node name: [width, height]} of the node items (an estimate is used otherwise).
+        """
+        from meshroom.core import graphLayout
+        sizes = sizes or {}
+        if hasattr(sizes, "toVariant"):
+            sizes = sizes.toVariant()
+        nodes = [node for node in (self.getSelectedNodes() or list(self._graph.nodes))
+                 if not isinstance(node, BackdropNode)]
+        if len(nodes) < 2:
+            return
+
+        def size(node):
+            value = sizes.get(node.name)
+            if value:
+                return float(value[0]), float(value[1])
+            pins = sum(1 for attr in node.attributes if attr.desc.visible and (attr.desc.exposed or attr.type == "File"))
+            return 180.0, 40.0 + 16.0 * max(1, pins)
+
+        edges = graphLayout.layoutEdges(self._graph, nodes)
+        origin = (min(node.x for node in nodes), min(node.y for node in nodes))
+        positions = graphLayout.treeLayout(nodes, edges, size, origin, lambda node: (node.x, node.y))
+        with self.groupedGraphModification("Layout Nodes"):
+            for node, (x, y) in positions.items():
+                if (int(x), int(y)) != (node.x, node.y):
+                    self.moveNode(node, Position(int(x), int(y)))
+
     @Slot()
     def alignVertically(self):
         """ All nodes are moved vertically to the same position, on an average position of selected nodes. """

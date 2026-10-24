@@ -52,7 +52,15 @@ Rectangle {
         xAxis.enabled: root.xAxisEnabled
         yAxis.enabled: root.yAxisEnabled
         margin: root.size * 2 // Handle interaction area
-        onActiveChanged: { if (!active) { root.moved() } }
+        onActiveChanged: {
+            if (active) {
+                // Take the focus so that the 2d Viewer receives key events (e.g. Delete),
+                // even if the shape was selected from another panel
+                root.forceActiveFocus()
+            } else {
+                root.moved()
+            }
+        }
         enabled: root.visible
     }
 

@@ -128,6 +128,10 @@ FocusScope {
         } else if (event.key === Qt.Key_1) {
             root.zoomPixelSize()
             event.accepted = true
+        } else if (event.key === Qt.Key_Delete && ShapeViewerHelper.selectedShapeNames.length > 0) {
+            // Remove the selected shapes (static) or their current keyframe (keyable)
+            ShapeViewerHelper.removeSelectedShapeObservation()
+            event.accepted = true
         }
     }
 

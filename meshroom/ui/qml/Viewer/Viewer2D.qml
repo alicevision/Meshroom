@@ -132,6 +132,13 @@ FocusScope {
             // Remove the selected shapes (static) or their current keyframe (keyable)
             ShapeViewerHelper.removeSelectedShapeObservation()
             event.accepted = true
+        } else if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
+            ShapeViewerHelper.selectAllShapes()
+            event.accepted = true
+        } else if (event.key === Qt.Key_Escape && (ShapeViewerHelper.selectedShapeNames.length > 0 || ShapeViewerHelper.isPlacing)) {
+            // Clear the shape selection, which also cancels a placement
+            ShapeViewerHelper.cancelPlacement()
+            event.accepted = true
         }
     }
 

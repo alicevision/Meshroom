@@ -45,7 +45,8 @@ Pane {
     // Background
     background: Rectangle { 
         radius: 3
-        border.color: palette.highlight
+        // White border while waiting for a click in the 2d Viewer to place the shape
+        border.color: (isAttributeSelected && ShapeViewerHelper.isPlacing) ? "white" : palette.highlight
         border.width: {
             if(isAttributeSelected)
                 return 2
@@ -112,23 +113,22 @@ Pane {
                 itemHeaderMenu.popup()
 
             // Left mouse button
-            if(button === Qt.LeftButton && isShape && isAttributeEnabled && isAttributeInitialized)
+            if(button === Qt.LeftButton && isShape && isAttributeEnabled)
             {
-                // Single tap
+                // Single tap: select (placement starts if no observation for the current view)
                 if(tapCount === 1 && model.isVisible)
                 {
-                    ShapeViewerHelper.selectedShapeNames = [model.fullName]
+                    ShapeViewerHelper.selectShape(model)
                 }
 
-                // Double tap
+                // Double tap on hidden shape: show and select
                 if(tapCount === 2 && !model.isVisible)
                 {
-                    
-                    ShapeViewerHelper.selectedShapeNames = [model.fullName]
                     model.isVisible = true
+                    ShapeViewerHelper.selectShape(model)
                 }
             }
-            else
+            else if(button === Qt.LeftButton)
             {
                 flickAnimation.start()
             }
@@ -316,7 +316,7 @@ Pane {
                             // add key
                             _currentScene.setObservation(model, _currentScene.selectedViewId, 
                                                           ShapeViewerHelper.getDefaultObservation(model.type))
-                            ShapeViewerHelper.selectedShapeNames = [model.fullName]
+                            ShapeViewerHelper.selectShape(model)
                         }
                     }
                     ToolTip.text: isAttributeInitialized ? "Reset Shape" : "Set Shape"
@@ -399,7 +399,7 @@ Pane {
                                 // add key
                                 _currentScene.setObservation(model, _currentScene.selectedViewId, 
                                                                ShapeViewerHelper.getDefaultObservation(model.type))
-                                ShapeViewerHelper.selectedShapeNames = [model.fullName]
+                                ShapeViewerHelper.selectShape(model)
                             }
                         }
                         ToolTip.text: checked ? "Remove current key" : "Set current key"

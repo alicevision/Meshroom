@@ -311,7 +311,7 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("Clipboard", ClipboardHelper(parent=self))
         self.engine.rootContext().setContextProperty("ThumbnailCache", ThumbnailCache(parent=self))
         self.engine.rootContext().setContextProperty("ShapeFilesHelper", ShapeFilesHelper(self.activeProject, parent=self))
-        self.engine.rootContext().setContextProperty("ShapeViewerHelper", ShapeViewerHelper(parent=self))
+        self.engine.rootContext().setContextProperty("ShapeViewerHelper", ShapeViewerHelper(self.activeProject, parent=self))
 
         # additional context properties
         self._messageController = MessageController(parent=self)

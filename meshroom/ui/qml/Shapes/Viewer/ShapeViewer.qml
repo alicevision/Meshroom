@@ -7,6 +7,7 @@ import QtQuick
 * @param containerWidth  - the parent image container width
 * @param containerHeight - the parent image container height
 * @param containerScale  - the parent image container scale
+* @param viewport        - the visible viewport item, used to size new observations
 */
 Item {
     id: shapeViewer
@@ -18,6 +19,9 @@ Item {
     property real containerWidth: 0.0
     property real containerHeight: 0.0
     property real containerScale: 1.0
+
+    // Visible viewport item
+    property Item viewport: null
 
     // Container scale ratio
     property real scaleRatio: (1 / containerScale)
@@ -58,8 +62,33 @@ Item {
 
     // Reset selection
     TapHandler {
+        enabled: !ShapeViewerHelper.isPlacing
         acceptedButtons: Qt.LeftButton
         gesturePolicy: TapHandler.WithinBounds
         onTapped: { ShapeViewerHelper.clearSelection() }
+    }
+
+    // Shape placement: left click adds the selected shape observation, right click cancels
+    // Note: declared last to be above the shape layers
+    MouseArea {
+        anchors.fill: parent
+        enabled: ShapeViewerHelper.isPlacing
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        cursorShape: Qt.CrossCursor
+        onPressed: function(mouse) {
+            // Let Shift+Left reach Viewer2D for panning
+            if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ShiftModifier))
+                mouse.accepted = false
+        }
+        onClicked: function(mouse) {
+            if (mouse.button === Qt.RightButton) {
+                ShapeViewerHelper.cancelPlacement()
+                return
+            }
+            // Visible viewport expressed in image coordinates (handles zoom and EXIF rotation)
+            const visible = viewport ? shapeViewer.mapFromItem(viewport, 0, 0, viewport.width, viewport.height)
+                                     : Qt.rect(0, 0, containerWidth, containerHeight)
+            ShapeViewerHelper.placeSelectedShapeAt(mouse.x, mouse.y, visible.width, visible.height)
+        }
     }
 }

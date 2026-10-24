@@ -67,6 +67,7 @@ BaseLayer {
             target: draggableShape
             cursorShape: Qt.SizeAllCursor
             visible: pointLayer.editable && pointLayer.selected
+            onTapped: function(modifiers) { selectionRequested(modifiers) }
             onMoved: pointLayer.commitMove()
         }
 

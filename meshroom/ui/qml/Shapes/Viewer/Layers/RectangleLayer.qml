@@ -85,6 +85,7 @@ BaseLayer {
             target: draggableRectangle
             cursorShape: Qt.SizeAllCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
+            onTapped: function(modifiers) { selectionRequested(modifiers) }
             onMoved: rectangleLayer.commitMove()
         }
 

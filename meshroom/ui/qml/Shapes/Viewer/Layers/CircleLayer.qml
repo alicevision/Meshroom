@@ -89,6 +89,7 @@ BaseLayer {
             target: draggableShape
             cursorShape: Qt.SizeAllCursor
             visible: circleLayer.editable && circleLayer.selected
+            onTapped: function(modifiers) { selectionRequested(modifiers) }
             onMoved: circleLayer.commitMove()
         }
 

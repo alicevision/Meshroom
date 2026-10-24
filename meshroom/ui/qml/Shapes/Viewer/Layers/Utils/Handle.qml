@@ -16,6 +16,9 @@ Rectangle {
 
     // Handle moved signal
     signal moved()
+
+    // Handle clicked without moving it (the handle takes the presses from the shape selection area)
+    signal tapped(int modifiers)
     
     // Handle display size
     property real size : 10.0
@@ -68,6 +71,15 @@ Rectangle {
             }
         }
         enabled: root.visible
+    }
+
+    // Handle tap handler, canceled when the drag handler moves the handle
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        gesturePolicy: TapHandler.DragThreshold
+        margin: root.size * 2 // Handle interaction area
+        enabled: root.visible
+        onTapped: root.tapped(point.modifiers)
     }
 
     // Handle shape

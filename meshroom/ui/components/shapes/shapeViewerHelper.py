@@ -194,6 +194,14 @@ class ShapeViewerHelper(BaseObject):
         self._repositioning = True
         self.placementChanged.emit()
 
+    @Slot(str)
+    def toggleShapeSelection(self, shapeName: str):
+        """Add the given shape name to the selection, or remove it if already selected."""
+        if shapeName in self._selectedShapeNames:
+            self.selectedShapeNames = [name for name in self._selectedShapeNames if name != shapeName]
+        else:
+            self.selectedShapeNames = self._selectedShapeNames + [shapeName]
+
     @Slot()
     def clearSelection(self):
         """Clear the selection, which also cancels the current placement."""

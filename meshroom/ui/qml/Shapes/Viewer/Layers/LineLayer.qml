@@ -127,6 +127,7 @@ BaseLayer {
             target: draggableLine
             cursorShape: Qt.SizeAllCursor
             visible: lineLayer.editable && lineLayer.selected
+            onTapped: function(modifiers) { selectionRequested(modifiers) }
             onMoved: lineLayer.commitMove()
         }
     }

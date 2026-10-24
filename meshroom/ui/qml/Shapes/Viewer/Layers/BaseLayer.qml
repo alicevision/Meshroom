@@ -41,10 +41,13 @@ Item {
     // Item moved by the shape move drags (set by each layer)
     property Item moveTarget: null
 
-    // Request selection
+    // Request selection: Ctrl toggles the shape in the selection, otherwise select it alone
     // Take the focus so that the 2d Viewer receives key events (e.g. Delete)
-    function selectionRequested() {
-        ShapeViewerHelper.selectedShapeNames = [name]
+    function selectionRequested(modifiers) {
+        if (modifiers & Qt.ControlModifier)
+            ShapeViewerHelper.toggleShapeSelection(name)
+        else
+            ShapeViewerHelper.selectedShapeNames = [name]
         baseLayer.forceActiveFocus()
     }
 

@@ -10,7 +10,7 @@ class ShapeViewerHelper(BaseObject):
     Manages interactions with the qml ShapeViewer (2d Viewer).
     - Handle shape selection (a list of shape names, ready for multiple selection).
     - Handle shape observation initialization.
-    - Handle shape placement (click-to-place observation in the 2d Viewer).
+    - Handle shape placement (click-to-place or click-to-move observation in the 2d Viewer).
     """
 
     def __init__(self, activeProject, parent=None):
@@ -19,6 +19,7 @@ class ShapeViewerHelper(BaseObject):
         self._selectedShapeNames = []  # Selected shape full names
         self._selectedShape = None  # ShapeAttribute | ShapeListAttribute | None
         self._listPlacement = False  # ShapeList multi-add mode
+        self._repositioning = False  # Move the selected shape observation on next click
         self._containerWidth = 0.0
         self._containerHeight = 0.0
         self._containerScale = 0.0
@@ -69,8 +70,9 @@ class ShapeViewerHelper(BaseObject):
                 # Signal was already disconnected or the attribute was destroyed
                 pass
         if shape is not previousShape:
-            # A newly selected shape never starts in multi-add mode
+            # A newly selected shape never starts in multi-add or move mode
             self._listPlacement = False
+            self._repositioning = False
         self._selectedShape = shape
         if shape is not None:
             if not isinstance(shape, ShapeListAttribute):
@@ -125,7 +127,7 @@ class ShapeViewerHelper(BaseObject):
             return False
         if isinstance(self._selectedShape, ShapeListAttribute):
             return self._listPlacement
-        return not self._hasCurrentObservation(self._selectedShape)
+        return self._repositioning or not self._hasCurrentObservation(self._selectedShape)
 
     def _getPlacementShapeType(self) -> str:
         """The type of the shape to place (the element type for a ShapeList), or an empty string if not placing."""
@@ -180,6 +182,13 @@ class ShapeViewerHelper(BaseObject):
         self.selectShape(listAttribute)
         self._setListPlacement(True)
 
+    @Slot(QObject)
+    def startReposition(self, shape):
+        """Select the given shape and move its observation for the current view on next click."""
+        self.selectShape(shape)
+        self._repositioning = True
+        self.placementChanged.emit()
+
     @Slot()
     def clearSelection(self):
         """Clear the selection, which also cancels the current placement."""
@@ -217,6 +226,32 @@ class ShapeViewerHelper(BaseObject):
                         "size": {"width": visibleWidth / 3.0, "height": visibleHeight / 3.0}}
         return None
 
+    @staticmethod
+    def getMovedObservation(shapeType: str, observation: dict, x: float, y: float) -> dict:
+        """
+        Translate a shape observation so that its center lands on the given image position.
+
+        Args:
+            shapeType: the shape type (Point2d, Line2d, Circle, Rectangle).
+            observation: the current observation, kept unchanged.
+            x, y: the new center position in image coordinates.
+
+        Returns:
+            The moved observation dict, or None for an unknown shape type.
+        """
+        match shapeType:
+            case "Point2d":
+                return {"x": x, "y": y}
+            case "Line2d":
+                a, b = observation["a"], observation["b"]
+                dx = x - (a["x"] + b["x"]) * 0.5
+                dy = y - (a["y"] + b["y"]) * 0.5
+                return {"a": {"x": a["x"] + dx, "y": a["y"] + dy},
+                        "b": {"x": b["x"] + dx, "y": b["y"] + dy}}
+            case "Circle" | "Rectangle":
+                return {**observation, "center": {"x": x, "y": y}}
+        return None
+
     def _placeSelectedShape(self, observation: dict):
         """
         Set the given observation to the selected shape for the current view.
@@ -231,15 +266,26 @@ class ShapeViewerHelper(BaseObject):
                 self._activeProject.appendAttribute(shape, None)
                 self._activeProject.setObservation(shape.at(len(shape) - 1), viewId, observation)
         else:
+            self._repositioning = False
             self._activeProject.setObservation(shape, viewId, observation)
+            self.placementChanged.emit()
 
     @Slot(float, float, float, float)
     def placeSelectedShapeAt(self, x: float, y: float, visibleWidth: float, visibleHeight: float):
-        """Place the selected shape at the given image position, sized relative to the visible viewport."""
+        """
+        Place the selected shape at the given image position, sized relative to the visible viewport.
+        When repositioning, the current observation is moved instead.
+        """
         shapeType = self._getPlacementShapeType()
         if not shapeType:
             return
-        self._placeSelectedShape(self.getObservationAt(shapeType, x, y, visibleWidth, visibleHeight))
+        shape = self._selectedShape
+        if self._repositioning and self._hasCurrentObservation(shape):
+            currentObservation = shape.geometry.getObservation(self._activeProject.selectedViewId)
+            observation = self.getMovedObservation(shapeType, currentObservation, x, y)
+        else:
+            observation = self.getObservationAt(shapeType, x, y, visibleWidth, visibleHeight)
+        self._placeSelectedShape(observation)
 
     # Properties and signals
     selectedShapeNamesChanged = Signal()
@@ -258,4 +304,5 @@ class ShapeViewerHelper(BaseObject):
     placementChanged = Signal()
     isShapeListSelected = Property(bool, _isShapeListSelected, notify=placementChanged)
     isListPlacement = Property(bool, lambda self: self._listPlacement, _setListPlacement, notify=placementChanged)
+    isRepositioning = Property(bool, lambda self: self._repositioning, notify=placementChanged)
     isPlacing = Property(bool, _isPlacing, notify=placementChanged)

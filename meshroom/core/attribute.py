@@ -1032,6 +1032,7 @@ class ListAttribute(Attribute):
                  for v in values]
         self._value.insert(index, attrs)
         self._applyExpr()
+        self._emitShiftedElementsFullNameChanged(index + len(attrs))
         self.valueChanged.emit()
         if self.isInput:
             self.requestGraphUpdate()
@@ -1050,9 +1051,21 @@ class ListAttribute(Attribute):
                         # delete edge if the attribute is linked
                         self.node.graph.removeEdge(attr)
         self._value.removeAt(index, count)
+        self._emitShiftedElementsFullNameChanged(index)
         if self.isInput:
             self.requestGraphUpdate()
         self.valueChanged.emit()
+
+    def _emitShiftedElementsFullNameChanged(self, fromIndex):
+        """
+        Notify the elements from 'fromIndex' (and their children) that their full name changed,
+        as their index in the list shifted after an insertion or a removal.
+        """
+        for idx in range(fromIndex, len(self)):
+            element = self._value.at(idx)
+            element.fullNameChanged.emit()
+            for child in element.flatStaticChildren:
+                child.fullNameChanged.emit()
 
     # Override
     def _initValue(self):

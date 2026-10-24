@@ -372,6 +372,35 @@ class TestShapeAttribute:
         assert len(node.pointList) == 0
         assert len(node.keyablePointList) == 0
 
+    def test_shapeListFullNameChangedOnShift(self):
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithShapeAttributes.__name__)
+        pointValue = {"userName": "testPoint", "userColor": "#fff", "geometry": {"x": 1, "y": 1}}
+        for _ in range(3):
+            node.pointList.append(pointValue)
+        first, second, third = (node.pointList.at(i) for i in range(3))
+
+        # Count fullNameChanged emissions for list elements and one of their children
+        counts = {}
+        for name, attribute in (("first", first), ("second", second), ("third", third),
+                                ("thirdGeometry", third.geometry)):
+            counts[name] = 0
+            attribute.fullNameChanged.connect(lambda name=name: counts.__setitem__(name, counts[name] + 1))
+
+        # Remove first element: the following elements (and their children) shift and are renamed
+        node.pointList.remove(0)
+        assert second.fullName.endswith("pointList[0]")
+        assert third.fullName.endswith("pointList[1]")
+        assert counts == {"first": 0, "second": 1, "third": 1, "thirdGeometry": 1}
+
+        # Insert at the end: no element shifts
+        node.pointList.append(pointValue)
+        assert counts == {"first": 0, "second": 1, "third": 1, "thirdGeometry": 1}
+
+        # Insert at the front: every existing element shifts
+        node.pointList.insert(0, pointValue)
+        assert counts == {"first": 0, "second": 2, "third": 2, "thirdGeometry": 2}
+
     def test_linkAttribute(self):
         graph = Graph("")
         nodeA = graph.addNewNode(NodeWithShapeAttributes.__name__)

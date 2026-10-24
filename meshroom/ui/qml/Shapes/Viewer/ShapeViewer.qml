@@ -26,11 +26,62 @@ Item {
     // Container scale ratio
     property real scaleRatio: (1 / containerScale)
 
+    // Emitted on a double click on empty space, in viewport coordinates (the 2d Viewer handles the zoom)
+    signal emptyDoubleClicked(point position)
+
     // Update ShapeViewerHelper
     // This is usefull for new observation initialization
     onContainerWidthChanged: { ShapeViewerHelper.containerWidth = shapeViewer.containerWidth }
     onContainerHeightChanged: { ShapeViewerHelper.containerHeight = shapeViewer.containerHeight }
     onContainerScaleChanged: { ShapeViewerHelper.containerScale = shapeViewer.containerScale }
+
+    // Selection area, declared first to be below the shape layers: it only receives presses on empty space
+    // - click clears the selection (kept with Ctrl)
+    // - left drag selects the shapes inside the rectangle, Ctrl+drag adds them to the selection
+    // Note: Shift+Left (pan) is passed to the 2d Viewer, double click (zoom) is forwarded with emptyDoubleClicked
+    MouseArea {
+        id: selectionArea
+        anchors.fill: parent
+        enabled: !ShapeViewerHelper.isPlacing
+        acceptedButtons: Qt.LeftButton
+        property point pressPosition
+        property bool additive: false
+
+        onPressed: function(mouse) {
+            if (mouse.modifiers & Qt.ShiftModifier) {
+                mouse.accepted = false
+                return
+            }
+            // Take the focus so that the 2d Viewer receives key events (e.g. Ctrl+A)
+            shapeViewer.forceActiveFocus()
+            pressPosition = Qt.point(mouse.x, mouse.y)
+            additive = (mouse.modifiers & Qt.ControlModifier) !== 0
+        }
+        onPositionChanged: function(mouse) {
+            // Drag threshold in screen pixels
+            if (!selectionRect.visible && Math.max(Math.abs(mouse.x - pressPosition.x), Math.abs(mouse.y - pressPosition.y))
+                                          * shapeViewer.containerScale < Qt.styleHints.startDragDistance)
+                return
+            selectionRect.x = Math.min(pressPosition.x, mouse.x)
+            selectionRect.y = Math.min(pressPosition.y, mouse.y)
+            selectionRect.width = Math.abs(mouse.x - pressPosition.x)
+            selectionRect.height = Math.abs(mouse.y - pressPosition.y)
+            selectionRect.visible = true
+        }
+        onReleased: {
+            if (selectionRect.visible) {
+                selectionRect.visible = false
+                ShapeViewerHelper.selectShapesInRect(selectionRect.x, selectionRect.y,
+                                                     selectionRect.width, selectionRect.height, additive)
+            } else if (!additive) {
+                ShapeViewerHelper.clearSelection()
+            }
+        }
+        onCanceled: { selectionRect.visible = false }
+        onDoubleClicked: function(mouse) {
+            shapeViewer.emptyDoubleClicked(viewport ? selectionArea.mapToItem(viewport, mouse.x, mouse.y) : Qt.point(mouse.x, mouse.y))
+        }
+    }
 
     // Current node shape files
     // ShapeFilesHelper provide the model
@@ -60,12 +111,12 @@ Item {
         }
     }
 
-    // Reset selection
-    TapHandler {
-        enabled: !ShapeViewerHelper.isPlacing
-        acceptedButtons: Qt.LeftButton
-        gesturePolicy: TapHandler.WithinBounds
-        onTapped: { ShapeViewerHelper.clearSelection() }
+    Rectangle {
+        id: selectionRect
+        visible: false
+        color: "#223399ff"
+        border.color: "#bb3399ff"
+        border.width: shapeViewer.scaleRatio
     }
 
     // Shape placement: left click adds the selected shape observation, right click cancels

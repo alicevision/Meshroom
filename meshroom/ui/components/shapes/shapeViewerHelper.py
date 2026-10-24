@@ -115,6 +115,22 @@ class ShapeViewerHelper(BaseObject):
         isLinked = shape.isLink or (isinstance(shape.root, ListAttribute) and shape.root.isLink)
         return shape.enabled and not isLinked and self._hasCurrentObservation(shape)
 
+    def _getDisplayedShapes(self) -> list:
+        """
+        Return the editable shapes of the selected node displayed in the 2d Viewer for the current view,
+        including the elements of its ShapeLists.
+        """
+        node = self._activeProject.selectedNode
+        if node is None:
+            return []
+        shapes = []
+        for attribute in node.attributes:
+            if not attribute.hasDisplayableShape or not attribute.isVisible:
+                continue
+            elements = attribute.value if isinstance(attribute, ShapeListAttribute) else [attribute]
+            shapes.extend(shape for shape in elements if shape.isVisible and self._isShapeEditable(shape))
+        return shapes
+
     def _isShapeListSelected(self) -> bool:
         return self._isSelectedShapeAlive() and isinstance(self._selectedShape, ShapeListAttribute)
 
@@ -288,6 +304,53 @@ class ShapeViewerHelper(BaseObject):
             case "Circle" | "Rectangle":
                 return {**observation, "center": {"x": x, "y": y}}
         return None
+
+    @staticmethod
+    def getObservationBounds(shapeType: str, observation: dict):
+        """
+        Compute the bounding box of a shape observation.
+
+        Args:
+            shapeType: the shape type (Point2d, Line2d, Circle, Rectangle).
+            observation: the shape observation.
+
+        Returns:
+            The (xMin, yMin, xMax, yMax) tuple in image coordinates, or None for an unknown shape type.
+        """
+        match shapeType:
+            case "Point2d":
+                return (observation["x"], observation["y"], observation["x"], observation["y"])
+            case "Line2d":
+                a, b = observation["a"], observation["b"]
+                return (min(a["x"], b["x"]), min(a["y"], b["y"]), max(a["x"], b["x"]), max(a["y"], b["y"]))
+            case "Circle":
+                center, radius = observation["center"], observation["radius"]
+                return (center["x"] - radius, center["y"] - radius, center["x"] + radius, center["y"] + radius)
+            case "Rectangle":
+                center, size = observation["center"], observation["size"]
+                halfWidth, halfHeight = size["width"] * 0.5, size["height"] * 0.5
+                return (center["x"] - halfWidth, center["y"] - halfHeight, center["x"] + halfWidth, center["y"] + halfHeight)
+        return None
+
+    @Slot(float, float, float, float, bool)
+    def selectShapesInRect(self, x: float, y: float, width: float, height: float, additive: bool):
+        """
+        Select the displayed shapes fully inside the given rectangle.
+
+        Args:
+            x, y, width, height: the rectangle in image coordinates.
+            additive: add the shapes to the current selection instead of replacing it.
+        """
+        viewId = self._activeProject.selectedViewId
+        names = list(self._selectedShapeNames) if additive else []
+        for shape in self._getDisplayedShapes():
+            bounds = self.getObservationBounds(shape.type, shape.geometry.getObservation(viewId))
+            if bounds is None or shape.fullName in names:
+                continue
+            xMin, yMin, xMax, yMax = bounds
+            if xMin >= x and yMin >= y and xMax <= x + width and yMax <= y + height:
+                names.append(shape.fullName)
+        self.selectedShapeNames = names
 
     def _placeSelectedShape(self, observation: dict):
         """

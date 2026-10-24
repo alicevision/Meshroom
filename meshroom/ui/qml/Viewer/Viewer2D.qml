@@ -176,19 +176,7 @@ FocusScope {
         }
 
         onDoubleClicked: function(mouse) {
-            if (Math.abs(imgContainer.scale - 1.0) > 0.001) {
-                // Not at 100%: save current state and zoom to 100% keeping cursor position
-                root.previousZoomScale = imgContainer.scale
-                root.previousZoomX = imgContainer.x
-                root.previousZoomY = imgContainer.y
-                zoomPixelSize(mouse.x, mouse.y)
-            } else if (root.previousZoomScale > 0) {
-                // Already at 100%: restore previous zoom state
-                imgContainer.scale = root.previousZoomScale
-                imgContainer.x = root.previousZoomX
-                imgContainer.y = root.previousZoomY
-                root.previousZoomScale = -1.0
-            }
+            root.toggleZoomPixelSize(mouse.x, mouse.y)
         }
 
         onWheel: function(wheel) {
@@ -233,6 +221,23 @@ FocusScope {
         imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale
 
         return true
+    }
+
+    // Zoom to 100% keeping the given position, or restore the previous zoom if already at 100%
+    function toggleZoomPixelSize(mouseX, mouseY) {
+        if (Math.abs(imgContainer.scale - 1.0) > 0.001) {
+            // Not at 100%: save current state and zoom to 100% keeping cursor position
+            root.previousZoomScale = imgContainer.scale
+            root.previousZoomX = imgContainer.x
+            root.previousZoomY = imgContainer.y
+            zoomPixelSize(mouseX, mouseY)
+        } else if (root.previousZoomScale > 0) {
+            // Already at 100%: restore previous zoom state
+            imgContainer.scale = root.previousZoomScale
+            imgContainer.x = root.previousZoomX
+            imgContainer.y = root.previousZoomY
+            root.previousZoomScale = -1.0
+        }
     }
 
     function zoomPixelSize(mouseX, mouseY) {
@@ -894,6 +899,7 @@ FocusScope {
                 // ShapeViewer: display shapes and texts from current node shape attributes and json files
                 // Note: use a Loader 
                 ExifOrientedViewer {
+                    id: shapeViewerLoader
                     anchors.centerIn: parent
                     width: imgContainer.width
                     height: imgContainer.height
@@ -901,6 +907,15 @@ FocusScope {
                     yOrigin: imgContainer.height * 0.5
                     orientationTag: imgContainer.orientationTag
                     active: _currentScene ? (_currentScene.selectedNode ? _currentScene.selectedNode.hasDisplayableShape : false) : false
+
+                    // The ShapeViewer selection area takes the double clicks on the image
+                    Connections {
+                        target: shapeViewerLoader.item
+                        function onEmptyDoubleClicked(position) {
+                            const point = imgLayout.mapToItem(root, position.x, position.y)
+                            root.toggleZoomPixelSize(point.x, point.y)
+                        }
+                    }
 
                     onActiveChanged: {
                         if (active) {

@@ -39,8 +39,10 @@ Item {
     readonly property color defaultColor: "#3366cc"
 
     // Request selection
+    // Take the focus so that the 2d Viewer receives key events (e.g. Delete)
     function selectionRequested() {
         ShapeViewerHelper.selectedShapeNames = [name]
+        baseLayer.forceActiveFocus()
     }
 
     // Helper function to get scaled handle size

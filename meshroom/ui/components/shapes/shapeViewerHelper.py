@@ -110,6 +110,11 @@ class ShapeViewerHelper(BaseObject):
             return geometry.hasObservation(self._activeProject.selectedViewId)
         return not geometry.isDefault
 
+    def _isShapeEditable(self, shape) -> bool:
+        """Whether the given shape (not a ShapeList) can be edited and has an observation for the current view."""
+        isLinked = shape.isLink or (isinstance(shape.root, ListAttribute) and shape.root.isLink)
+        return shape.enabled and not isLinked and self._hasCurrentObservation(shape)
+
     def _isShapeListSelected(self) -> bool:
         return self._isSelectedShapeAlive() and isinstance(self._selectedShape, ShapeListAttribute)
 
@@ -198,6 +203,30 @@ class ShapeViewerHelper(BaseObject):
     def cancelPlacement(self):
         """Cancel the current placement and clear the selection."""
         self.clearSelection()
+
+    @Slot()
+    def removeSelectedShapeObservation(self):
+        """
+        Remove the observation for the current view of all selected shapes (the shape itself if static,
+        its current keyframe if keyable) in a single undo step, and clear the selection.
+        ShapeLists, non-editable shapes and shapes without current observation are skipped.
+        """
+        graph = self._activeProject.graph
+        if graph is None:
+            return
+        # Note: a shape selected from the 2d Viewer is only known by its name
+        shapes = []
+        for shapeName in self._selectedShapeNames:
+            shape = graph.anyAttribute(shapeName)
+            if shape is not None and not isinstance(shape, ShapeListAttribute) and self._isShapeEditable(shape):
+                shapes.append(shape)
+        if not shapes:
+            return
+        viewId = self._activeProject.selectedViewId
+        with self._activeProject.groupedGraphModification("Remove Shape Observations"):
+            for shape in shapes:
+                self._activeProject.removeObservation(shape, viewId)
+        self.cancelPlacement()
 
     def getObservationAt(self, shapeType: str, x: float, y: float, visibleWidth: float, visibleHeight: float) -> Variant:
         """

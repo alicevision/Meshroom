@@ -211,6 +211,19 @@ class ParameterTypesSample(desc.Node):
             f.write(f"{node.boolParam.value},{node.intParam.value},{node.floatParam.value},{node.stringParam.value},{node.fileParam.value},{node.choiceParam.value},{node.colorParam.value},{len(node.fileList.value)},{node.inputGroup.groupBool.value},{node.inputGroup.groupInt.value},{node.inputGroup.groupString.value},{node.inputGroup.groupFile.value}\n")
 ```
 
+### Color Groups
+
+A `GroupAttribute` of 4 `FloatParam`s named `r`, `g`, `b`, `a` is edited as a color in the Node Editor
+when its semantic is `"rgbaColor"`: a swatch (alpha over a checkerboard) with the values, and a slider per
+channel (linear values, the ranges of the children). With `semantic="linkedColor"` (a value per channel,
+e.g. a gain), a single slider sets the 4 channels by default and a "split" checkbox shows them apart.
+
+```python
+desc.GroupAttribute(name="color", label="Color", description="", semantic="rgbaColor", joinChar=",",
+                    items=[desc.FloatParam(name=c, label=c.upper(), description="", value=v, range=(0.0, 1.0, 0.01))
+                           for c, v in zip("rgba", (1.0, 0.5, 0.0, 1.0))])
+```
+
 ### Geometry Helpers
 
 Convenient groups for 2D geometry, built from `GroupAttribute` and `FloatParam`:

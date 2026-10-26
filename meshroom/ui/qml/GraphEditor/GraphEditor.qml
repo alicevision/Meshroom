@@ -151,6 +151,8 @@ Item {
             event.accepted = true
             if (mouseArea.containsMouse) {
                 newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
+                // With a single node selected, the new node comes after it (see createNode)
+                newNodeMenu.chainAfter = uigraph.getSelectedNodes().length === 1 ? uigraph.selectedNode : null
                 newNodeMenu.popup()
             }
         }
@@ -218,6 +220,7 @@ Item {
             if (mouse.button == Qt.RightButton) {
                 // Store mouse click position in 'draggable' coordinates as new node spawn position
                 newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
+                newNodeMenu.chainAfter = null
                 newNodeMenu.popup()
             }
         }
@@ -227,6 +230,8 @@ Item {
         Menu {
             id: newNodeMenu
             property point spawnPosition
+            // Node after which the created node is chained (menu opened with Tab while a single node is selected)
+            property var chainAfter: null
             property variant menuKeys: Object.keys(root.nodeTypesModel).concat(Object.values(MeshroomApp.pipelineTemplateNames))
             height: searchBar.height + nodeMenuRepeater.height + instantiator.height
 
@@ -234,8 +239,11 @@ Item {
                 // "nodeType" might be a pipeline (artificially added in the "Pipelines" category) instead of a node
                 // If it is not a pipeline to import, then it must be a node
                 if (!importPipeline(nodeType)) {
-                    // Add node via the proper command in uigraph
-                    var node = uigraph.addNewNode(nodeType, spawnPosition)
+                    // Add node via the proper command in uigraph. Opened with Tab while a single node is selected:
+                    // the new node comes after it (connected, on its right), so that nodes created one after the
+                    // other with Tab are chained
+                    var node = chainAfter ? uigraph.addNewNodeAfter(nodeType, chainAfter)
+                                          : uigraph.addNewNode(nodeType, spawnPosition)
                     uigraph.selectedNode = node
                     uigraph.selectNodes([node])
                 }

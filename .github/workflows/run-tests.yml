@@ -37,7 +37,7 @@ jobs:
 
       # ── Primary Python environment ───────────────────────────
       - name: Set up Python ${{ inputs.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ inputs.python-version }}
 
@@ -81,7 +81,7 @@ jobs:
       # ── meshroom_compute smoke test (Python 3.9) ─────────────
       # Verifies that the CLI entry-point works on the minimum "ideal" supported version.
       - name: Set up Python 3.9 – meshroom_compute smoke test
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.9'
 
@@ -101,7 +101,7 @@ jobs:
       # ── meshroom_compute smoke test (Python 3.7) ─────────────
       # Verifies that the CLI entry-point works on the minimum supported version.
       - name: Set up Python 3.7 – meshroom_compute smoke test
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         if: runner.os == 'Windows'
         with:
           python-version: '3.7'

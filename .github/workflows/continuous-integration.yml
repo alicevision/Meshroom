@@ -26,7 +26,7 @@ jobs:
     name: Test (Linux)
     uses: ./.github/workflows/run-tests.yml
     with:
-      os: ubuntu-latest
+      os: ubuntu-24.04
       python-version: '3.11'
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

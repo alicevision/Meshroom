@@ -145,6 +145,10 @@ if args.node:
         print(f"InitNode: No computation to do.")
         sys.exit(0)
 
+    if node.isDotNode:
+        print(f"Dot node: No computation to do.")
+        sys.exit(0)
+
     if args.preprocess:
         chunks = [node.preprocessChunk]
     elif args.postprocess:

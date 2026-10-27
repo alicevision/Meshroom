@@ -71,6 +71,7 @@ class MrNodeType(enum.Enum):
     COMMANDLINE = enum.auto()
     INIT = enum.auto()
     BACKDROP = enum.auto()
+    DOT = enum.auto()
 
 
 class InternalAttributesFactory:
@@ -196,6 +197,7 @@ class InternalAttributesFactory:
             MrNodeType.COMMANDLINE: cls.INVALIDATION + cls.BASIC,
             MrNodeType.INIT: cls.BASIC,
             MrNodeType.BACKDROP: cls.BASIC + cls.RESIZABLE,
+            MrNodeType.DOT: cls.BASIC,
         }
 
         return paramMap.get(mrNodeType)
@@ -561,6 +563,34 @@ class BackdropNode(BaseNode):
 
     def __init__(self):
         super(BackdropNode, self).__init__()
+
+    def getMrNodeType(self):
+        return self._mrNodeType
+
+    def processChunk(self, chunk):
+        pass
+
+    def process(self, node):
+        pass
+
+
+class DotNode(BaseNode):
+    """
+    Node that does not need to be processed: it is a pure pass-through that forwards
+    the value of its single input to its single output, without any computation.
+    It is only used to organize and re-route connections in the graph.
+
+    A Dot node type must declare exactly one input named "input" and one output named
+    "output", both described with DotAttribute. The type of the output follows the type
+    of the attribute connected to the input.
+    """
+    _mrNodeType: MrNodeType = MrNodeType.DOT
+    internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+    internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
+    internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
+
+    def __init__(self):
+        super(DotNode, self).__init__()
 
     def getMrNodeType(self):
         return self._mrNodeType

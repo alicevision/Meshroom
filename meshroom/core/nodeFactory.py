@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 import meshroom.core
 from meshroom.core import Version, desc
 from meshroom.core.desc.anySet import AnySet
-from meshroom.core.node import BackdropNode, CompatibilityIssue, CompatibilityNode, Node, Position
+from meshroom.core.node import BackdropNode, CompatibilityIssue, CompatibilityNode, DotNode, Node, Position
 
 
 def nodeFactory(
@@ -13,7 +13,7 @@ def nodeFactory(
     inTemplate: bool = False,
     expectedUid: Optional[str] = None,
     nodeDescDict: dict = None,
-) -> Union[Node, BackdropNode, CompatibilityNode]:
+) -> Union[Node, BackdropNode, DotNode, CompatibilityNode]:
     """
     Create a node instance by deserializing the given node data.
     If the serialized data matches the corresponding node type description, a Node instance is created.
@@ -31,9 +31,10 @@ def nodeFactory(
     return _NodeCreator(nodeData, name, inTemplate, expectedUid, nodeDescDict).create()
 
 
-def getNodeConstructor(nodeType: str, position: Optional[Position]=None, **kwargs) -> Union[BackdropNode, Node]:
+def getNodeConstructor(nodeType: str, position: Optional[Position]=None, **kwargs) -> Union[BackdropNode, DotNode, Node]:
     constructors = {
         "Backdrop": BackdropNode,
+        "Dot": DotNode,
     }
     constructor = constructors.get(nodeType, Node)
     return constructor(nodeType, position=position, **kwargs)
@@ -77,7 +78,7 @@ class _NodeCreator:
         if meshroom.core.pluginManager.isNodeDescRegistered(self.nodeType):
             self.nodeDesc = meshroom.core.pluginManager.getNodeDescProvider(self.nodeType).nodeDescClass
 
-    def create(self) -> Union[Node, BackdropNode, CompatibilityNode]:
+    def create(self) -> Union[Node, BackdropNode, DotNode, CompatibilityNode]:
         compatibilityIssue = self._checkCompatibilityIssues()
         if compatibilityIssue:
             node = self._createCompatibilityNode(compatibilityIssue)
@@ -257,7 +258,7 @@ class _NodeCreator:
             for attrName, value in attributesDict.items()
         )
 
-    def _createNode(self) -> Union[BackdropNode, Node]:
+    def _createNode(self) -> Union[BackdropNode, DotNode, Node]:
         logging.info(f"Creating node '{self.name}'")
         # TODO: user inputs/outputs may conflicts with internal names (like logLevel, position, uid)
         # The line below can cause UI issues but at least prevent crashes

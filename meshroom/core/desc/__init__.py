@@ -30,6 +30,9 @@ from .shapeAttribute import (
 from .anySet import (
     AnySet
 )
+from .dotAttribute import (
+    DotAttribute
+)
 from .computation import (
     DynamicNodeSize,
     Level,
@@ -43,6 +46,7 @@ from .node import (
     BaseNode,
     BackdropNode,
     CommandLineNode,
+    DotNode,
     InputNode,
     InitNode,
     InternalAttributesFactory,

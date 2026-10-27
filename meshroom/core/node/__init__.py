@@ -30,6 +30,9 @@ from .node import (
 from .backdropNode import (
     BackdropNode,
 )
+from .dotNode import (
+    DotNode,
+)
 from .compatibilityNode import (
     CompatibilityIssue,
     CompatibilityNode,

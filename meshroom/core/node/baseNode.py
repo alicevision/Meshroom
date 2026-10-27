@@ -579,7 +579,7 @@ class BaseNode(BaseObject):
         """
         # Ambiguous case for NONE, which could be used for compatibility nodes if we do not have
         # any information about the node descriptor.
-        return self.getMrNodeType() != MrNodeType.INIT and self.getMrNodeType() != MrNodeType.BACKDROP
+        return self.getMrNodeType() not in (MrNodeType.INIT, MrNodeType.BACKDROP, MrNodeType.DOT)
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -772,10 +772,12 @@ class BaseNode(BaseObject):
             # Compatibility nodes are not meant to be updated.
             return
 
-        if attr.isOutput and not self.isInitNode:
+        if attr.isOutput and not self.isInitNode and not self.isDotNode:
             # Ignore changes on output attributes for non-init nodes
             # as they are updated during the node's computation.
             # And we do not want notifications during the graph processing.
+            # Dot nodes are an exception: their output forwards the value of their input,
+            # so output changes must be propagated like input changes.
             return
 
         if not attr.keyable and attr.value is None:
@@ -1257,6 +1259,9 @@ class BaseNode(BaseObject):
     def _isBackdropNode(self) -> bool:
         return False
 
+    def _isDotNode(self) -> bool:
+        return False
+
     @property
     def globalExecMode(self):
         if not self._chunksCreated:
@@ -1590,6 +1595,7 @@ class BaseNode(BaseObject):
     isIONode = Property(bool, lambda self: self._isIONode(), constant=True)
     isGraphInputNode = Property(bool, lambda self: self._isGraphInputNode(), constant=True)
     isBackdropNode = Property(bool, lambda self: self._isBackdropNode(), constant=True)
+    isDotNode = Property(bool, lambda self: self._isDotNode(), constant=True)
 
     globalExecMode = Property(str, globalExecMode.fget, notify=globalStatusChanged)
     jobName = Property(str, lambda self: self._getJobName(), notify=globalStatusChanged)

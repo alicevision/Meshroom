@@ -2193,3 +2193,111 @@ class Flow(Attribute):
 
     # Override
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+
+
+class DotAttribute(Attribute):
+    """
+    Attribute instance of a Dot node (input or output).
+
+    A Dot is a pure pass-through: the value of its output is the value of its input,
+    and the type reported by its output follows the type of the connected upstream
+    attribute, so that connecting through a Dot behaves exactly like a direct connection.
+    """
+
+    # Name of the input attribute of a Dot node (see desc.DotNode)
+    inputAttributeName = "input"
+
+    def _getDotInputAttribute(self) -> Optional[Attribute]:
+        """ Return the input attribute of the Dot node owning this attribute. """
+        return self.node.attribute(self.inputAttributeName)
+
+    def _getConnectedAttribute(self) -> Optional[Attribute]:
+        """
+        Return the upstream attribute connected to the Dot input, if any.
+
+        While a graph is being loaded, the edge incoming on the Dot input may not be
+        created yet: in that case, resolve the input's serialized link expression.
+        """
+        inputAttr = self._getDotInputAttribute()
+        if inputAttr is None:
+            return None
+        if inputAttr.isLink:
+            return inputAttr._getInputLink()
+        linkExpression = inputAttr._linkExpression
+        if linkExpression and self.node.graph:
+            nodeName, _, attrName = linkExpression[1:-1].partition(".")
+            upstreamNode = self.node.graph.node(nodeName)
+            if upstreamNode is not None:
+                if upstreamNode.hasAttribute(attrName):
+                    return upstreamNode.attribute(attrName)
+                if upstreamNode.hasInternalAttribute(attrName):
+                    return upstreamNode.internalAttribute(attrName)
+        return None
+
+    # Override
+    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
+        """ The input of a Dot accepts connections of any type. """
+        if self.isInput:
+            return True
+        return super()._validateIncomingConnection(connectingAttribute)
+
+    # Override
+    def _getValue(self):
+        """ The output of a Dot forwards the value of its input. """
+        if self.isOutput:
+            inputAttr = self._getDotInputAttribute()
+            if inputAttr is not None:
+                return inputAttr.value
+            return None
+        return super()._getValue()
+
+    # Override
+    def uid(self) -> str:
+        """
+        The output of a Dot delegates its UID to its input, so that downstream nodes are
+        invalidated exactly as if the upstream attribute was connected directly.
+        """
+        if self.isOutput:
+            inputAttr = self._getDotInputAttribute()
+            if inputAttr is not None:
+                return inputAttr.uid()
+        return super().uid()
+
+    # Override
+    def getSerializedValue(self):
+        """ A Dot holds no value of its own: its output is serialized as an empty value. """
+        if self.isOutput:
+            return ""
+        return super().getSerializedValue()
+
+    def _getConnectedType(self) -> str:
+        """
+        Return the type reported by this attribute: for the Dot output, the type of the
+        upstream attribute connected to the Dot input; the descriptor's type otherwise.
+        """
+        if self.isOutput:
+            connectedAttr = self._getConnectedAttribute()
+            if connectedAttr is not None:
+                return connectedAttr.type
+        return self._desc.type
+
+    def _getConnectedBaseType(self) -> str:
+        """
+        Return the base type reported by this attribute: for the Dot output, the base type
+        of the upstream attribute connected to the Dot input; the descriptor's type otherwise.
+        This is what incoming connection validation relies on.
+        """
+        if self.isOutput:
+            connectedAttr = self._getConnectedAttribute()
+            if connectedAttr is not None:
+                return connectedAttr.baseType
+        return self._desc.type
+
+    # Override: the value Property must be redeclared so that reading it goes through
+    # this class' _getValue (the base Property captures the base _getValue function).
+    value = Property(Variant, lambda self: self._getValue(), lambda self, value: self._setValue(value), notify=Attribute.valueChanged)
+
+    # Override
+    type = Property(str, _getConnectedType, notify=Attribute.inputLinksChanged)
+    # Override
+    baseType = Property(str, _getConnectedBaseType, notify=Attribute.inputLinksChanged)

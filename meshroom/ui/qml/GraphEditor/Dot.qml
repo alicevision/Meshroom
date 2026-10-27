@@ -9,8 +9,8 @@ import Utils 1.0
  * A Dot is a purely organizational pass-through node: it is drawn as a small circle
  * with a single pin acting as the anchor for both its "input" and "output" attributes,
  * so that edges look like they pass through a re-routing point.
- * Dragging the center of the dot creates an edge from its output; dragging its border
- * moves it. The label of the Dot is shown as a tooltip on hover.
+ * Dragging the pin in the center of the dot creates an edge from its output; dragging
+ * the border around the pin moves it. The label of the Dot is shown as a tooltip on hover.
  */
 Item {
     id: root
@@ -30,8 +30,10 @@ Item {
 
     /// Diameter of the visual dot
     readonly property real dotSize: 14
-    /// Size of the (invisible) hit area: the border around the dot moves it, the center creates edges
-    readonly property real hitSize: 30
+    /// Size of the pin: same as regular attribute pins (see AttributePin.qml) - dragging it creates an edge
+    readonly property real pinSize: 8
+    /// Size of the (invisible) hit area: the border around the pin moves the Dot
+    readonly property real hitSize: 40
 
     // Identifies this delegate as a dot node
     readonly property bool isDotNode: true
@@ -107,8 +109,9 @@ Item {
     Item {
         id: pin
         anchors.centerIn: parent
-        width: root.dotSize
-        height: root.dotSize
+        // Same size as regular attribute pins: only the pin creates edges, the border around it moves the Dot
+        width: root.pinSize
+        height: root.pinSize
 
         // Position of this pin in the 'draggable' coordinate space (see GraphEditor)
         property real globalX: root.x + x
@@ -136,10 +139,12 @@ Item {
                 root.attributePinDeleted(pin.outputAttribute, pin)
         }
 
-        // Visual dot
+        // Visual dot (slightly larger than the pin, centered on it)
         Rectangle {
             id: dotCircle
-            anchors.fill: parent
+            anchors.centerIn: parent
+            width: root.dotSize
+            height: root.dotSize
             radius: width / 2
             color: Colors.sysPalette.base
             border.width: 1
@@ -180,8 +185,9 @@ Item {
         // - dropping an input connector creates an edge from the Dot output
         DropArea {
             id: dropArea
+            // Same negative margins as regular attribute pins to make the connection zone easier to reach
             anchors.fill: parent
-            anchors.margins: -4
+            anchors.margins: -2
             keys: [outputDragTarget.objectName]
 
             property bool acceptableDrop: false
@@ -236,8 +242,8 @@ Item {
             readonly property bool isList: pin.outputAttribute ? pin.outputAttribute.type === "ListAttribute" : false
             readonly property bool isExpandable: pin.outputAttribute ? pin.outputAttribute.isExpandable === true : false
             property bool dropAccepted: false
-            width: 8
-            height: 8
+            width: parent.width
+            height: parent.height
             x: parent.width / 2 - width / 2
             y: parent.height / 2 - height / 2
             Drag.keys: [outputDragTarget.objectName]
@@ -262,7 +268,8 @@ Item {
         MouseArea {
             id: connectMA
             anchors.fill: parent
-            anchors.margins: -3
+            // Same negative margins as the DropArea, like regular attribute pins
+            anchors.margins: -2
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             hoverEnabled: true
             enabled: !root.readOnly

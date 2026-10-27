@@ -50,7 +50,7 @@ The Meshroom UI is divided into several key areas:
 The **Dot** node (category *Utils*) is a purely organizational, pass-through node inspired by Katana's Dot node. It has a single input and a single output, performs no processing, and is drawn as a small circle in the Graph Editor. Its purpose is to route and tidy connections: re-route long links, avoid crossings, and fan a single output out to many inputs through a single anchor point.
 
 - **Create** a Dot from the graph editor's node creation menu (right-click → *Utils* → *Dot*, or search for "Dot").
-- **Connect** it like any other node: drag from the center of the dot to an input to fan out, or drag an output onto the dot to feed it. The Dot is type-agnostic: its output takes the type of whatever is connected to its input.
+- **Connect** it like any other node: drag from the pin in the center of the dot to an input to fan out, or drag an output onto the dot to feed it. The Dot is type-agnostic: its output takes the type of whatever is connected to its input.
 - **Insert** a Dot on an existing link via the edge context menu (right-click on an edge → *Insert Dot*): `A → B` becomes `A → Dot → B`.
 - **Move** a Dot by dragging its border; **rename** it from the Node Editor header (the label shows as a tooltip on hover); **delete** it like any other node (its neighbours are kept).
 

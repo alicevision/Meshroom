@@ -553,8 +553,8 @@ Item {
                                 midX = (edgeMenu.currentEdge.src.node.x + edgeMenu.currentEdge.dst.node.x) / 2
                                 midY = (edgeMenu.currentEdge.src.node.y + edgeMenu.currentEdge.dst.node.y) / 2
                             }
-                            // The node position is the top-left corner of the Dot's hit area (30px)
-                            uigraph.insertDotOnEdge(edgeMenu.currentEdge, Qt.point(midX - 15, midY - 15))
+                            // The node position is the top-left corner of the Dot's hit area (40px)
+                            uigraph.insertDotOnEdge(edgeMenu.currentEdge, Qt.point(midX - 20, midY - 20))
                             edgeMenu.close()
                         }
                     }

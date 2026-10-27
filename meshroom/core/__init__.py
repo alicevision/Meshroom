@@ -2,7 +2,6 @@ import hashlib
 import logging
 import os
 from pathlib import Path
-import shutil
 import sys
 from typing import Dict
 import uuid
@@ -15,7 +14,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import meshroomPluginsFolder, meshroomPluginsInternalPrefix, meshroomRegistriesFolder
+from meshroom.core.plugins import initLocalPluginsFolder, meshroomPluginsFolder, meshroomPluginsInternalPrefix
 from meshroom.core.plugins.manager import PluginManager
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension, isTemplateFile
 from meshroom.core.submitter import BaseSubmitter
@@ -237,15 +236,8 @@ def initPipelines():
 
 
 def initPlugins():
-    # Create the local plugins folder on first run, seeded with the registries shipped with Meshroom
-    # An existing folder is left untouched, so that a registry removed by the user is not restored
-    if pluginManager.localPluginsEnabled and not meshroomPluginsFolder.exists():
-        try:
-            meshroomPluginsFolder.mkdir(parents=True)
-            for registryPath in meshroomRegistriesFolder.glob("*.json"):
-                shutil.copy2(registryPath, meshroomPluginsFolder / registryPath.name)
-        except OSError as exc:
-            logging.warning(f"Cannot initialize the local plugins folder '{meshroomPluginsFolder}':\n{exc}")
+    if pluginManager.localPluginsEnabled:
+        initLocalPluginsFolder()
 
     if meshroomPluginsFolder.is_dir():
         # Load JSON registry files, only if local plugin management is enabled

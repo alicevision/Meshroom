@@ -73,15 +73,6 @@ jobs:
         run: |
           python setup.py install_exe -d "$OUTPUT_DIR"
 
-      - name: Fix missing PySide6 DLL (Windows only)
-        if: runner.os == 'Windows'
-        shell: cmd
-        env:
-          OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
-        run: |
-          curl -L "https://drive.google.com/uc?export=download&id=1vhPDmDQJJfM_hBD7KVqRfh8tiqTCN7Jv" ^
-            -o "%OUTPUT_DIR%\lib\PySide6\Qt63DQuickScene3D.dll"
-
       - name: Remove unused PySide6 files (Windows)
         if: runner.os == 'Windows'
         shell: cmd

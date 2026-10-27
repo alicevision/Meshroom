@@ -8,7 +8,7 @@ ARG AV_IMAGE
 FROM ${AV_IMAGE}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
-ARG QT_VERSION=6.8.3
+ARG QT_VERSION=6.12.0
 ENV QT_VERSION=${QT_VERSION} \
     QT_DIR=/opt/Qt/${QT_VERSION}/gcc_64
 

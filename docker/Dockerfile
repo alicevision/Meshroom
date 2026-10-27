@@ -71,9 +71,6 @@ RUN --mount=type=bind,from=sources,target=/opt/Meshroom,rw \
 		${MESHROOM_BUNDLE}/aliceVision/share/man/ \
 		${MESHROOM_BUNDLE}/aliceVision/share/pkgconfig
 
-# PySide6: copy missing libQt63DQuickScene3D.so along with its dependencies to avoid runtime issues
-RUN cp ${QT_DIR}/lib/libQt63DQuickScene3D.so.${QT_VERSION} ${MESHROOM_BUNDLE}/lib/PySide6/Qt/lib/libQt63DQuickScene3D.so.6
-
 # Copy the system libraries listed by the deps image (BUNDLE_EXTRA_LIBS) into the bundle
 RUN for lib in ${BUNDLE_EXTRA_LIBS:-}; do cp -L "$lib" "${MESHROOM_BUNDLE}/lib/"; done
 

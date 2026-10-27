@@ -1387,6 +1387,24 @@ class UIGraph(QObject):
             self.addEdge(dot.attribute("output"), dst)
         return dot
 
+    @Slot(Attribute, QPoint, result=QObject)
+    def insertDotFromAttribute(self, attribute, position):
+        """
+        [Undoable] Create a Dot node at 'position' and connect 'attribute' to the Dot input.
+        Used by the GraphEditor "insert Dot while dragging an edge" shortcut.
+
+        Args:
+            attribute (Attribute): the attribute to connect to the Dot input
+            position (QPoint): the position of the Dot in the graph
+
+        Returns:
+            Node: the created Dot node
+        """
+        with self.groupedGraphModification(f"Insert Dot from '{attribute.fullName}'"):
+            dot = self.addNewNode("Dot", position=Position(position.x(), position.y()))
+            self.addEdge(attribute, dot.attribute("input"))
+        return dot
+
     @Slot(Attribute, result=Edge)
     def getEdge(self, dst):
         return self._graph.edge(dst)

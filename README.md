@@ -52,6 +52,7 @@ The **Dot** node (category *Utils*) is a purely organizational, pass-through nod
 - **Create** a Dot from the graph editor's node creation menu (right-click → *Utils* → *Dot*, or search for "Dot").
 - **Connect** it like any other node: drag from the pin in the center of the dot to an input to fan out, or drag an output onto the dot to feed it. The Dot is type-agnostic: its output takes the type of whatever is connected to its input.
 - **Insert** a Dot on an existing link via the edge context menu (right-click on an edge → *Insert Dot*): `A → B` becomes `A → Dot → B`.
+- **Insert while dragging**: while dragging an edge from an output attribute pin, press `O` to create a Dot under the cursor. The dragged attribute is connected to the Dot and the drag continues from the Dot output, so the edge can be dropped on any compatible input (`A → …` becomes `A → Dot → …`). Pressing `O` again inserts another Dot, chaining them.
 - **Move** a Dot by dragging its border; **rename** it from the Node Editor header (the label shows as a tooltip on hover); **delete** it like any other node (its neighbours are kept).
 
 A Dot never creates chunks, a cache folder or a status file, and is never computed or submitted: downstream nodes see the upstream node's status and values, exactly as if the Dot was not there. Dots are saved in `.mg` files and survive copy/paste, duplication and undo/redo.

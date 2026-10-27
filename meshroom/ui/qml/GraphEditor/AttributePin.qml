@@ -35,6 +35,10 @@ RowLayout {
     readonly property bool isDynamic: !!attribute.desc && !!attribute.desc.isCustomAttribute
     readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     readonly property bool isConnected: attribute.hasAnyInputLinks || attribute.hasAnyOutputLinks
+    /// The edge connector currently dragged from this pin (null if none)
+    readonly property var draggedConnector: outputConnectMA.drag.active ? outputDragTarget : inputConnectMA.drag.active ? inputDragTarget : null
+    /// Preview edge drawn while an edge is dragged from the output connector (exposed for the GraphEditor)
+    readonly property var outputEdgePreview: outputConnectEdge
 
     signal childPinCreated(var childAttribute, var pin)
     signal childPinDeleted(var childAttribute, var pin)
@@ -275,7 +279,10 @@ RowLayout {
 
                 onDropped: function(drop) {
                     root.edgeAboutToBeRemoved(undefined)
-                    _currentScene.addEdge(drag.source.attribute, inputDragTarget.attribute)
+                    // An ongoing drag can be redirected to a Dot (insert Dot while dragging an edge):
+                    // the new edge is then created from the Dot output instead of the original source
+                    var srcAttribute = drop.source.dragRedirectAttribute ? drop.source.dragRedirectAttribute : drop.source.attribute
+                    _currentScene.addEdge(srcAttribute, inputDragTarget.attribute)
                 }
             }
 
@@ -535,6 +542,11 @@ RowLayout {
             readonly property alias isList: root.isList
             readonly property alias isExpandable: root.isExpandable
             property bool dropAccepted: false
+            /// Whether an edge is currently being dragged from this connector
+            readonly property bool dragging: outputConnectMA.drag.active
+            /// Attribute to use as the edge source instead of this connector's attribute when set
+            /// (an ongoing drag can be redirected to a Dot, see the GraphEditor insert Dot shortcut)
+            property var dragRedirectAttribute: null
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
@@ -573,6 +585,8 @@ RowLayout {
 
             onReleased: function(mouse) {
                 outputDragTarget.Drag.drop()
+                // Clear any drag redirect (insert Dot while dragging an edge)
+                outputDragTarget.dragRedirectAttribute = null
                 isPressed = false
                 dragTriggered = false
             }

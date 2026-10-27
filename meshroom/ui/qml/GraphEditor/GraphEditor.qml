@@ -115,6 +115,46 @@ Item {
         return mapToItem(draggable, mouseArea.width / 2, mouseArea.height / 2)
     }
 
+    /// Get the edge connector currently dragged in the graph (null if none)
+    function activeEdgeConnector() {
+        for (var uuid in root._attributeToDelegate) {
+            var pin = root._attributeToDelegate[uuid]
+            if (pin && pin.draggedConnector)
+                return pin.draggedConnector
+        }
+        return null
+    }
+
+    /**
+     * Insert a Dot on the edge currently being dragged: a Dot is created under the mouse and
+     * connected to the dragged attribute, and the ongoing drag is redirected to the Dot output
+     * (it continues as if it was started from the Dot).
+     * Triggered by the 'O' key while dragging an edge from an output attribute pin.
+     */
+    function insertDotOnDraggedEdge() {
+        const connector = activeEdgeConnector()
+        // Only output connectors can be redirected to a Dot
+        if (!connector || connector.connectorType !== "output" || !connector.attribute)
+            return
+        const srcPin = root._attributeToDelegate[connector.attribute.uuid]
+        if (!srcPin || srcPin.readOnly)
+            return
+        // The dragged connector follows the mouse: use it to get the cursor position in 'draggable' coordinates
+        const mousePos = draggable.mapFromItem(connector, connector.width / 2, connector.height / 2)
+        // Create the Dot under the mouse (the node position is the top-left corner of the Dot's hit area, 40px)
+        // and connect the dragged attribute to its input
+        const dot = uigraph.insertDotFromAttribute(connector.attribute, Qt.point(mousePos.x - 20, mousePos.y - 20))
+        const dotDelegate = root.nodeDelegate(dot)
+        if (!dotDelegate)
+            return
+        // Redirect the ongoing drag to the Dot output
+        connector.dragRedirectAttribute = dot.attribute("output")
+        dotDelegate.redirectEdgeDrag(connector)
+        // Hide the dragged pin's preview edge: the drag now continues from the Dot
+        if (srcPin.outputEdgePreview)
+            srcPin.outputEdgePreview.visible = false
+    }
+
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             fit()
@@ -147,6 +187,9 @@ Item {
             uigraph.alignVertically()
         } else if (event.key === Qt.Key_H && event.modifiers === Qt.ShiftModifier) {
             uigraph.alignHorizontally()
+        } else if (event.key === Qt.Key_O && event.modifiers === Qt.NoModifier) {
+            // Insert a Dot on the edge currently being dragged (the drag continues from the Dot)
+            insertDotOnDraggedEdge()
         } else if (event.key === Qt.Key_Tab) {
             event.accepted = true
             if (mouseArea.containsMouse) {

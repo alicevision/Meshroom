@@ -74,6 +74,17 @@ Item {
         }
     }
 
+    /**
+     * Redirect an ongoing edge drag (started from 'connector') to this Dot: the preview edge
+     * is drawn from the Dot and follows the dragged connector, so that the drag appears to
+     * continue from the Dot output attribute.
+     * Used by the GraphEditor "insert Dot while dragging an edge" shortcut.
+     */
+    function redirectEdgeDrag(connector) {
+        pin.redirectSource = connector
+        pin.updateRedirectPosition()
+    }
+
     // The Dot label is displayed as a tooltip (rename it from the Node Editor header)
     ToolTip {
         text: node ? node.label : ""
@@ -126,6 +137,15 @@ Item {
         readonly property bool connected: (inputAttribute && inputAttribute.hasAnyInputLinks) ||
                                            (outputAttribute && outputAttribute.hasAnyOutputLinks)
 
+        /// The edge connector currently dragged from this pin (null if none)
+        readonly property var draggedConnector: connectMA.drag.active ? outputDragTarget : null
+        /// Connector whose ongoing edge drag is redirected to this Dot (insert Dot shortcut):
+        /// the preview edge is drawn from the Dot and follows it, so that the drag appears
+        /// to continue from the Dot output attribute
+        property var redirectSource: null
+        /// Whether this Dot's own edge drag has been redirected to another Dot
+        readonly property bool dragRedirected: outputDragTarget.dragRedirectAttribute !== null
+
         Component.onCompleted: {
             if (pin.inputAttribute)
                 root.attributePinCreated(pin.inputAttribute, pin)
@@ -137,6 +157,30 @@ Item {
                 root.attributePinDeleted(pin.inputAttribute, pin)
             if (pin.outputAttribute)
                 root.attributePinDeleted(pin.outputAttribute, pin)
+        }
+
+        // Follow a redirected drag: keep the connector (and thus the preview edge) under the mouse
+        function updateRedirectPosition() {
+            if (!redirectSource)
+                return
+            var pos = mapFromItem(redirectSource, redirectSource.width / 2, redirectSource.height / 2)
+            outputDragTarget.x = pos.x - outputDragTarget.width / 2
+            outputDragTarget.y = pos.y - outputDragTarget.height / 2
+        }
+
+        Connections {
+            target: pin.redirectSource
+
+            // The redirected drag is over: hide the preview and re-center the connector
+            function onDraggingChanged() {
+                if (pin.redirectSource && !pin.redirectSource.dragging) {
+                    pin.redirectSource = null
+                    outputDragTarget.x = pin.width / 2 - outputDragTarget.width / 2
+                    outputDragTarget.y = pin.height / 2 - outputDragTarget.height / 2
+                }
+            }
+            function onXChanged() { pin.updateRedirectPosition() }
+            function onYChanged() { pin.updateRedirectPosition() }
         }
 
         // Visual dot (slightly larger than the pin, centered on it)
@@ -193,12 +237,15 @@ Item {
             property bool acceptableDrop: false
 
             onEntered: function(drag) {
-                if (root.readOnly || drag.source.objectName !== "edgeConnector" || drag.source.nodeItem === root) {
+                // An ongoing drag can be redirected to another Dot (insert Dot while dragging an edge):
+                // use the effective source attribute instead of the original connector's one
+                var srcAttribute = drag.source.dragRedirectAttribute ? drag.source.dragRedirectAttribute : drag.source.attribute
+                if (root.readOnly || drag.source.objectName !== "edgeConnector" || !srcAttribute || srcAttribute.node === node) {
                     // Locked node, not an edge connector, or connection within the same node
                     drag.accepted = false
                 } else if (drag.source.connectorType === "output") {
                     // Incoming connection on the Dot input
-                    drag.accepted = pin.inputAttribute.validateIncomingConnection(drag.source.attribute)
+                    drag.accepted = pin.inputAttribute.validateIncomingConnection(srcAttribute)
                     if (drag.accepted && pin.inputAttribute.isLink) {
                         // The existing edge will be replaced
                         root.edgeAboutToBeRemoved(pin.inputAttribute)
@@ -223,8 +270,10 @@ Item {
 
             onDropped: function(drop) {
                 root.edgeAboutToBeRemoved(undefined)
+                // An ongoing drag can be redirected to another Dot (insert Dot while dragging an edge)
+                var srcAttribute = drop.source.dragRedirectAttribute ? drop.source.dragRedirectAttribute : drop.source.attribute
                 if (drop.source.connectorType === "output") {
-                    _currentScene.addEdge(drop.source.attribute, pin.inputAttribute)
+                    _currentScene.addEdge(srcAttribute, pin.inputAttribute)
                 } else {
                     _currentScene.addEdge(pin.outputAttribute, drop.source.attribute)
                 }
@@ -242,6 +291,11 @@ Item {
             readonly property bool isList: pin.outputAttribute ? pin.outputAttribute.type === "ListAttribute" : false
             readonly property bool isExpandable: pin.outputAttribute ? pin.outputAttribute.isExpandable === true : false
             property bool dropAccepted: false
+            /// Whether an edge is currently being dragged from this connector
+            readonly property bool dragging: connectMA.drag.active
+            /// Attribute to use as the edge source instead of this connector's attribute when set
+            /// (an ongoing drag can be redirected to another Dot, see the GraphEditor insert Dot shortcut)
+            property var dragRedirectAttribute: null
             width: parent.width
             height: parent.height
             x: parent.width / 2 - width / 2
@@ -255,7 +309,9 @@ Item {
         // Preview of the edge being created
         Edge {
             id: connectEdge
-            visible: connectMA.drag.active
+            // Shown while dragging from the Dot, or while a drag is redirected to it;
+            // hidden while this Dot's own drag is redirected to another Dot
+            visible: (connectMA.drag.active && !pin.dragRedirected) || (pin.redirectSource !== null && pin.redirectSource.dragging)
             z: 100
             point1x: pin.width / 2
             point1y: pin.height / 2
@@ -279,6 +335,8 @@ Item {
             onPressed: function(mouse) { root.pressed(mouse) }
             onReleased: function(mouse) {
                 outputDragTarget.Drag.drop()
+                // Clear any drag redirect (insert Dot while dragging an edge)
+                outputDragTarget.dragRedirectAttribute = null
                 root.released(mouse)
             }
             onClicked: function(mouse) { root.clicked(mouse) }

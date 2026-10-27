@@ -537,6 +537,30 @@ Item {
 
                     MaterialToolButton {
                         font.pointSize: 13
+                        ToolTip.text: "Insert Dot"
+                        enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
+                        text: MaterialIcons.adjust
+                        onClicked: {
+                            // Place the Dot at the midpoint of the edge (in 'draggable' coordinates)
+                            const srcPin = root._attributeToDelegate[edgeMenu.currentEdge.src.uuid]
+                            const dstPin = root._attributeToDelegate[edgeMenu.currentEdge.dst.uuid]
+                            var midX = 0
+                            var midY = 0
+                            if (srcPin && dstPin) {
+                                midX = (srcPin.globalX + srcPin.outputAnchorPos.x + dstPin.globalX + dstPin.inputAnchorPos.x) / 2
+                                midY = (srcPin.globalY + srcPin.outputAnchorPos.y + dstPin.globalY + dstPin.inputAnchorPos.y) / 2
+                            } else {
+                                midX = (edgeMenu.currentEdge.src.node.x + edgeMenu.currentEdge.dst.node.x) / 2
+                                midY = (edgeMenu.currentEdge.src.node.y + edgeMenu.currentEdge.dst.node.y) / 2
+                            }
+                            // The node position is the top-left corner of the Dot's hit area (30px)
+                            uigraph.insertDotOnEdge(edgeMenu.currentEdge, Qt.point(midX - 15, midY - 15))
+                            edgeMenu.close()
+                        }
+                    }
+
+                    MaterialToolButton {
+                        font.pointSize: 13
                         ToolTip.text: "Remove Edge"
                         enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
                         text: MaterialIcons.delete_
@@ -1315,7 +1339,147 @@ Item {
                         }
                     }
 
-                    sourceComponent: object.isBackdropNode ? backdropComponent : nodeComponent
+                    Component {
+                        id: dotComponent
+                        Dot {
+                            id: dotDelegate
+
+                            node: object
+
+                            mainSelected: uigraph.selectedNode === node
+                            hovered: uigraph.hoveredNode === node
+
+                            // ItemSelectionModel.hasSelection triggers updates anytime the selectionChanged() signal is emitted.
+                            selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
+
+                            onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
+                            onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
+
+                            onPressed: function(mouse) {
+                                nodeRepeater.updateSelectionOnClick = true
+                                nodeRepeater.ongoingDrag = true
+
+                                let selectionMode = ItemSelectionModel.NoUpdate
+
+                                if (!selected) {
+                                    selectionMode = ItemSelectionModel.ClearAndSelect
+                                }
+
+                                if (mouse.button === Qt.LeftButton) {
+                                    if (mouse.modifiers & Qt.ShiftModifier) {
+                                        selectionMode = ItemSelectionModel.Select
+                                    }
+                                    if (mouse.modifiers & Qt.ControlModifier) {
+                                        selectionMode = ItemSelectionModel.Toggle
+                                    }
+                                    if (mouse.modifiers & Qt.AltModifier) {
+                                        let selectFollowingMode = ItemSelectionModel.ClearAndSelect
+                                        if (mouse.modifiers & Qt.ShiftModifier) {
+                                            selectFollowingMode = ItemSelectionModel.Select
+                                        }
+                                        uigraph.selectFollowing(node, selectFollowingMode)
+                                        // Indicate selection has been dealt with by setting conservative Select mode.
+                                        selectionMode = ItemSelectionModel.Select
+                                    }
+                                }
+                                else if (mouse.button === Qt.RightButton) {
+                                    if (selected) {
+                                        // Keep the full selection when right-clicking on an already selected node.
+                                        nodeRepeater.updateSelectionOnClick = false
+                                    }
+                                }
+
+                                if (selectionMode != ItemSelectionModel.NoUpdate) {
+                                    nodeRepeater.updateSelectionOnClick = false
+                                    uigraph.selectNodeByIndex(index, selectionMode)
+                                }
+
+                                // If the node is selected after this, make it the active selected node.
+                                if (selected) {
+                                    uigraph.selectedNode = node
+                                }
+
+                                // Open the node context menu once selection has been updated.
+                                if (mouse.button == Qt.RightButton) {
+                                    nodeMenuLoader.load(node)
+                                }
+                            }
+
+                            onReleased: function(mouse, wasDragged) {
+                                nodeRepeater.ongoingDrag = false
+                            }
+
+                            // Only called when the node has not been dragged.
+                            onClicked: function(mouse) {
+                                if (!nodeRepeater.updateSelectionOnClick) {
+                                    return
+                                }
+                                uigraph.selectNodeByIndex(index)
+                            }
+
+                            onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }
+
+                            onEntered: uigraph.hoveredNode = node
+                            onExited: uigraph.hoveredNode = null
+
+                            onEdgeAboutToBeRemoved: function(input) {
+                                /*
+                                 * Sometimes the signals are not in the right order because of weird Qt/QML update order
+                                 * (next DropArea entered signal before previous DropArea exited signal) so edgeAboutToBeRemoved
+                                 * must be set to undefined before it can be set to another attribute object.
+                                 */
+                                if (input === undefined) {
+                                    if (nodeRepeater.temporaryEdgeAboutToBeRemoved === undefined) {
+                                        root.edgeAboutToBeRemoved = input
+                                    } else {
+                                        root.edgeAboutToBeRemoved = nodeRepeater.temporaryEdgeAboutToBeRemoved
+                                        nodeRepeater.temporaryEdgeAboutToBeRemoved = undefined
+                                    }
+                                } else {
+                                    if (root.edgeAboutToBeRemoved === undefined) {
+                                        root.edgeAboutToBeRemoved = input
+                                    } else {
+                                        nodeRepeater.temporaryEdgeAboutToBeRemoved = input
+                                    }
+                                }
+                            }
+
+                            // Interactive dragging: move the visual delegates
+                            onPositionChanged: {
+                                if (!selected || !dragging) {
+                                    return
+                                }
+
+                                // Compute offset between the delegate and the stored node position.
+                                const offset = Qt.point(x - node.x, y - node.y)
+
+                                uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
+                                    if (idx != index) {
+                                        const delegate = nodeRepeater.getItemAt(idx.row)
+                                        delegate.x = delegate.node.x + offset.x
+                                        delegate.y = delegate.node.y + offset.y
+                                    }
+                                })
+                            }
+
+                            // After drag: apply the final offset to all selected nodes
+                            onMoved: function(position) {
+                                const offset = Qt.point(position.x - node.x, position.y - node.y)
+                                uigraph.moveSelectedNodesBy(offset)
+                            }
+
+                            Behavior on x {
+                                enabled: !nodeRepeater.ongoingDrag
+                                NumberAnimation { duration: 100 }
+                            }
+                            Behavior on y {
+                                enabled: !nodeRepeater.ongoingDrag
+                                NumberAnimation { duration: 100 }
+                            }
+                        }
+                    }
+
+                    sourceComponent: object.isBackdropNode ? backdropComponent : (object.isDotNode ? dotComponent : nodeComponent)
 
                     onLoaded: {
                         nodeLoader.z = Qt.binding(function() { return nodeLoader.item ? nodeLoader.item.z : 0 })

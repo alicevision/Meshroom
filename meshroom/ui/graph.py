@@ -1366,6 +1366,27 @@ class UIGraph(QObject):
             self.addEdge(newSrc, newDst)
         return self._graph.edge(newDst)
 
+    @Slot(Edge, QPoint, result=QObject)
+    def insertDotOnEdge(self, edge, position):
+        """
+        [Undoable] Insert a Dot node on the given edge: 'src -> dst' becomes 'src -> Dot -> dst'.
+
+        Args:
+            edge (Edge): the edge on which to insert the Dot
+            position (QPoint): the position of the Dot in the graph
+
+        Returns:
+            Node: the created Dot node
+        """
+        with self.groupedGraphModification(f"Insert Dot on '{edge.src.fullName}'->'{edge.dst.fullName}'"):
+            src = edge.src
+            dst = edge.dst
+            dot = self.addNewNode("Dot", position=Position(position.x(), position.y()))
+            self.removeEdge(edge)
+            self.addEdge(src, dot.attribute("input"))
+            self.addEdge(dot.attribute("output"), dst)
+        return dot
+
     @Slot(Attribute, result=Edge)
     def getEdge(self, dst):
         return self._graph.edge(dst)

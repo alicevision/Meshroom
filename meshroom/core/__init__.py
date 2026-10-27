@@ -14,7 +14,7 @@ try:
 except Exception:
     pass
 
-from meshroom.core.plugins import meshroomPluginsFolder, meshroomPluginsInternalPrefix
+from meshroom.core.plugins import initLocalPluginsFolder, meshroomPluginsFolder, meshroomPluginsInternalPrefix
 from meshroom.core.plugins.manager import PluginManager
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, hasExtension, isTemplateFile
 from meshroom.core.submitter import BaseSubmitter
@@ -236,6 +236,9 @@ def initPipelines():
 
 
 def initPlugins():
+    if pluginManager.localPluginsEnabled:
+        initLocalPluginsFolder()
+
     if meshroomPluginsFolder.is_dir():
         # Load JSON registry files, only if local plugin management is enabled
         # Do not load registries records
@@ -245,6 +248,8 @@ def initPlugins():
                 pluginManager.addPluginRegistryFile(jsonFilePath, updateRecords=False)
         # Local plugins
         # Using DirTreeProcessEnv
+        # Loaded even if local plugin management is disabled:
+        # it only prevents installing, updating and uninstalling plugins.
         for subfolderPath in sorted(p for p in meshroomPluginsFolder.iterdir()
                                      if p.is_dir() and not p.name.startswith(meshroomPluginsInternalPrefix)):
             pluginManager.addPluginFromLocalFolder(subfolderPath.name, str(subfolderPath))

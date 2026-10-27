@@ -15,12 +15,14 @@ from meshroom.core import desc, plugins, hashValue, MrNodeType
 from meshroom.core.attribute import ListAttribute, GroupAttribute, Attribute
 from meshroom.core.desc.attribute import Attribute as AttributeDescription
 from meshroom.core.desc.anySet import AnySet as AnySetDescription
-from meshroom.core.node.status import ChunkIndex, ChunkStatusData, ExecMode, NodeStatusData, Status, getWritingFilepath, renameWritingToFinalPath
+from meshroom.core.node.status import (ChunkIndex, ChunkStatusData, ExecMode,
+                                       NodeStatusData, Status, getWritingFilepath,
+                                       renameWritingToFinalPath)
 from meshroom.core.node.logManager import LogManager
 from meshroom.core.node.chunk import NodeChunk
 
 
-def hasADynamicValue(attribute: AttributeDescription) ->bool:
+def hasADynamicValue(attribute: AttributeDescription) -> bool:
     return attribute.isDynamicValue or isinstance(attribute, AnySetDescription)
 
 
@@ -210,7 +212,6 @@ class BaseNode(BaseObject):
         if self.hasInternalAttribute("nodeHeight"):
             return self.internalAttribute("nodeHeight").value
         return 0
-
 
     @Slot(str, result=str)
     def nameToLabel(self, name):
@@ -469,7 +470,6 @@ class BaseNode(BaseObject):
 
             # xxValue is exposed without quotes to allow to compose expressions
             self._expVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
-
 
     def createCmdLineVars(self):
         """
@@ -908,15 +908,17 @@ class BaseNode(BaseObject):
             except Exception as e:
                 logging.warning(f"Could not create chunks from cache: {e}")
                 return
-        s = self.globalStatus
+
         if self.hasPreprocessChunk:
             if not self._preprocessChunk:
                 raise ValueError("No preprocess chunk")
             self._preprocessChunk.updateStatusFromCache()
+
         if self.hasPostprocessChunk:
             if not self._postprocessChunk:
                 raise ValueError("No postprocess chunk")
             self._postprocessChunk.updateStatusFromCache()
+
         if self._chunksCreated:
             for chunk in self._chunks:
                 chunk.updateStatusFromCache()
@@ -931,7 +933,6 @@ class BaseNode(BaseObject):
             else:
                 chunkPlaceholder._status.status = Status.NONE
             self._chunkPlaceholder.setObjectList([chunkPlaceholder])
-        # logging.debug(f"updateStatusFromCache: {self.name}, status: {s} => {self.globalStatus}")
         self.updateOutputAttr()
 
     def upgradeStatusFile(self):
@@ -1428,12 +1429,12 @@ class BaseNode(BaseObject):
             return False
         # Only locked nodes running in local with the same
         # computeSessionUid as the Meshroom instance can be stopped
-        return (self.getGlobalStatus() == Status.RUNNING and self.isMainNode() and
-                (
-                    (self.globalExecMode == ExecMode.LOCAL.name and self.initFromThisSession())
-                    or
-                    (self.globalExecMode == ExecMode.EXTERN.name and self._nodeStatus.jobName != "UNKNOWN")
-                )
+        return (
+            self.getGlobalStatus() == Status.RUNNING and self.isMainNode() and
+            (
+                (self.globalExecMode == ExecMode.LOCAL.name and self.initFromThisSession()) or
+                (self.globalExecMode == ExecMode.EXTERN.name and self._nodeStatus.jobName != "UNKNOWN")
+            )
         )
 
     @Slot(result=bool)
@@ -1451,12 +1452,12 @@ class BaseNode(BaseObject):
             return False
         # Only locked nodes submitted in local with the same
         # computeSessionUid as the Meshroom instance can be canceled
-        return (self.getGlobalStatus() == Status.SUBMITTED and self.isMainNode() and
-                (
-                    (self.globalExecMode == ExecMode.LOCAL.name and self.initFromThisSession())
-                    or
-                    (self.globalExecMode == ExecMode.EXTERN.name and self._nodeStatus.jobName != "UNKNOWN")
-                )
+        return (
+            self.getGlobalStatus() == Status.SUBMITTED and self.isMainNode() and
+            (
+                (self.globalExecMode == ExecMode.LOCAL.name and self.initFromThisSession()) or
+                (self.globalExecMode == ExecMode.EXTERN.name and self._nodeStatus.jobName != "UNKNOWN")
+            )
         )
 
     def hasImageOutputAttribute(self) -> bool:
@@ -1511,7 +1512,6 @@ class BaseNode(BaseObject):
         """
         return next((attr for attr in self._attributes if attr.hasDisplayableShape or
                      attr.desc.semantic == "shapeFile"), None) is not None
-
 
     nodeNameChanged = Signal()
     name = Property(str, getName, notify=nodeNameChanged)

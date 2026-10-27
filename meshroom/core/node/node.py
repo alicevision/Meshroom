@@ -23,7 +23,6 @@ class Node(BaseNode):
 
         self.packageName = self.nodeDesc.packageName
 
-
         for attrDesc in self.nodeDesc.inputs:
             self._attributes.add(attributeFactory(attrDesc, kwargs.get(attrDesc.name, None),
                                                   isOutput=False, node=self))

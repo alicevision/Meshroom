@@ -10,7 +10,10 @@ from typing import TYPE_CHECKING, Dict
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject
 from meshroom.core import desc, stats, MrNodeType
-from meshroom.core.node.status import ChunkIndex, ChunkStatusData, ExecMode, Status, getWritingFilepath, renameWritingToFinalPath
+from meshroom.core.node.status import (
+    ChunkIndex, ChunkStatusData, ExecMode, Status,
+    getWritingFilepath, renameWritingToFinalPath
+)
 from meshroom.core.node.logManager import LogManager
 
 if TYPE_CHECKING:
@@ -340,7 +343,8 @@ class NodeChunk(BaseObject):
             return True
         elif self._status.execMode == ExecMode.LOCAL:
             if self._status.status in (Status.SUBMITTED, Status.RUNNING):
-                return meshroom.core.sessionUid not in (self.node._nodeStatus.submitterSessionUid, self._status.computeSessionUid)
+                return meshroom.core.sessionUid not in (self.node._nodeStatus.submitterSessionUid,
+                                                        self._status.computeSessionUid)
             return False
         return False
 

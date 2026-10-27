@@ -56,9 +56,9 @@ class ExecMode(Enum):
 
 
 class ChunkIndex(IntEnum):
-    NONE=-3
-    PREPROCESS=-2
-    POSTPROCESS=-1
+    NONE = -3
+    PREPROCESS = -2
+    POSTPROCESS = -1
     # Standard chunks are indexed from 0
 
 
@@ -84,6 +84,7 @@ class ChunkIndexEnum(BaseObject):
 
 # Simple structure for storing chunk information
 NodeChunkSetup = namedtuple("NodeChunks", ["blockSize", "fullSize", "nbBlocks"])
+
 
 class NodeStatusData(BaseObject):
     __slots__ = ("nodeName", "nodeType", "status", "execMode", "packageName", "mrNodeType",
@@ -164,7 +165,7 @@ class NodeStatusData(BaseObject):
 
     def toDict(self):
         keys = list(self.__slots__) or []
-        d = {key:getattr(self, key, 0) for key in keys}
+        d = {key: getattr(self, key, 0) for key in keys}
         for _k, _v in d.items():
             if isinstance(_v, Enum):
                 d[_k] = _v.name
@@ -331,7 +332,7 @@ class ChunkStatusData(BaseObject):
     def initEndCompute(self):
         self.computeSessionUid = meshroom.core.sessionUid
         self.endDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
-        if self._startTime != None:
+        if self._startTime is not None:
             self.elapsedTime = time.time() - self._startTime
 
     @property
@@ -340,7 +341,7 @@ class ChunkStatusData(BaseObject):
 
     def toDict(self):
         keys = list(self.__slots__) or []
-        d = {key:getattr(self, key) for key in keys}
+        d = {key: getattr(self, key) for key in keys}
         for _k, _v in d.items():
             if isinstance(_v, Enum):
                 d[_k] = _v.name

@@ -440,7 +440,7 @@ class CompatibilityNode(BaseNode):
 
         descOutputs = self.nodeDescDict.get("outputs", {})
         dynamicAttrs = [name for name, attrDesc in descOutputs.items()
-                            if attrDesc.get("type") and (attrDesc["type"]=="AnySet" or attrDesc.get("value") is None)]
+                        if attrDesc.get("type") and (attrDesc["type"] == "AnySet" or attrDesc.get("value") is None)]
 
         if not dynamicAttrs:
             return

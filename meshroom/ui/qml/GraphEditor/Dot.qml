@@ -210,7 +210,8 @@ Item {
             onExited: function(drag) {
                 root.edgeAboutToBeRemoved(undefined)
                 dropArea.acceptableDrop = false
-                if (drag.source)
+                // 'drag' is undefined when the drag ends while still over the DropArea (e.g. right after a drop)
+                if (drag && drag.source)
                     drag.source.dropAccepted = false
             }
 

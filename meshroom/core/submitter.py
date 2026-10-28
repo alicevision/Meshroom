@@ -83,7 +83,7 @@ class OrderedTaskType(IntFlag):
 
 
 class OrderedTask:
-    _usedUids = set()
+    _lastUid = 0
 
     def __init__(self, taskType: OrderedTaskType, node: BaseNode = None, iteration : int = -1):
         self.taskType: OrderedTaskType = taskType
@@ -91,8 +91,12 @@ class OrderedTask:
         self.iteration: int = iteration
         self.dependencies : list["OrderedTask"] = []
         # Generate UID
-        self.uid: int = max(self._usedUids) + 1 if len(self._usedUids) > 0 else 0
-        self._usedUids.add(self.uid)
+        self.uid: int = self._generateUid()
+
+    @classmethod
+    def _generateUid(cls) -> int:
+        cls._lastUid += 1
+        return cls._lastUid
 
     @property
     def nodeName(self) -> str:

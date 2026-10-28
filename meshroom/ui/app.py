@@ -34,6 +34,7 @@ from meshroom.ui.components.messaging import MessageController
 from meshroom.ui.components.shapes import ShapeFilesHelper, ShapeViewerHelper
 from meshroom.ui.dockLayoutManager import DockLayoutManager
 from meshroom.ui.palette import PaletteManager
+from meshroom.ui.menu import MeshroomMenuManager
 from meshroom.ui.scene import Scene
 from meshroom.ui.utils import QmlInstantEngine
 from meshroom.ui import commands
@@ -302,6 +303,8 @@ class MeshroomApp(QApplication):
 
         # expose the plugin manager
         self.engine.rootContext().setContextProperty("_pluginManager", pluginManager)
+        # Expose the menu manager
+        self.engine.rootContext().setContextProperty("MeshroomMenuManager", MeshroomMenuManager(parent=self))
 
         # expose the queue processing the plugin installation, update and removal tasks
         self._pluginTaskQueue = PluginTaskQueue(parent=self)

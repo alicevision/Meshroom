@@ -724,7 +724,15 @@ Item {
                             spacing: 3
 
                             property var parentPins: new Map()
+                            // JS Map changes are not notified: bump this to re-evaluate the bindings reading parentPins
+                            property int parentPinsRevision: 0
                             signal parentPinsUpdated()
+
+                            function updateParentPins() {
+                                // Let each pin update parentPins first, then re-evaluate the "visible" bindings
+                                parentPinsUpdated()
+                                parentPinsRevision++
+                            }
 
                             Repeater {
                                 model: root.generateAttributesModel(true, outputs.parentPins)  // isOutput = true
@@ -734,6 +742,7 @@ Item {
 
                                     active: Boolean(modelData.isOutput && modelData.desc.visible)
                                     visible: {
+                                        outputs.parentPinsRevision  // Re-evaluate when parentPins changes
                                         if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
                                             if (modelData.root && modelData.root.isExpandable) {
                                                 return Boolean(outputs.parentPins.get(modelData.root.fullName) ||
@@ -752,7 +761,7 @@ Item {
                                         target: outputs
 
                                         function onParentPinsUpdated() {
-                                            visible = updateChildPin(modelData, outputs.parentPins, outputLoader.item)
+                                            updateChildPin(modelData, outputs.parentPins, outputLoader.item)
                                         }
                                     }
 
@@ -766,7 +775,7 @@ Item {
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
 
                                         onIsConnectedChanged: function() {
-                                            outputs.parentPinsUpdated()
+                                            outputs.updateParentPins()
                                         }
 
                                         onPressed: function(mouse) {
@@ -777,7 +786,7 @@ Item {
                                             if (outputs.parentPins.has(modelData.fullName)) {
                                                 modelData.expanded = !modelData.expanded
                                                 outputs.parentPins.set(modelData.fullName, modelData.expanded)
-                                                outputs.parentPinsUpdated()
+                                                outputs.updateParentPins()
                                             }
                                         }
 
@@ -800,7 +809,15 @@ Item {
                             spacing: 3
 
                             property var parentPins: new Map()
+                            // JS Map changes are not notified: bump this to re-evaluate the bindings reading parentPins
+                            property int parentPinsRevision: 0
                             signal parentPinsUpdated()
+
+                            function updateParentPins() {
+                                // Let each pin update parentPins first, then re-evaluate the "visible" bindings
+                                parentPinsUpdated()
+                                parentPinsRevision++
+                            }
 
                             Repeater {
                                 model: root.generateAttributesModel(false, inputs.parentPins)  // isOutput = false
@@ -810,6 +827,7 @@ Item {
 
                                     active: !modelData.isOutput && modelData.exposed && modelData.desc.visible
                                     visible: {
+                                        inputs.parentPinsRevision  // Re-evaluate when parentPins changes
                                         if (Boolean(modelData.enabled)) {
                                             if (modelData.root && (modelData.root.isExpandable) ) {
                                                 return Boolean(inputs.parentPins.get(modelData.root.fullName) ||
@@ -827,7 +845,7 @@ Item {
                                         target: inputs
 
                                         function onParentPinsUpdated() {
-                                            visible = updateChildPin(modelData, inputs.parentPins, inputLoader.item)
+                                            updateChildPin(modelData, inputs.parentPins, inputLoader.item)
                                         }
                                     }
 
@@ -841,7 +859,7 @@ Item {
                                         property real globalY: root.y + nodeAttributes.y + inputs.y + inputLoader.y + inPin.y
 
                                         onIsConnectedChanged: function() {
-                                            inputs.parentPinsUpdated()
+                                            inputs.updateParentPins()
                                         }
 
                                         readOnly: Boolean(root.readOnly || modelData.isReadOnly)
@@ -856,7 +874,7 @@ Item {
                                             if (inputs.parentPins.has(modelData.fullName)) {
                                                 modelData.expanded = !modelData.expanded
                                                 inputs.parentPins.set(modelData.fullName, modelData.expanded)
-                                                inputs.parentPinsUpdated()
+                                                inputs.updateParentPins()
                                             }
                                         }
 
@@ -904,7 +922,15 @@ Item {
                                 spacing: 3
 
                                 property var parentPins: new Map()
+                                // JS Map changes are not notified: bump this to re-evaluate the bindings reading parentPins
+                                property int parentPinsRevision: 0
                                 signal parentPinsUpdated()
+
+                                function updateParentPins() {
+                                    // Let each pin update parentPins first, then re-evaluate the "visible" bindings
+                                    parentPinsUpdated()
+                                    parentPinsRevision++
+                                }
 
                                 Repeater {
                                     model: root.generateAttributesModel(false, inputParams.parentPins)  // isOutput = false
@@ -914,6 +940,7 @@ Item {
 
                                         active: !modelData.isOutput && !modelData.exposed && modelData.desc.visible
                                         visible: {
+                                            inputParams.parentPinsRevision  // Re-evaluate when parentPins changes
                                             if (Boolean(modelData.enabled || modelData.hasAnyOutputLinks || modelData.hasAnyInputLinks)) {
                                                 if (modelData.root && modelData.root.isExpandable) {
                                                     return Boolean(inputParams.parentPins.get(modelData.root.fullName) ||
@@ -934,7 +961,7 @@ Item {
                                             target: inputParams
 
                                             function onParentPinsUpdated() {
-                                                visible = updateChildPin(modelData, inputParams.parentPins, paramLoader.item)
+                                                updateChildPin(modelData, inputParams.parentPins, paramLoader.item)
                                             }
                                         }
 
@@ -948,7 +975,7 @@ Item {
                                             property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inParamsPin.y
 
                                             onIsConnectedChanged: function() {
-                                                inputParams.parentPinsUpdated()
+                                                inputParams.updateParentPins()
                                             }
 
                                             height: isFullyActive ? childrenRect.height : 0
@@ -967,7 +994,7 @@ Item {
                                                 if (inputParams.parentPins.has(modelData.fullName)) {
                                                     modelData.expanded = !modelData.expanded
                                                     inputParams.parentPins.set(modelData.fullName, modelData.expanded)
-                                                    inputParams.parentPinsUpdated()
+                                                    inputParams.updateParentPins()
                                                 }
                                             }
 

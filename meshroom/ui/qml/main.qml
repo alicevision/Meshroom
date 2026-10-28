@@ -4,7 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 
-import Qt.labs.platform as Platform
+import Meshroom.Helpers as Helpers
 
 ApplicationWindow {
     id: _window
@@ -97,7 +97,7 @@ ApplicationWindow {
         dialog.folder = folder
     }
 
-    Platform.FileDialog {
+    Helpers.FileDialog {
         id: openFileDialog
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]

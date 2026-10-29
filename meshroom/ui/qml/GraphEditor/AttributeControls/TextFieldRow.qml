@@ -7,12 +7,22 @@ RowLayout {
     required property string text
     required property bool mandatory
     property bool editable
+    // Item given the focus when leaving the field with Enter or Escape; the field only loses it if null
+    property Item focusTarget: null
     signal editingFinished(var text)
-    signal accepted(var parameterLabel, var text)
+    signal accepted(var text)
     signal destruction(bool activeFocus, var text)
     signal dropped(bool hasUrls, bool hasText, var urlText, var text)
     signal triggered(var text, int start, int end, int length, var clipboard)
     anchors.fill: parent
+
+    function leaveField() {
+        if (root.focusTarget)
+            root.focusTarget.forceActiveFocus()
+        else
+            textField.focus = false
+    }
+
     TextField {
         id: textField
         Layout.fillWidth: true
@@ -44,11 +54,14 @@ RowLayout {
         persistentSelection: false
         onEditingFinished: root.editingFinished(text)
 
-        onAccepted: root.accepted(parameterLabel, text)
+        onAccepted: {
+            root.accepted(text)
+            root.leaveField()
+        }
         Keys.onPressed: function(event) {
             if ((event.key == Qt.Key_Escape)) {
                 event.accepted = true
-                parameterLabel.forceActiveFocus()
+                root.leaveField()
             }
         }
         Component.onDestruction: root.destruction(activeFocus, text)

@@ -418,6 +418,7 @@ RowLayout {
         Layout.fillWidth: true
         attribute: root.attribute
         editable: root.editable
+        focusTarget: parameterLabel
 
         // Containers are displayed by this delegate, other attributes by the value editor
         sourceComponent: {

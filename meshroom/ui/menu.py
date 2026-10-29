@@ -5,12 +5,11 @@ On top of the Meshroom menus that are set-up in the QML
 we can register additional menus that will trigger a callback if we click on the menu entry.
 
 Example :
-    class OpenSettingUi(MenuCallback):
-        def __call__(self, menu, app, **kwargs):
-            ...
+    def open_settings_ui(menu, app, **kwargs):
+        ...
 
     settings_menu = Menu("Settings")
-    settings_menu.addButton("Open Settings", callback=OpenSettingUi)
+    settings_menu.addButton("Open Settings", callback=open_settings_ui)
     register_menu(menu=settings_menu)
 """
 
@@ -61,10 +60,10 @@ class MenuObject(BaseObject):
     """
 
     def __init__(self, parent: "Menu", callback: Optional[MenuCallback],
-                 type: MenuObjectType, **kwargs):
-        if type not in MenuObjectType:
+                 menuObjectType: MenuObjectType, **kwargs):
+        if menuObjectType not in MenuObjectType:
             raise ValueError(
-                f"Invalid MenuObject type: {type} (valid types are " +
+                f"Invalid MenuObject type: {menuObjectType} (valid types are " +
                 ", ".join(m.name for m in MenuObjectType) + ")"
             )
 
@@ -73,7 +72,7 @@ class MenuObject(BaseObject):
         self._uid: str = uuid.uuid4().hex
         self.parentMenu: "Menu" = parent
         self.callback: Callable = callback
-        self._type: MenuObjectType = type
+        self.menuObjectType: MenuObjectType = menuObjectType
 
         # General properties
         self._name: str = kwargs.get("name", "")
@@ -109,7 +108,7 @@ class MenuObject(BaseObject):
             return self.callback(self.parentMenu, app, **kwargs)
 
     uid = Property(str, lambda self: self._uid, constant=True)
-    type = Property(str, lambda self: self._type.value, constant=True)
+    objectType = Property(str, lambda self: self.menuObjectType.value, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     icon = Property(str, lambda self: self._icon, constant=True)
     tooltip = Property(str, lambda self: self._tooltip, constant=True)
@@ -138,11 +137,12 @@ class Menu(BaseObject):
         self.parentMenu: "Menu" = parent
         self.index: int = index
         self.menuObject = MenuObject(
-            parent=self, callback=None, type=MenuObjectType.MENU,
+            parent=self, callback=None, menuObjectType=MenuObjectType.MENU,
             # and kwargs :
             name=name, label=name, icon=icon, tooltip=tooltip, index=index
         )
         self._objects: ListModel = ListModel(parent=self)
+        self._initialized = False
 
     def __repr__(self):
         return f'<Menu name="{self._name}"|uid={self._uid}|size={len(self._objects)}>'
@@ -220,15 +220,28 @@ class MeshroomMenuManager(BaseObject):
 
     _menus: list[Menu] = []
     _objects: dict[str, MenuObject] = {}
+    
+    LIST_OBJ_TYPES = [
+        MenuObjectType.RADIOBUTTON.value
+    ]
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._menuModel: ListModel = ListModel(parent=self)
-        self._menuModel.extend(self._menus)
+        self._menuModel.setObjectList(self._menus)
         logging.info(f"Initialize MeshroomMenuManager with {len(self._menus)} menus.")
         for menu in self._menus:
-            logging.info(f"Adding user menu: {menu}")
+            if menu._initialized:
+                continue
+            logging.info(f"Initialize User Menu: {menu}")
             menu.onCreated()
+            menu._initialized = True
+
+    @classmethod  
+    def clear(cls):  
+        """Clear all registered menus and objects. Useful for testing and resetting state."""  
+        cls._menus.clear()  
+        cls._objects.clear()  
 
     @property
     def app(self):
@@ -241,7 +254,7 @@ class MeshroomMenuManager(BaseObject):
         cls._objects[menu.menuObject.uid] = menu.menuObject
         for obj in menu._objects:  # iterate CoreListModel/QObjectListModel directly
             cls._objects[obj.uid] = obj
-            if obj.type == MenuObjectType.MENU.value:
+            if obj.objectType == MenuObjectType.MENU.value:
                 cls._indexMenu(obj.submenu)
 
     @classmethod
@@ -274,9 +287,9 @@ class MeshroomMenuManager(BaseObject):
         self.trigger(uid, enabled=checked)
 
     @Slot(str, str)
-    def triggerRadioEntry(self, groupUid: str, entryName: str):
+    def triggerListEntry(self, groupUid: str, entryName: str):
         obj = self.getObject(groupUid)
-        if obj is None or obj.type != MenuObjectType.RADIOBUTTON.value:
+        if obj is None or obj.menuObjectType in self.LIST_OBJ_TYPES:
             return
         item = next((i for i in obj.items if i.name == entryName), None)
         if item is None:

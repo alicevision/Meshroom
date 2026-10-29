@@ -18,9 +18,9 @@ Menu {
             required property var itemData
 
             text: itemData.label
-            icon.source: itemData.icon
-            checkable: itemData.type === "checkbox"
-            checked: itemData.type === "checkbox" ? itemData.checked : false
+            icon.source: itemData.icon !== "" ? itemData.icon : undefined
+            checkable: itemData.objectType === "checkbox"
+            checked: itemData.objectType === "checkbox" ? itemData.checked : false
 
             ToolTip.visible: hovered && itemData.tooltip !== ""
             ToolTip.text: itemData.tooltip
@@ -34,7 +34,7 @@ Menu {
             onTriggered: trigger()
 
             function trigger() {
-                if (itemData.type === "checkbox")
+                if (itemData.objectType === "checkbox")
                     MeshroomMenuManager.triggerCheckbox(itemData.uid, checked)
                 else
                     MeshroomMenuManager.triggerButton(itemData.uid)
@@ -88,7 +88,7 @@ Menu {
         for (let i = 0; i < items.count; ++i) {
             const itemData = items.at(i)
 
-            switch (itemData.type) {
+            switch (itemData.objectType) {
                 case "separator": {
                     const sep = separatorComponent.createObject(null)
                     _createdItems.push(sep)

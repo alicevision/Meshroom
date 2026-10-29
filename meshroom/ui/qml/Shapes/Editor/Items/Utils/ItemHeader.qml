@@ -340,8 +340,10 @@ Pane {
                         else
                         {
                             // add key
-                            _currentScene.setObservation(model, _currentScene.selectedViewId, 
-                                                          ShapeViewerHelper.getDefaultObservation(model.type))
+                            // A survey point is placed in the 2d Viewer: selecting it starts the placement
+                            if (model.type !== "SurveyPoint")
+                                _currentScene.setObservation(model, _currentScene.selectedViewId, 
+                                                              ShapeViewerHelper.getDefaultObservation(model.type))
                             ShapeViewerHelper.selectShape(model)
                         }
                     }
@@ -423,8 +425,10 @@ Pane {
                             else
                             {
                                 // add key
-                                _currentScene.setObservation(model, _currentScene.selectedViewId, 
-                                                               ShapeViewerHelper.getDefaultObservation(model.type))
+                                // A survey point is placed in the 2d Viewer: selecting it starts the placement
+                                if (model.type !== "SurveyPoint")
+                                    _currentScene.setObservation(model, _currentScene.selectedViewId, 
+                                                                   ShapeViewerHelper.getDefaultObservation(model.type))
                                 ShapeViewerHelper.selectShape(model)
                             }
                         }

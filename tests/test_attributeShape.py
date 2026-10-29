@@ -616,6 +616,33 @@ class TestSurveyPointAttribute:
         assert loadedNode.keyableSurveyPoint.geometry.getObservation("1") == observation
         assert loadedNode.surveyPoint.geometry.getObservation("0") == observation
 
+    def test_mergeKeepsOtherPart(self):
+        from meshroom.ui.components.shapes.surveyPoint import mergeSurveyPointObservation
+
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithSurveyPoints.__name__)
+
+        for shape, key in ((node.keyableSurveyPoint, "1"), (node.surveyPoint, "0")):
+            geometry = shape.geometry
+            point3d = {"X": 1.0, "Y": 2.0, "Z": 3.0, "picked": True}
+
+            # 3d pick first: full observation, the 2d part keeps its default values
+            geometry.setObservation(key, mergeSurveyPointObservation(shape, key, point3d))
+            assert geometry.hasObservation(key)
+            assert geometry.getObservation(key)["picked2d"] is False
+
+            # 2d placement keeps the 3d part
+            geometry.setObservation(key, mergeSurveyPointObservation(shape, key, {"x": 10.0, "y": 20.0, "picked2d": True}))
+            observation = geometry.getObservation(key)
+            assert point3d.items() <= observation.items()
+            assert (observation["x"], observation["y"], observation["picked2d"]) == (10.0, 20.0, True)
+
+            # Removing the 2d part keeps the 3d part and the 2d position
+            geometry.setObservation(key, mergeSurveyPointObservation(shape, key, {"picked2d": False}))
+            observation = geometry.getObservation(key)
+            assert point3d.items() <= observation.items()
+            assert (observation["x"], observation["y"], observation["picked2d"]) == (10.0, 20.0, False)
+
     def test_upgradeWithoutPicked2d(self):
         graph = Graph("")
         node = graph.addNewNode(NodeWithSurveyPoints.__name__)

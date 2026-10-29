@@ -1,5 +1,7 @@
 import hashlib
 import http.client
+import logging
+import re
 import urllib.error
 import urllib.request
 
@@ -13,6 +15,8 @@ from meshroom.core.files import atomicOpen
 _HTTP_REQUEST_TIMEOUT = 10
 # Chunk size (in bytes) used when streaming a download to report progress.
 _HTTP_CHUNK_SIZE = 64 * 1024
+# Number of attempts of a file download interrupted by a network error.
+_HTTP_DOWNLOAD_ATTEMPTS = 3
 # Network failures that urllib does not always wrap in a URLError (e.g. TimeoutError).
 _HTTP_NETWORK_ERRORS = (OSError, http.client.HTTPException)
 
@@ -28,13 +32,14 @@ class RequestError(Exception):
 
 
 @contextmanager
-def _open(url: str, timeout: float):
+def _open(url: str, timeout: float, headers: Optional[dict] = None):
     """
     Open "url", translating urllib's network/HTTP errors into RequestError.
 
     Args:
         url: the url to open.
         timeout: the timeout (in seconds) of the request.
+        headers: the extra headers of the request.
 
     Yields:
         The open response, as returned by urllib.request.urlopen().
@@ -42,8 +47,9 @@ def _open(url: str, timeout: float):
     Raises:
         RequestError: if the request fails.
     """
+    request = urllib.request.Request(url, headers=headers or {})
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             yield response
     except urllib.error.HTTPError as exc:
         raise RequestError(str(exc), code=exc.code) from exc
@@ -70,7 +76,7 @@ def _contentLength(response) -> int:
         return -1
 
 
-def _readChunks(response, onBytes: Optional[Callable[[int, int], None]]) -> Iterator[bytes]:
+def _readChunks(response, onBytes: Optional[Callable[[int, int], None]], offset: int = 0) -> Iterator[bytes]:
     """
     Read "response" fully in fixed-size chunks, yielding each chunk.
 
@@ -78,12 +84,17 @@ def _readChunks(response, onBytes: Optional[Callable[[int, int], None]]) -> Iter
         response: the open response, as returned by urllib.request.urlopen().
         onBytes: if provided, called after each chunk has been consumed with "(bytesRead, totalBytes)",
                  "totalBytes" being -1 if unknown.
+        offset: the number of bytes of the content received before "response" (resumed download).
 
     Yields:
         bytes: the next chunk of the response's body.
+
+    Raises:
+        RequestError: if the connection is closed before the whole body announced by "Content-Length" is read.
     """
-    total = _contentLength(response)
-    bytesRead = 0
+    contentLength = _contentLength(response)
+    total = offset + contentLength if contentLength >= 0 else -1
+    bytesRead = offset
     while True:
         chunk = response.read(_HTTP_CHUNK_SIZE)
         if not chunk:
@@ -93,6 +104,9 @@ def _readChunks(response, onBytes: Optional[Callable[[int, int], None]]) -> Iter
         bytesRead += len(chunk)
         if onBytes:
             onBytes(bytesRead, total)
+    # "read()" returns no data, without error, when the server closes the connection early.
+    if total >= 0 and bytesRead < total:
+        raise RequestError(f"Incomplete download: received {bytesRead} of {total} bytes.")
 
 
 def etagMatch(url: str, etag: str) -> bool:
@@ -179,12 +193,30 @@ def fetchWithProgress(url: str, onBytes: Optional[Callable[[int, int], None]] = 
         return b"".join(_readChunks(response, onBytes))
 
 
+def _resumeOffset(response, offset: int) -> int:
+    """
+    Return the offset at which "response" (to a request for the bytes from "offset") resumes the content:
+    "offset" if the server sent the requested range, 0 if it sent the whole content.
+
+    Raises:
+        RequestError: if the server sent another range.
+    """
+    if offset == 0 or response.status != 206:
+        return 0
+    match = re.match(r"bytes (\d+)-", response.headers.get("Content-Range", ""))
+    if not match or int(match.group(1)) != offset:
+        raise RequestError(f"Unexpected range in the response: '{response.headers.get('Content-Range')}'.")
+    return offset
+
+
 def fetchToFile(url: str, destination: Path, onBytes: Optional[Callable[[int, int], None]] = None,
                 timeout: float = _HTTP_REQUEST_TIMEOUT) -> str:
     """
     GET "url" and stream its content into "destination", reporting progress via "onBytes".
     The content is written to a temporary file next to "destination" first, then moved into place,
     so "destination" is never left partially written.
+    A download interrupted by a network error is attempted again, resumed where it stopped when the
+    server supports ranges.
 
     Args:
         url: the url to download.
@@ -197,13 +229,31 @@ def fetchToFile(url: str, destination: Path, onBytes: Optional[Callable[[int, in
         str: the SHA-256 hexdigest of the downloaded content.
 
     Raises:
-        RequestError: if the request fails.
+        RequestError: if the request fails, or the download is still incomplete after all the attempts.
     """
     destination = Path(destination)
-    sha256 = hashlib.sha256()
-    with atomicOpen(destination, "wb", prefix=f".{destination.name}.") as tmpFile, \
-            _open(url, timeout) as response:
-        for chunk in _readChunks(response, onBytes):
-            tmpFile.write(chunk)
-            sha256.update(chunk)
-    return sha256.hexdigest()
+    with atomicOpen(destination, "wb", prefix=f".{destination.name}.") as tmpFile:
+        sha256 = hashlib.sha256()
+        received = 0
+        for attempt in range(1, _HTTP_DOWNLOAD_ATTEMPTS + 1):
+            try:
+                headers = {"Range": f"bytes={received}-"} if received else None
+                with _open(url, timeout, headers) as response:
+                    offset = _resumeOffset(response, received)
+                    if offset != received:
+                        # The server sent the whole content again: start over.
+                        tmpFile.seek(0)
+                        tmpFile.truncate()
+                        sha256 = hashlib.sha256()
+                        received = 0
+                    for chunk in _readChunks(response, onBytes, offset):
+                        tmpFile.write(chunk)
+                        sha256.update(chunk)
+                        received += len(chunk)
+                return sha256.hexdigest()
+            except RequestError as exc:
+                # Only network errors are worth another attempt, not HTTP errors (e.g. 404).
+                if exc.code is not None or attempt == _HTTP_DOWNLOAD_ATTEMPTS:
+                    raise
+                logging.warning(f"Download of '{url}' interrupted ({exc}), attempt {attempt + 1}/"
+                                f"{_HTTP_DOWNLOAD_ATTEMPTS} from byte {received}.")

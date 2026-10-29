@@ -79,7 +79,12 @@ def confirmAction(prompt: str, force: bool) -> bool:
     """
     if force:
         return True
-    answer = input(f"{prompt} [y/n] ").strip().lower()
+    try:
+        answer = input(f"{prompt} [y/n] ").strip().lower()
+    except EOFError:
+        # No terminal to answer from (e.g. a script): use "--force" to skip the prompt.
+        print("\nNo answer to the confirmation prompt, use -f/--force to skip it.")
+        return False
     return answer in ("y", "yes")
 
 

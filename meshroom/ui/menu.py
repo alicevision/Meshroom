@@ -10,7 +10,7 @@ Example :
 
     settings_menu = Menu("Settings")
     settings_menu.addButton("Open Settings", callback=open_settings_ui)
-    register_menu(menu=settings_menu)
+    MeshroomMenuManager.registerMenu(settings_menu)
 """
 
 import logging

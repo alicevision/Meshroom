@@ -20,13 +20,43 @@ def getSurveyPointObservationKey(shapeAttribute, viewId):
     return "0"
 
 
+def getSurveyPointPartialObservation(shapeAttribute, key):
+    """
+    Return the SurveyPoint observation for the given key, even if only one of its parts is set.
+    Its 3d part (X, Y, Z, picked) and its 2d part (x, y, picked2d) are set independently, so a keyable
+    SurveyPoint may only have some of its children keyed: the missing ones get their default value.
+
+    Args:
+        shapeAttribute: the SurveyPoint ShapeAttribute.
+        key: the observation key.
+
+    Returns:
+        The observation dict, with a value for every geometry child.
+    """
+    observation = {}
+    for attribute in shapeAttribute.geometry.value:
+        if attribute.keyable:
+            observation[attribute.name] = attribute.keyValues.getValueAtKeyOrDefault(key)
+        else:
+            observation[attribute.name] = attribute.value
+    return observation
+
+
+def mergeSurveyPointObservation(shapeAttribute, key, values):
+    """
+    Return the full SurveyPoint observation for the given key, updated with the given values.
+    Setting a full observation keeps the other part of the SurveyPoint (3d or 2d) unchanged.
+    """
+    return {**getSurveyPointPartialObservation(shapeAttribute, key), **values}
+
+
 def getSurveyPointObservation(shapeAttribute, viewId):
 
     key = getSurveyPointObservationKey(shapeAttribute, viewId)
     if key is None:
         return None
 
-    return shapeAttribute.geometry.getObservation(key)
+    return getSurveyPointPartialObservation(shapeAttribute, key)
 
 
 def observationToSurveyPoint(observation):

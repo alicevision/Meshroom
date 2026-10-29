@@ -4,9 +4,10 @@ import QtQuick.Shapes
 import "Utils" as LayerUtils
 
 /**
-* PointLayer
+* SurveyPointLayer
 *
-* @biref Allows to display and modify a 2d point.
+* @biref Allows to display and modify the 2d observation of a survey point,
+*        and its offset to the estimated reprojection. Hidden until the point is placed in 2d.
 * @param name - the given shape name
 * @param properties - the given shape style properties
 * @param observation - the given shape position and dimensions for the current view
@@ -17,14 +18,27 @@ import "Utils" as LayerUtils
 */
 BaseLayer {
     id: surveyPointLayer
+    moveTarget: draggableShape
 
     // Point size and half size
     property real pointSize: Math.max(1.0, 12.0 * scaleRatio)
     property real pointHalfSize: pointSize * 0.5
 
+    // Commit the move of the point (and of the other selected shapes)
+    // Note: a placed survey point has a full observation, setting its 2d position keeps its 3d part
+    function commitMove() {
+        if (commitSelectionMove())
+            return
+        _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
+            x: handleCenter.x + draggableShape.x,
+            y: handleCenter.y + draggableShape.y
+        })
+    }
+
     // Point shape
     Shape {
         id: draggableShape
+        visible: surveyPointLayer.observation.picked2d === true
 
         // Center cross path
         ShapePath {
@@ -50,16 +64,14 @@ BaseLayer {
             }
         }
 
-        // Selection area
-        MouseArea  {
+        // Selection and move area
+        LayerUtils.MoveArea {
             x: handleCenter.x - pointSize
             y: handleCenter.y - pointSize
             width: pointSize * 2
             height: pointSize * 2
-            acceptedButtons: Qt.LeftButton
-            cursorShape: surveyPointLayer.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: selectionRequested()
-            enabled: surveyPointLayer.editable && !surveyPointLayer.selected
+            shapeLayer: surveyPointLayer
+            onMoved: surveyPointLayer.commitMove()
         }
 
         // Handle for point center
@@ -68,15 +80,12 @@ BaseLayer {
             x: surveyPointLayer.observation.x || 0
             y: surveyPointLayer.observation.y || 0
             size: getScaledHandleSize()
+            scaleRatio: surveyPointLayer.scaleRatio
             target: draggableShape
             cursorShape: Qt.SizeAllCursor
             visible: surveyPointLayer.editable && surveyPointLayer.selected
-            onMoved: {
-                _currentScene.setObservationFromName(surveyPointLayer.name, _currentScene.selectedViewId, {
-                    x: handleCenter.x + draggableShape.x,
-                    y: handleCenter.y + draggableShape.y
-                })
-            }
+            onTapped: function(modifiers) { selectionRequested(modifiers) }
+            onMoved: surveyPointLayer.commitMove()
         }
 
         // Point name

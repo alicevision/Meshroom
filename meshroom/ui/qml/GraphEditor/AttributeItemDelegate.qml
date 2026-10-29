@@ -61,91 +61,25 @@ RowLayout {
             }
             MenuSeparator {}
             MenuItem {
-                text: "Rename Attribute"
-                enabled: root.isAnySetChild
-                onTriggered: {
-                    var dialog = renameAnySetAttributeDialogComp.createObject(Overlay.overlay, {
-                        "targetAttribute": attribute,
-                        "preferredX": anySetMenu.preferredX,
-                        "preferredY": anySetMenu.preferredY
-                    })
-                    dialog.open()
-                }
-            }
-            MenuItem {
-                text: "Remove Attribute"
-                enabled: root.isAnySetChild
-                onTriggered: _currentScene.removeAnySetAttribute(attribute)
+                text: "Edit Attribute..."
+                enabled: root.isAnySetChild && !root.readOnly
+                onTriggered: root.openEditAnySetAttributeDialog(attribute, anySetMenu.preferredX, anySetMenu.preferredY)
             }
         }
     }
 
     Component {
-        id: renameAnySetAttributeDialogComp
-        Dialog {
-            id: renameDialog
+        id: editAnySetAttributeDialogComp
+        AnySetAttributeDialog {}
+    }
 
-            property var targetAttribute: null
-            property real preferredX: 0
-            property real preferredY: 0
-
-            title: "Rename Attribute"
-            modal: true
-            parent: Overlay.overlay
-            contentWidth: 280
-            x: parent ? Math.max(0, Math.min(preferredX, parent.width - width)) : 0
-            y: parent ? Math.max(0, Math.min(preferredY, parent.height - height)) : 0
-            standardButtons: Dialog.Ok | Dialog.Cancel
-            closePolicy: Popup.CloseOnEscape
-
-            GridLayout {
-                columns: 2
-                columnSpacing: 8
-                rowSpacing: 8
-                width: renameDialog.contentWidth
-
-                Label {
-                    text: "Name"
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                }
-                TextField {
-                    id: nameField
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: renameDialog.targetAttribute ? renameDialog.targetAttribute.name : ""
-                    selectByMouse: true
-                    validator: RegularExpressionValidator { regularExpression: /^[A-Za-z_][A-Za-z0-9_]*$/ }
-                    onAccepted: renameDialog.accept()
-                }
-
-                Label {
-                    text: "Label"
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                }
-                TextField {
-                    id: labelField
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: renameDialog.targetAttribute ? renameDialog.targetAttribute.label : ""
-                    selectByMouse: true
-                    onAccepted: renameDialog.accept()
-                }
-            }
-
-            onOpened: {
-                nameField.forceActiveFocus()
-                nameField.selectAll()
-            }
-
-            onAccepted: {
-                if (targetAttribute && nameField.acceptableInput && labelField.text.trim() !== "") {
-                    _currentScene.renameAnySetAttribute(targetAttribute, nameField.text.trim(), labelField.text.trim())
-                }
-                destroy()
-            }
-
-            onRejected: destroy()
-        }
+    function openEditAnySetAttributeDialog(targetAttribute, x, y) {
+        var dialog = editAnySetAttributeDialogComp.createObject(Overlay.overlay, {
+            "targetAttribute": targetAttribute,
+            "preferredX": x,
+            "preferredY": y
+        })
+        dialog.open()
     }
 
     spacing: 2
@@ -328,22 +262,9 @@ RowLayout {
                         MenuItem {
                             visible: root.isAnySetChild
                             height: visible ? implicitHeight : 0
-                            text: "Rename Attribute"
-                            onTriggered: {
-                                var dialog = renameAnySetAttributeDialogComp.createObject(Overlay.overlay, {
-                                    "targetAttribute": attribute,
-                                    "preferredX": paramMenu.preferredX,
-                                    "preferredY": paramMenu.preferredY
-                                })
-                                dialog.open()
-                            }
-                        }
-
-                        MenuItem {
-                            visible: root.isAnySetChild
-                            height: visible ? implicitHeight : 0
-                            text: "Remove Attribute"
-                            onTriggered: _currentScene.removeAnySetAttribute(attribute)
+                            text: "Edit Attribute..."
+                            enabled: !root.readOnly
+                            onTriggered: root.openEditAnySetAttributeDialog(attribute, paramMenu.preferredX, paramMenu.preferredY)
                         }
 
                     }
@@ -765,6 +686,7 @@ RowLayout {
                 id: groupItem
                 spacing: 0
                 property bool expanded: true
+                readonly property bool isAnySet: attribute.type === "AnySet"
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -782,7 +704,7 @@ RowLayout {
                         text: attribute.label
                         font.bold: true
                         font.pointSize: 8
-                        Layout.fillWidth: true
+                        Layout.fillWidth: !groupItem.isAnySet
                         elide: Text.ElideRight
                         padding: 3
 
@@ -817,6 +739,58 @@ RowLayout {
                             onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
                         }
                     }
+
+                    Label {
+                        visible: groupItem.isAnySet
+                        text: attribute.value.count + (attribute.value.count === 1 ? " attribute" : " attributes")
+                        color: Colors.lightgrey
+                        font.pointSize: 8
+                        leftPadding: 4
+                        rightPadding: 4
+                    }
+
+                    ToolButton {
+                        id: addAnySetAttributeButton
+                        visible: groupItem.isAnySet
+                        enabled: !root.readOnly
+                        text: MaterialIcons.add_circle_outline
+                        font.family: MaterialIcons.fontFamily
+                        font.pointSize: 11
+                        padding: 2
+                        ToolTip.text: "Add Attribute"
+                        ToolTip.visible: hovered && !addAnySetAttributeMenu.visible
+                        onClicked: addAnySetAttributeMenu.popup(addAnySetAttributeButton, 0, addAnySetAttributeButton.height)
+
+                        Menu {
+                            id: addAnySetAttributeMenu
+
+                            Repeater {
+                                model: [
+                                    { "label": "String", "type": "StringParam" },
+                                    { "label": "Integer", "type": "IntParam" },
+                                    { "label": "Float", "type": "FloatParam" },
+                                    { "label": "Boolean", "type": "BoolParam" },
+                                    { "label": "Choice", "type": "ChoiceParam" },
+                                    { "label": "File", "type": "File" },
+                                    { "label": "Color", "type": "ColorParam" }
+                                ]
+                                delegate: MenuItem {
+                                    text: modelData.label
+                                    onTriggered: {
+                                        groupItem.expanded = true
+                                        var newAttribute = _currentScene.addAnySetAttribute(attribute, modelData.type)
+                                        if (newAttribute) {
+                                            // Edit the description of the new attribute right away
+                                            var position = addAnySetAttributeButton.mapToItem(Overlay.overlay, 0, addAnySetAttributeButton.height)
+                                            root.openEditAnySetAttributeDialog(newAttribute, position.x, position.y)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Item { Layout.fillWidth: groupItem.isAnySet }
                 }
 
                 Component.onCompleted: {
@@ -880,6 +854,20 @@ RowLayout {
         text: MaterialIcons.fmd_bad
         ToolTip.text: root.errorMessages.join("\n")
         color: "orange"
+    }
+
+    // Remove button for AnySet children
+    ToolButton {
+        visible: root.isAnySetChild
+        enabled: !root.readOnly
+        text: MaterialIcons.remove_circle_outline
+        font.family: MaterialIcons.fontFamily
+        font.pointSize: 11
+        padding: 2
+        Layout.alignment: Qt.AlignTop
+        ToolTip.text: "Remove Attribute"
+        ToolTip.visible: hovered
+        onClicked: _currentScene.removeAnySetAttribute(attribute)
     }
 
     // Add or remove key button for keyable attribute

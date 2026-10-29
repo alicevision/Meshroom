@@ -13,6 +13,8 @@ Item {
     readonly property var scene: typeof _currentScene === "undefined" ? null : _currentScene
     // Active orbit motion, or null while looking through an SfM camera
     readonly property var orbit: sceneView.motionInfo instanceof OrbitMotionInfo ? sceneView.motionInfo : null
+    // Name of the shape selected alone (empty for no or a multiple selection), target of the survey point picking
+    readonly property string selectedShapeName: ShapeViewerHelper.selectedShapeNames.length === 1 ? ShapeViewerHelper.selectedShapeNames[0] : ""
 
     // Sentinel used by SfmDataLayer.selectedCamera to mean "no camera selected" (UndefinedIndexT).
     // Declared as "var" (not "int") since QML's int is 32-bit signed and would overflow 0xFFFFFFFF to -1.
@@ -148,29 +150,12 @@ Item {
     /** Store the point picked on mesh @p layer as the selected survey point's observation. */
     function handlePickingShape(layer)
     {
-        if (!scene)
-        {
-            return
-        }
-
-        const selectedShapeName = ShapeViewerHelper.selectedShapeName
         if (!selectedShapeName)
         {
             return
         }
 
-        const observationKey = SurveyPointViewerHelper.observationKeyForSelectedSurveyPoint(selectedShapeName)
-        if (!observationKey)
-        {
-            return
-        }
-
-        scene.setObservationFromName(selectedShapeName, observationKey, {
-            "X": layer.selection.x,
-            "Y": -layer.selection.y,
-            "Z": -layer.selection.z,
-            "picked": true
-        })
+        SurveyPointViewerHelper.setPickedPosition(selectedShapeName, layer.selection.x, -layer.selection.y, -layer.selection.z)
     }
 
     function moveToCameraCenter(layer)
@@ -217,7 +202,6 @@ Item {
     /** Return the selected survey point's observation in the selected view, or null. */
     function getSelectedObservation()
     {
-        const selectedShapeName = ShapeViewerHelper.selectedShapeName
         if (!selectedShapeName || !scene)
         {
             return null
@@ -392,13 +376,13 @@ Item {
         }
     }
 
-    // Source: ShapeViewerHelper (singleton), whose selectedShapeName reflects the survey point/shape
+    // Source: ShapeViewerHelper (singleton), whose selectedShapeNames reflects the survey point/shape
     // selected elsewhere in the UI (e.g. attribute editor). Reason: when that selection changes, center
     // the orbit on the corresponding picked observation so the selected point stays in view.
     Connections {
         target: ShapeViewerHelper
 
-        function onSelectedShapeNameChanged()
+        function onSelectedShapeNamesChanged()
         {
             const obs = getSelectedObservation()
             if (obs && obs.picked && orbit)

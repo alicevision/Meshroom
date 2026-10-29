@@ -1,7 +1,8 @@
 from PySide6.QtGui import QVector3D
 
 from meshroom.common import BaseObject, Property, Variant, Signal, Slot
-from .surveyPoint import getNodeSurveyPointPositions, getSelectedSurveyPointObservationKey
+from .surveyPoint import (getNodeSurveyPointPositions, getSurveyPointObservationKey, mergeSurveyPointObservation,
+                          resolveSelectedSurveyPointAttribute)
 
 
 class SurveyPointViewerHelper(BaseObject):
@@ -80,14 +81,23 @@ class SurveyPointViewerHelper(BaseObject):
     def _onSelectedViewIdChanged(self):
         self._refreshPositions()
 
-    @Slot(str, result=str)
-    def observationKeyForSelectedSurveyPoint(self, selectedShapeName):
-        return getSelectedSurveyPointObservationKey(
-            self._activeProject.graph,
-            self._currentNode,
-            selectedShapeName,
-            self._activeProject.selectedViewId,
-        )
+    @Slot(str, float, float, float)
+    def setPickedPosition(self, shapeName, x, y, z):
+        """
+        Set the 3d part of the given SurveyPoint for the selected view, keeping its 2d part.
+        Does nothing if the shape is not a visible SurveyPoint of the selected node, or without selected view
+        for a keyable SurveyPoint.
+
+        Args:
+            shapeName: the SurveyPoint full name.
+            x, y, z: the picked position, in the SurveyPoint coordinates.
+        """
+        shape = resolveSelectedSurveyPointAttribute(self._activeProject.graph, self._currentNode, shapeName)
+        key = getSurveyPointObservationKey(shape, self._activeProject.selectedViewId)
+        if key is None:
+            return
+        observation = mergeSurveyPointObservation(shape, key, {"X": x, "Y": y, "Z": z, "picked": True})
+        self._activeProject.setObservation(shape, key, observation)
 
     @Slot()
     def _refreshPositions(self):

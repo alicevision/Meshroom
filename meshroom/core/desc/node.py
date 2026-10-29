@@ -33,7 +33,7 @@ if getattr(sys, "frozen", False):
 else:
     _MESHROOM_COMPUTE = (Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute").as_posix()
 
-_MESHROOM_COMPUTE_DEPS = ["psutil"]
+_MESHROOM_COMPUTE_DEPS = ["psutil", "tomli"]
 
 
 # Handle cleanup

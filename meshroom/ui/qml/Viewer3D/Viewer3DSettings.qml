@@ -55,6 +55,9 @@ Item {
     property bool displayOrigin: false
     property bool displayLightController: false
     // Camera
+    // Use a parallel projection instead of a perspective one, to compare
+    // directions and proportions without perspective foreshortening
+    property bool orthographic: false
     property bool syncViewpointCamera: false
     property bool syncWithPickedViewId: false  // Sync active camera with picked view ID from sequence player if the setting is enabled
     property bool viewpointImageOverlay: true

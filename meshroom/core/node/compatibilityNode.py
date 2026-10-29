@@ -384,9 +384,12 @@ class CompatibilityNode(BaseNode):
 
         Serialized inputs and internal inputs are updated to handle instances that have been duplicated
         and might be connected to different nodes, or whose (flow) connections have changed.
+
+        The returned dictionary is a copy that can be freely modified by the caller (e.g. the template
+        serializer removes some entries from it) without altering the original serialized node.
         """
-        # update inputs to get up-to-date connections
-        self.nodeDict.update({"inputs": self.inputs})
+        # update inputs to get up-to-date connections, and position
+        nodeDict = dict(self.nodeDict, inputs=self.inputs, position=self.position)
         if self.graph:
             # update internal inputs to get up-to-date flow connections, with the same filtering as Node.toDict:
             # flowInputs is only serialized if it is not the default value, and empty values are skipped
@@ -394,10 +397,8 @@ class CompatibilityNode(BaseNode):
             flowInputs = self._internalAttributes.get("flowInputs")
             if flowInputs is not None and flowInputs.isDefault and not flowInputs.isLink:
                 internalInputs.pop("flowInputs", None)
-            self.nodeDict.update({"internalInputs": internalInputs})
-        # update position
-        self.nodeDict.update({"position": self.position})
-        return self.nodeDict
+            nodeDict["internalInputs"] = internalInputs
+        return copy.deepcopy(nodeDict)
 
     def getNodeDescription(self):
         # Get the node type, the node version, and the basic information about the io (name, type and default value)

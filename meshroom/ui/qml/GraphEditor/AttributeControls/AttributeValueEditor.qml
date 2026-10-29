@@ -16,6 +16,17 @@ Loader {
 
     required property var attribute
     property bool editable: true
+    // Item given the focus when leaving a text field with Enter or Escape
+    property Item focusTarget: null
+    // Read by the controls to highlight invalid values
+    property var errorMessages: root.attribute ? root.attribute.errorMessages : []
+
+    Connections {
+        target: root.attribute
+        function onValueChanged() {
+            root.errorMessages = root.attribute.errorMessages
+        }
+    }
 
     readonly property Component valueComponent: {
         if (!root.attribute)
@@ -97,11 +108,9 @@ Loader {
             text: root.attribute.value
             mandatory: root.attribute.isMandatory
             editable: root.editable
+            focusTarget: root.focusTarget
             onEditingFinished: (text) => setTextFieldAttribute(text)
-            onAccepted: (parameterLabel, text) => {
-                setTextFieldAttribute(text)
-                parameterLabel.forceActiveFocus()
-            }
+            onAccepted: (text) => setTextFieldAttribute(text)
             onDestruction: (activeFocus, text) => {
                 if (activeFocus)
                     setTextFieldAttribute(text)

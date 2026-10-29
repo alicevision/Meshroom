@@ -3,10 +3,14 @@
 
 import hashlib
 import json
+import os
+import stat
+import tarfile
 
 import pytest
 
 from meshroom.core.plugins.record import PluginRecord
+from meshroom.core.plugins.local import installer as installerModule, releases
 from meshroom.core.plugins.provider import ArchivePluginProvider
 from meshroom.core.plugins.local.service import PluginServiceCancelled, PluginServiceError
 from meshroom.core.plugins.local.installer import PluginInstaller
@@ -34,6 +38,22 @@ def asset(url, name="weights", path="weights.pt", sha256=None):
     if sha256 is not None:
         entry["sha256"] = sha256
     return entry
+
+
+def releaseAsset(release="myOrg/myTool@v1.0", name="tool", path="tool", executable=False):
+    """ Return an asset entry of a plugin metadata file, coming from a GitHub release. """
+    entry = {"name": name, "category": "binary", "release": release, "path": path}
+    if executable:
+        entry["executable"] = True
+    return entry
+
+
+def sha256Of(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def isExecutable(path):
+    return bool(path.stat().st_mode & stat.S_IXUSR)
 
 
 def installer(archive, pluginsPath, name="myPlugin"):
@@ -150,6 +170,115 @@ class TestInstaller:
         with pytest.raises(PluginServiceError):
             installer(archive, tmp_path / "plugins").execute()
         assert not (tmp_path / "plugins" / "myPlugin").exists()
+
+
+class TestReleaseAssets:
+    """ Assets coming from GitHub releases, with the GitHub API served from local files. """
+
+    @pytest.fixture(autouse=True)
+    def api(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(releases, "_GITHUB_API_URL", (tmp_path / "api").as_uri())
+        self.setPlatform(monkeypatch, "linux", "x86_64")
+        return tmp_path / "api"
+
+    @staticmethod
+    def setPlatform(monkeypatch, system, arch):
+        monkeypatch.setattr(installerModule, "currentPlatform", lambda: (system, arch))
+
+    @staticmethod
+    def publishRelease(api, files, release="myOrg/myTool@v1.0", digests=None):
+        """ Publish the release "release" with the local "files", whose digests are their sha256 unless given. """
+        repository, _, tag = release.partition("@")
+        digests = digests or {}
+        assets = [{"name": file.name, "browser_download_url": file.as_uri(),
+                   "digest": digests.get(file.name, "sha256:" + sha256Of(file))} for file in files]
+        writeFile(api / "repos" / repository / "releases" / "tags" / tag, json.dumps({"assets": assets}))
+
+    @staticmethod
+    def writeToolArchives(folder):
+        """ Write a Linux tar.gz and a Windows zip archive of a tool, each with a single root folder. """
+        linuxArchive = folder / "tool-1.0-linux-x86_64.tar.gz"
+        executable = writeFile(folder / "build" / "tool-1.0" / "bin" / "tool", "linux")
+        executable.chmod(0o755)
+        writeFile(folder / "build" / "tool-1.0" / "data.txt", "data")
+        with tarfile.open(linuxArchive, "w:gz") as archive:
+            archive.add(folder / "build" / "tool-1.0", arcname="tool-1.0")
+        windowsArchive = writeZip(folder / "tool-1.0-windows-x86_64.zip", {"tool-1.0/bin/tool.exe": "windows"})
+        return linuxArchive, windowsArchive
+
+    def test_archive(self, tmp_path, api):
+        """ The archive of the release for the current platform is extracted in the asset's path. """
+        self.publishRelease(api, self.writeToolArchives(tmp_path / "remote"))
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset(path="bin/tool")])
+        installer(archive, tmp_path / "plugins").execute()
+
+        toolFolder = tmp_path / "plugins" / "myPlugin" / "bin" / "tool"
+        assert (toolFolder / "bin" / "tool").read_text() == "linux"
+        assert (toolFolder / "data.txt").read_text() == "data"
+        if os.name != "nt":
+            assert isExecutable(toolFolder / "bin" / "tool")
+        # Nothing is left from the download.
+        assert sorted(path.name for path in toolFolder.parent.iterdir()) == ["tool"]
+
+    def test_platform(self, tmp_path, api, monkeypatch):
+        self.publishRelease(api, self.writeToolArchives(tmp_path / "remote"))
+        self.setPlatform(monkeypatch, "windows", "x86_64")
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset()])
+        installer(archive, tmp_path / "plugins").execute()
+        assert (tmp_path / "plugins" / "myPlugin" / "tool" / "bin" / "tool.exe").read_text() == "windows"
+
+    def test_noFileForPlatform(self, tmp_path, api, monkeypatch):
+        """ A release without a file for the current platform fails the installation, and leaves nothing behind. """
+        self.publishRelease(api, self.writeToolArchives(tmp_path / "remote"))
+        self.setPlatform(monkeypatch, "macos", "arm64")
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset()])
+        with pytest.raises(PluginServiceError, match="tool-1.0-linux-x86_64.tar.gz"):
+            installer(archive, tmp_path / "plugins").execute()
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
+
+    def test_missingRelease(self, tmp_path):
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset()])
+        with pytest.raises(PluginServiceError):
+            installer(archive, tmp_path / "plugins").execute()
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
+
+    def test_digestMismatch(self, tmp_path, api):
+        """ A file that does not match the digest published by GitHub fails the installation. """
+        linuxArchive, windowsArchive = self.writeToolArchives(tmp_path / "remote")
+        self.publishRelease(api, [linuxArchive, windowsArchive], digests={linuxArchive.name: "sha256:" + "0" * 64})
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset()])
+        with pytest.raises(PluginServiceError, match="Checksum mismatch"):
+            installer(archive, tmp_path / "plugins").execute()
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
+
+    def test_invalidArchive(self, tmp_path, api):
+        broken = writeFile(tmp_path / "remote" / "tool-linux-x86_64.tar.gz", "notAnArchive")
+        self.publishRelease(api, [broken])
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset()])
+        with pytest.raises(PluginServiceError, match="Failed to extract"):
+            installer(archive, tmp_path / "plugins").execute()
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
+
+    def test_executableFile(self, tmp_path, api):
+        """ A release file that is not an archive is downloaded as is in the asset's path, and made executable. """
+        linuxTool = writeFile(tmp_path / "remote" / "tool-linux-x86_64", "linux")
+        windowsTool = writeFile(tmp_path / "remote" / "tool-windows-x86_64.exe", "windows")
+        self.publishRelease(api, [linuxTool, windowsTool])
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset(path="bin/tool", executable=True)])
+        installer(archive, tmp_path / "plugins").execute()
+
+        tool = tmp_path / "plugins" / "myPlugin" / "bin" / "tool"
+        assert tool.read_text() == "linux"
+        if os.name != "nt":
+            assert isExecutable(tool)
+
+    @pytest.mark.skipif(os.name == "nt", reason="No executable permission on Windows.")
+    def test_executableUrlAsset(self, tmp_path):
+        assetFile = writeFile(tmp_path / "remote" / "tool", "tool")
+        entry = dict(asset(assetFile.as_uri(), path="tool"), executable=True)
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[entry])
+        installer(archive, tmp_path / "plugins").execute()
+        assert isExecutable(tmp_path / "plugins" / "myPlugin" / "tool")
 
 
 class TestUninstaller:

@@ -57,6 +57,12 @@ category = "model"
 url = "https://example.com/path/to/weights.pt"
 path = "models/weights.pt"
 sha256 = "eefe175fb7c1c605de5c351ef12271f52663874ea3a01cae75f767201f1fe0c3"
+
+[[tool.meshroom.assets]]
+name = "myTool"
+category = "binary"
+release = "myPublisher/myTool@v1.0.0"
+path = "myTool"
 ```
 
 All the fields are optional:
@@ -69,9 +75,27 @@ All the fields are optional:
 - **`assets`**: external files (models, weights, data...) downloaded into the plugin folder when the plugin is installed or updated as a local plugin. Each asset has:
   - **`name`** (required): the name of the asset, unique within the plugin.
   - **`category`** (required): a free-form label describing the kind of asset (e.g. `model`, `weights`, `data`).
-  - **`url`** (required): the url to download the asset from.
-  - **`path`** (required): the file path of the asset, relative to the plugin root folder.
-  - **`sha256`** (optional, recommended): the SHA-256 checksum of the asset.
+  - **`url`** (required, unless `release` is set): the url to download the asset from. The file is kept as is, it is
+    not extracted.
+  - **`release`**: instead of `url`, a GitHub release, as `<owner>/<repository>@<tag>`. The file of the release
+    to install is chosen for the user's platform, from its name, which should follow the convention
+    `<name>-<version>-<os>-<arch>[-<extras>].<ext>`:
+    - `<os>`: `linux`, `windows` or `macos` (`win64`, `darwin` and `osx` are also recognized);
+    - `<arch>`: `x86_64` or `arm64` (`amd64`, `x64` and `aarch64` are also recognized); a file without it is
+      used when no file of the release names the architecture of the user's machine;
+    - `<extras>`: free (e.g. `cu128`), ignored to choose the file.
+
+    e.g. `myTool-1.0.0-linux-x86_64-cu128.tar.gz` and `myTool-1.0.0-windows-x86_64-cu128.zip`. The release must
+    have a single file per platform: several files matching the user's platform is an error. A release with a
+    single file that names no operating system is used on every platform (e.g. model weights).
+    The file is checked against the SHA-256 published by GitHub. A `.zip`, `.tar`, `.tar.gz`,
+    `.tgz`, `.tar.bz2` or `.tar.xz` archive is extracted in `path`, its single root folder unwrapped, keeping the
+    executable permissions of its files; links pointing outside of the archive are skipped.
+  - **`path`** (required): the path of the asset, relative to the plugin root folder: the file, or the folder an
+    archive from a release is extracted in.
+  - **`sha256`** (optional, recommended, only with `url`): the SHA-256 checksum of the asset.
+  - **`executable`** (optional, default `false`): make the downloaded file executable (archives keep the
+    permissions of their files).
 
 ### Legacy `config.json`
 

@@ -2,10 +2,11 @@ import io
 import logging
 import os
 import shutil
+import tarfile
 import zipfile
 
-from typing import List, Optional, Tuple
-from pathlib import Path
+from typing import Callable, List, Optional, Tuple
+from pathlib import Path, PurePosixPath
 
 from meshroom.env import EnvVar
 from meshroom.core.files import scratchFolder
@@ -14,6 +15,8 @@ from meshroom.core.plugins import meshroomPluginsFolder, meshroomPluginsInternal
 from meshroom.core.plugins.metadata import PluginAsset, PluginMetadata
 from meshroom.core.plugins.record import PluginRecord
 from meshroom.core.plugins.provider import PluginProvider
+from meshroom.core.plugins.local.archives import extractArchive, isArchive, makeExecutable
+from meshroom.core.plugins.local.releases import ReleaseError, currentPlatform, fetchReleaseFiles, selectReleaseFile
 from meshroom.core.plugins.local.service import PluginService
 from meshroom.core.plugins.local.uv import findUv, pythonForUv, parseUvProgress, runUv, runUvWithProgress
 
@@ -268,7 +271,9 @@ class PluginInstaller(PluginService):
 
     def _downloadAssets(self, pluginFolder: Path, assets: List[PluginAsset]) -> None:
         """
-        Download the plugin's assets into "pluginFolder", checking their SHA-256 when it is declared.
+        Download the plugin's assets into "pluginFolder", checking their SHA-256 when it is declared or published.
+        An asset from a GitHub release uses the file of the release for the current platform, extracted in
+        the asset's path if it is an archive.
 
         Args:
             pluginFolder: the folder of the plugin.
@@ -297,21 +302,71 @@ class PluginInstaller(PluginService):
                 self._checkCancel()
                 self._reportProgress(message, downloadProgress(bytesRead, totalBytes, start, start + step))
 
-            logging.info(f"Downloading asset '{asset.name}' of plugin '{self._record.name}' from '{asset.url}'...")
             self._reportProgress(message, start)
-            try:
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                digest = fetchToFile(asset.url, destination, onBytes=onBytes)
-            except (RequestError, OSError) as exc:
-                raise self._error("Assets", f"Failed to download asset '{asset.name}' from '{asset.url}'.", exc)
+            url, fileName, sha256 = self._assetSource(asset)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if asset.release is not None and isArchive(fileName):
+                # Download the archive next to its destination, then extract it in place.
+                with scratchFolder(destination.parent, prefix=f".{destination.name}.") as tmpDir:
+                    archivePath = tmpDir / fileName
+                    self._downloadAsset(asset, url, archivePath, sha256, onBytes)
+                    self._checkCancel()
+                    self._reportProgress(f"Extracting asset '{asset.name}' ({index + 1}/{len(assets)})", start + step)
+                    try:
+                        extractArchive(archivePath, destination)
+                    except (ValueError, zipfile.BadZipFile, tarfile.TarError, OSError) as exc:
+                        raise self._error("Assets", f"Failed to extract asset '{asset.name}' from '{fileName}'.", exc)
+            else:
+                self._downloadAsset(asset, url, destination, sha256, onBytes)
+                if asset.executable:
+                    makeExecutable(destination)
 
-            if asset.sha256 is None:
-                logging.warning(f"Asset '{asset.name}' of plugin '{self._record.name}' has no declared 'sha256', "
-                                f"its integrity was not checked (downloaded sha256: {digest}).")
-            elif digest != asset.sha256:
-                destination.unlink()
-                raise self._error("Assets", f"Checksum mismatch for asset '{asset.name}': "
-                                            f"expected sha256 {asset.sha256}, got {digest}.")
+    def _assetSource(self, asset: PluginAsset) -> Tuple[str, str, Optional[str]]:
+        """
+        Return where to download "asset" from: its url, or the file of its GitHub release for the current platform.
+
+        Args:
+            asset: the asset to download.
+
+        Returns:
+            tuple[str, str, str | None]: the url of the file to download, its file name, and its expected
+            SHA-256 hexdigest (None if unknown).
+        """
+        if asset.release is None:
+            return asset.url, PurePosixPath(asset.path).name, asset.sha256
+        try:
+            releaseFile = selectReleaseFile(fetchReleaseFiles(asset.release), *currentPlatform())
+        except ReleaseError as exc:
+            raise self._error("Assets", f"Cannot download asset '{asset.name}' from release '{asset.release}'.", exc)
+        logging.info(f"Asset '{asset.name}' of plugin '{self._record.name}': "
+                     f"using '{releaseFile.name}' of release '{asset.release}'.")
+        return releaseFile.url, releaseFile.name, releaseFile.sha256
+
+    def _downloadAsset(self, asset: PluginAsset, url: str, destination: Path, sha256: Optional[str],
+                       onBytes: Callable[[int, int], None]) -> None:
+        """
+        Download the file "url" of "asset" into "destination", and check it against "sha256".
+
+        Args:
+            asset: the asset being downloaded.
+            url: the url of the file to download.
+            destination: the file to write. Its parent folder must exist.
+            sha256: the expected SHA-256 hexdigest of the file, or None if unknown.
+            onBytes: the progress callback of the download, see fetchToFile().
+        """
+        logging.info(f"Downloading asset '{asset.name}' of plugin '{self._record.name}' from '{url}'...")
+        try:
+            digest = fetchToFile(url, destination, onBytes=onBytes)
+        except (RequestError, OSError) as exc:
+            raise self._error("Assets", f"Failed to download asset '{asset.name}' from '{url}'.", exc)
+
+        if sha256 is None:
+            logging.warning(f"Asset '{asset.name}' of plugin '{self._record.name}' has no declared or published "
+                            f"'sha256', its integrity was not checked (downloaded sha256: {digest}).")
+        elif digest != sha256:
+            destination.unlink()
+            raise self._error("Assets", f"Checksum mismatch for asset '{asset.name}': "
+                                        f"expected sha256 {sha256}, got {digest}.")
 
     def _runUv(self, uv: str, args: List[str], env: Optional[dict] = None) -> None:
         """

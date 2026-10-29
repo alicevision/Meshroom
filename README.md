@@ -112,6 +112,12 @@ An exploratory plugin integrating MicMac's photogrammetric algorithms into Meshr
 A plugin for geospatial integration that extracts GPS data from photographs and downloads contextual geographic information. The plugin automatically places 3D reconstructions within their real-world geographical environment by retrieving worldwide 2D maps (OpenStreetMap), global elevation models (NASA datasets), and high-resolution 3D Lidar models where available (France via IGN open data). This enables accurate georeferencing and contextual visualization of photogrammetric reconstructions.
 
 
+## IMU Plugin
+
+[MrIMU](https://github.com/Supermagnum/Meshroom/tree/develop/MrIMU)
+A plugin for integrating IMU (Inertial Measurement Unit) data from accelerometers and gyroscopes into photogrammetry workflows. The plugin supports loading IMU data from OpenCamera-Sensors CSV files or extracting CAMM metadata from GoPro MP4 files. It extracts gravity vectors using low-pass Butterworth filtering and applies IMU-derived orientation constraints to StructureFromMotion camera poses, improving vertical axis stability and overall reconstruction quality. The plugin offers configurable IMU influence weighting and Z-axis locking to gravity direction.
+
+
 # License
 
 The project is released under MPLv2, see [**COPYING.md**](COPYING.md).

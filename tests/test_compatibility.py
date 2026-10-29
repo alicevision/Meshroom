@@ -1397,6 +1397,15 @@ class TestUpgradeConnections:
         assert len(loadedGraph.node(nodeName).internalAttribute("flowInputs")) == 0
         assert self.edgeNames(loadedGraph) == edgesBefore
 
+    def test_savingAsTemplateDoesNotAlterCompatibilityNodeSerialization(self, connectedGraphFactory, tmp_path):
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        nodeDictBefore = copy.deepcopy(graph.node(nodeName).toDict())
+
+        # The template serialization removes the outputs, uid and parallelization from the serialized node
+        graph.save(str(tmp_path / "test_template.mg"), setupProjectFile=False, template=True)
+
+        assert graph.node(nodeName).toDict() == nodeDictBefore
+
     def test_undoUpgradeRestoresCompatibilityNodeAndConnections(self, connectedGraphFactory):
         graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
         edgesBefore = self.edgeNames(graph)

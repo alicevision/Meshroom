@@ -70,14 +70,17 @@ class CompatibilityNode(BaseNode):
         for attrName, value in self._internalInputs.items():
             self._addAttribute(attrName, value, isOutput=False, internalAttr=True)
 
-        if self.nodeDescDict:
-            # Add internal flowInputs to internalAttributes
-            if "flowInputs" not in self._internalAttributes.keys():
-                self._addAttribute("flowInputs", None, isOutput=False, internalAttr=True)
-            # Add internal flowOutput to internalAttributes
-            if "flowOutput" not in self._internalAttributes.keys():
-                self._addAttribute("flowOutput", None, isOutput=True, internalAttr=True)
+        # Add the internal flow attributes, which are not serialized when they are not connected, so that
+        # flow edges to and from this node can always be restored (they do not depend on the node description)
+        existingAttrNames = set(self._attributes.keys()) | set(self._internalAttributes.keys())
+        for attrDesc in self._internalFlowDescriptions(isOutput=False):
+            if attrDesc.name not in existingAttrNames:
+                self._addAttribute(attrDesc.name, None, isOutput=False, internalAttr=True)
+        for attrDesc in self._internalFlowDescriptions(isOutput=True):
+            if attrDesc.name not in existingAttrNames:
+                self._addAttribute(attrDesc.name, None, isOutput=True, internalAttr=True)
 
+        if self.nodeDescDict:
             # Add any input/output attribute present in the node description but not in the serialized node data
             existingAttrNames = set(self._attributes.keys())
             for attrName in self.nodeDescDict.get("inputs", {}).keys():
@@ -99,6 +102,17 @@ class CompatibilityNode(BaseNode):
     def _updateNodeSize(self):
         # Block the recompute of the node size for compatibility nodes
         pass
+
+    def _internalFlowDescriptions(self, isOutput):
+        """
+        Return the descriptions of the internal flow input or output attributes of this node: the ones of its
+        node type if it is known, the ones of a base node otherwise.
+        """
+        if self.nodeDesc:
+            return self.nodeDesc.internalFlowOutputs if isOutput else self.nodeDesc.internalFlowInputs
+        if isOutput:
+            return InternalAttributesFactory.getInternalFlowOutputs(MrNodeType.BASENODE)
+        return InternalAttributesFactory.getInternalFlowInputs(MrNodeType.BASENODE)
 
     @staticmethod
     def attributeDescFromValue(attrName, value, isOutput):
@@ -303,20 +317,22 @@ class CompatibilityNode(BaseNode):
         attrDesc = None
         if self.nodeDesc:
             if internalAttr:
-                refAttrs = self.nodeDesc.internalInputs
+                refAttrs = (list(self.nodeDesc.internalInputs) + list(self.nodeDesc.internalFlowInputs)
+                            + list(self.nodeDesc.internalFlowOutputs))
             else:
                 refAttrs = self.nodeDesc.outputs if isOutput else self.nodeDesc.inputs
             attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
         matchDesc = attrDesc is not None
-        if attrDesc is None and self.nodeDescDict:
-            if internalAttr:
-                internalAttrs = InternalAttributesFactory.getInternalAttributes(MrNodeType.BASENODE)
-                internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(MrNodeType.BASENODE)
-                internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(MrNodeType.BASENODE)
-                refAttrs = internalAttrs + internalFlowInputs + internalFlowOutputs
-                attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
-            else:
-                attrDesc = CompatibilityNode.attributeDescFromDict(self.nodeDescDict, name, val, isOutput)
+        if attrDesc is None and internalAttr:
+            # Internal attributes are not serialized in the node description, but they are common to all
+            # node types: look for them in the base node ones, even without a node description
+            internalAttrs = InternalAttributesFactory.getInternalAttributes(MrNodeType.BASENODE)
+            internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(MrNodeType.BASENODE)
+            internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(MrNodeType.BASENODE)
+            refAttrs = internalAttrs + internalFlowInputs + internalFlowOutputs
+            attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
+        elif attrDesc is None and self.nodeDescDict:
+            attrDesc = CompatibilityNode.attributeDescFromDict(self.nodeDescDict, name, val, isOutput)
         if attrDesc is None:
             attrDesc = CompatibilityNode.attributeDescFromValue(name, val, isOutput)
         attribute = attributeFactory(attrDesc, val, isOutput, self)
@@ -356,23 +372,33 @@ class CompatibilityNode(BaseNode):
 
     @property
     def internalInputs(self):
-        """ Get current node's internal attributes """
+        """ Get current node internal inputs, where links could differ from original serialized node data
+        (i.e. after node duplication or flow connections changes) """
         if not self.graph:
             return self._internalInputs
-        return {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items()}
+        return {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items() if v.isInput}
 
     def toDict(self):
         """
         Return the original serialized node that generated a compatibility issue.
 
-        Serialized inputs are updated to handle instances that have been duplicated
-        and might be connected to different nodes.
+        Serialized inputs and internal inputs are updated to handle instances that have been duplicated
+        and might be connected to different nodes, or whose (flow) connections have changed.
+
+        The returned dictionary is a copy that can be freely modified by the caller (e.g. the template
+        serializer removes some entries from it) without altering the original serialized node.
         """
-        # update inputs to get up-to-date connections
-        self.nodeDict.update({"inputs": self.inputs})
-        # update position
-        self.nodeDict.update({"position": self.position})
-        return self.nodeDict
+        # update inputs to get up-to-date connections, and position
+        nodeDict = dict(self.nodeDict, inputs=self.inputs, position=self.position)
+        if self.graph:
+            # update internal inputs to get up-to-date flow connections, with the same filtering as Node.toDict:
+            # flowInputs is only serialized if it is not the default value, and empty values are skipped
+            internalInputs = {k: v for k, v in self.internalInputs.items() if v is not None}
+            flowInputs = self._internalAttributes.get("flowInputs")
+            if flowInputs is not None and flowInputs.isDefault and not flowInputs.isLink:
+                internalInputs.pop("flowInputs", None)
+            nodeDict["internalInputs"] = internalInputs
+        return copy.deepcopy(nodeDict)
 
     def getNodeDescription(self):
         # Get the node type, the node version, and the basic information about the io (name, type and default value)

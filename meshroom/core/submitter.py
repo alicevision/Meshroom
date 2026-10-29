@@ -7,11 +7,14 @@ import logging
 import operator
 
 from enum import IntFlag, auto
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, TYPE_CHECKING
 from itertools import accumulate
 
 import meshroom
 from meshroom.common import BaseObject, Property
+
+if TYPE_CHECKING:
+    from meshroom.core.node import BaseNode
 
 
 logger = logging.getLogger("Submitter")
@@ -80,33 +83,30 @@ class OrderedTaskType(IntFlag):
 
 
 class OrderedTask:
-    _usedUids = set()
+    _lastUid = 0
 
-    def __init__(self, taskType, node = None, iteration : int = -1):
+    def __init__(self, taskType: OrderedTaskType, node: BaseNode = None, iteration : int = -1):
         self.taskType: OrderedTaskType = taskType
-        self.node = node  # BaseNode
-        self.iteration = iteration
-        self.dependencies = []
-        self.uid = self._generateUid()
-
-    @property
-    def nodeName(self):
-        return self.node.name if self.node else "NONE"
+        self.node: BaseNode = node
+        self.iteration: int = iteration
+        self.dependencies : list["OrderedTask"] = []
+        # Generate UID
+        self.uid: int = self._generateUid()
 
     @classmethod
     def _generateUid(cls) -> int:
-        nextUid = max(cls._usedUids) + 1 if len(cls._usedUids) > 0 else 0
-        cls._usedUids.add(nextUid)
-        return nextUid
-
-    def addDependency(self, otherTask: OrderedTask):
-        self.dependencies.append(otherTask)
+        cls._lastUid += 1
+        return cls._lastUid
 
     @property
-    def shortName(self):
-        sn = self.nodeName if self.node else "NONE"
+    def nodeName(self) -> str:
+        return self.node.name if self.node else "NONE"
+
+    @property
+    def name(self) -> str:
+        sn = self.nodeName
         if self.taskType == OrderedTaskType.CHUNK:
-            sn += f"_{self.iteration if self.iteration >=0 else 'allchunks'}"
+            sn += f"_{self.iteration if self.iteration >=0 else 'process'}"
         else:
             sn += f"_{self.taskType.name}"
         return f"{self.uid:03d} {sn}"
@@ -123,6 +123,9 @@ class OrderedTask:
             string += f" iteration={self.iteration}"
         string += f" ({len(self.dependencies)} deps)>"
         return string
+
+    def addDependency(self, otherTask: OrderedTask):
+        self.dependencies.append(otherTask)
 
 
 class OrderedNode:
@@ -220,7 +223,7 @@ class OrderedTasks:
             return allTasks
         tasks: list[OrderedTask] = gatherTasks(self.rootTask)
         for task in set(tasks):
-            logging.debug(f"[{task.shortName}] {task} -> depends on {[t.shortName for t in task.dependencies]}")
+            logging.debug(f"[{task.name}] {task} -> depends on {[t.name for t in task.dependencies]}")
 
     def iterOnTasks(self, current:OrderedTask=None, skipRootTask=False):
         skipCurrent = (current is None) and skipRootTask

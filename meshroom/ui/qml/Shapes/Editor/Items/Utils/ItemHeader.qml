@@ -262,6 +262,7 @@ Pane {
                     switch(model.type) {
                         case "ShapeFile": return MaterialIcons.insert_drive_file;
                         case "ShapeList": return MaterialIcons.layers;
+                        case "SurveyPoint":   return MaterialIcons.location_on;
                         case "Point2d":   return MaterialIcons.control_camera;
                         case "Line2d":    return MaterialIcons.linear_scale;
                         case "Circle":    return MaterialIcons.radio_button_unchecked;
@@ -339,8 +340,10 @@ Pane {
                         else
                         {
                             // add key
-                            _currentScene.setObservation(model, _currentScene.selectedViewId, 
-                                                          ShapeViewerHelper.getDefaultObservation(model.type))
+                            // A survey point is placed in the 2d Viewer: selecting it starts the placement
+                            if (model.type !== "SurveyPoint")
+                                _currentScene.setObservation(model, _currentScene.selectedViewId, 
+                                                              ShapeViewerHelper.getDefaultObservation(model.type))
                             ShapeViewerHelper.selectShape(model)
                         }
                     }
@@ -422,8 +425,10 @@ Pane {
                             else
                             {
                                 // add key
-                                _currentScene.setObservation(model, _currentScene.selectedViewId, 
-                                                               ShapeViewerHelper.getDefaultObservation(model.type))
+                                // A survey point is placed in the 2d Viewer: selecting it starts the placement
+                                if (model.type !== "SurveyPoint")
+                                    _currentScene.setObservation(model, _currentScene.selectedViewId, 
+                                                                   ShapeViewerHelper.getDefaultObservation(model.type))
                                 ShapeViewerHelper.selectShape(model)
                             }
                         }

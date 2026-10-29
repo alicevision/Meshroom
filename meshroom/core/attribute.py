@@ -8,6 +8,7 @@ import threading
 import weakref
 import logging
 import inspect
+import math
 
 from collections.abc import Iterable, Sequence
 from string import Template
@@ -128,7 +129,7 @@ class Attribute(BaseObject):
     """
     LINK_EXPRESSION_REGEX = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
     VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
-    VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".abc", ".ply", ".usdc", ".usda"]
+    VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".glb", ".abc", ".ply", ".usdc", ".usda", ".sfm"]
     VALID_TEXT_EXTENSIONS = [".txt", ".json", ".log", ".csv", ".md"]
 
     @staticmethod
@@ -1633,7 +1634,10 @@ class GeometryAttribute(GroupAttribute):
                         outValue[key][attribute.name] = value
             else:
                 for pair in attribute.keyValues.pairs:
-                    outValue[str(pair.key)][attribute.name] = pair.value
+                    value = pair.value
+                    if math.isnan(value):
+                        value = 'nan'
+                    outValue[str(pair.key)][attribute.name] = value
         return dict(outValue)
 
     def _hasKeyableChilds(self) -> bool:
@@ -1769,6 +1773,39 @@ class ShapeAttribute(GroupAttribute):
         self.value.get("userName").valueChanged.connect(self._onShapeChanged)
         self.value.get("userColor").valueChanged.connect(self._onShapeChanged)
         self.geometry.valueChanged.connect(self._onGeometryChanged)
+
+    # Override
+    # Upgrade the flags of a SurveyPoint saved with an older description.
+    def upgradeValue(self, exportedValue):
+        if self.type == "SurveyPoint" and isinstance(exportedValue, dict):
+            exportedValue = self._upgradeSurveyPointFlags(exportedValue)
+        super().upgradeValue(exportedValue)
+
+    @staticmethod
+    def _upgradeSurveyPointFlags(exportedValue: dict) -> dict:
+        """
+        Return the given exported SurveyPoint value with its current flags:
+        - the former picked flag is renamed picked3d.
+        - a missing picked2d flag is derived from the 2d position, which is -1 when not placed.
+        """
+        geometry = exportedValue.get("geometry")
+        if not isinstance(geometry, dict):
+            return exportedValue
+        if "picked" in geometry and "picked3d" not in geometry:
+            geometry = {("picked3d" if name == "picked" else name): value for name, value in geometry.items()}
+            exportedValue = {**exportedValue, "geometry": geometry}
+        if "picked2d" in geometry:
+            return exportedValue
+        x, y = geometry.get("x", -1.0), geometry.get("y", -1.0)
+        if isinstance(x, dict) and isinstance(y, dict):
+            # Keyable geometry: {key: value}
+            picked2d = {key: x[key] >= 0 and y.get(key, -1.0) >= 0 for key in x}
+        elif isinstance(x, (int, float)) and isinstance(y, (int, float)):
+            picked2d = x >= 0 and y >= 0
+        else:
+            # Link expression
+            return exportedValue
+        return {**exportedValue, "geometry": {**geometry, "picked2d": picked2d}}
 
     # Override
     # Fix missing link expression serialization.

@@ -106,6 +106,7 @@ class MenuObject(BaseObject):
     def trigger(self, app, **kwargs):
         if self.callback is not None:
             return self.callback(self.parentMenu, app, **kwargs)
+        return None
 
     uid = Property(str, lambda self: self._uid, constant=True)
     objectType = Property(str, lambda self: self.menuObjectType.value, constant=True)

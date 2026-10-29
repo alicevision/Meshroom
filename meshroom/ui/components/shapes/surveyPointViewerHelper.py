@@ -1,7 +1,7 @@
 from PySide6.QtGui import QVector3D
 
 from meshroom.common import BaseObject, Property, Variant, Signal, Slot
-from meshroom.core.surveyPoint import getNodeSurveyPointPositions, getSelectedSurveyPointObservationKey
+from .surveyPoint import getNodeSurveyPointPositions, getSelectedSurveyPointObservationKey
 
 
 class SurveyPointViewerHelper(BaseObject):

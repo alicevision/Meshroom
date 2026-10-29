@@ -1448,6 +1448,44 @@ class UIGraph(QObject):
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
+    @Slot(Attribute, str, result=Attribute)
+    def addAnySetAttribute(self, attribute, attributeType):
+        """
+        Add a new child attribute of the given description type to an AnySet attribute.
+
+        Args:
+            attribute (Attribute): the AnySet attribute
+            attributeType (str): the description type of the new attribute (e.g. "FloatParam")
+
+        Returns:
+            Attribute: the created attribute, or None if it could not be created
+        """
+        if not isinstance(attribute, AnySet):
+            return None
+        command = commands.AddAnySetAttributeCommand(self._graph, attribute, attributeType)
+        if not self.push(command):
+            return None
+        return self._graph.attribute(f"{attribute.fullName}.{command.value['name']}")
+
+    @Slot(Attribute, "QVariantMap")
+    def editAnySetAttribute(self, attribute, parameters):
+        """
+        Edit the description parameters of an AnySet child attribute.
+
+        Args:
+            attribute (Attribute): the AnySet child attribute
+            parameters (dict): the edited parameters, among "name", "label", "description", "advanced",
+                               "defaultValue", "range" (numeric types) and "values" (choices)
+        """
+        if not isinstance(attribute.root, AnySet):
+            return
+        try:
+            command = commands.EditAnySetAttributeCommand(self._graph, attribute, parameters)
+        except ValueError as e:
+            logging.warning(f"Cannot edit attribute '{attribute.fullName}': {e}")
+            return
+        self.push(command)
+
     @Slot(Attribute)
     def removeAnySetAttribute(self, attribute):
         if not isinstance(attribute.root, AnySet):

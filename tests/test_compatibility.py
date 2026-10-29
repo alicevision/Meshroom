@@ -1364,6 +1364,39 @@ class TestUpgradeConnections:
         assert isinstance(graph.node(nodeName), CompatibilityNode)
         assert self.edgeNames(graph) == edgesBefore
 
+    def test_compatibilityNodeSerializesUpdatedFlowConnections(self, connectedGraphFactory, tmp_path):
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        flowInputs = graph.node(nodeName).internalAttribute("flowInputs")
+        upNode = flowInputs.at(0).inputLink.node
+
+        # Rename the upstream node: its previous name is then taken by a new node, connected with a new flow edge
+        graph.renameNode(upNode, "renamedUp")
+        newUpNode = graph.addNewNode(UidTestingNodeV1.__name__)
+        flowInputs.append("0")
+        graph.addEdge(newUpNode.internalAttribute("flowOutput"), flowInputs.at(1))
+        edgesBefore = self.edgeNames(graph)
+
+        graphFile = str(tmp_path / "test_updated_graph.mg")
+        graph.save(graphFile)
+        loadedGraph = loadGraph(graphFile)
+
+        assert isinstance(loadedGraph.node(nodeName), CompatibilityNode)
+        assert self.edgeNames(loadedGraph) == edgesBefore
+
+    def test_compatibilityNodeSerializesRemovedFlowConnections(self, connectedGraphFactory, tmp_path):
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        flowInputs = graph.node(nodeName).internalAttribute("flowInputs")
+        graph.removeEdge(flowInputs.at(0))
+        flowInputs.remove(0)
+        edgesBefore = self.edgeNames(graph)
+
+        graphFile = str(tmp_path / "test_updated_graph.mg")
+        graph.save(graphFile)
+        loadedGraph = loadGraph(graphFile)
+
+        assert len(loadedGraph.node(nodeName).internalAttribute("flowInputs")) == 0
+        assert self.edgeNames(loadedGraph) == edgesBefore
+
     def test_undoUpgradeRestoresCompatibilityNodeAndConnections(self, connectedGraphFactory):
         graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
         edgesBefore = self.edgeNames(graph)

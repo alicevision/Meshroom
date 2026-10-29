@@ -96,7 +96,7 @@ class SurveyPointViewerHelper(BaseObject):
         key = getSurveyPointObservationKey(shape, self._activeProject.selectedViewId)
         if key is None:
             return
-        observation = mergeSurveyPointObservation(shape, key, {"X": x, "Y": y, "Z": z, "picked": True})
+        observation = mergeSurveyPointObservation(shape, key, {"X": x, "Y": y, "Z": z, "picked3d": True})
         self._activeProject.setObservation(shape, key, observation)
 
     @Slot()

@@ -23,7 +23,7 @@ def getSurveyPointObservationKey(shapeAttribute, viewId):
 def getSurveyPointPartialObservation(shapeAttribute, key):
     """
     Return the SurveyPoint observation for the given key, even if only one of its parts is set.
-    Its 3d part (X, Y, Z, picked) and its 2d part (x, y, picked2d) are set independently, so a keyable
+    Its 3d part (X, Y, Z, picked3d) and its 2d part (x, y, picked2d) are set independently, so a keyable
     SurveyPoint may only have some of its children keyed: the missing ones get their default value.
 
     Args:
@@ -75,14 +75,14 @@ def observationToSurveyPoint(observation):
 
 
 def getNodeSurveyPointPositions(node, viewId):
-    return [item["position"] for item in getNodeSurveyPointData(node, viewId) if item["picked"]]
+    return [item["position"] for item in getNodeSurveyPointData(node, viewId) if item["picked3d"]]
 
 
 def isPickedSurveyPoint(observation):
     if observation is None:
         return False
 
-    return bool(observation.get("picked", False))
+    return bool(observation.get("picked3d", False))
 
 
 def iterateNodeSurveyPointAttributes(node):
@@ -110,7 +110,7 @@ def getNodeSurveyPointData(node, viewId):
         surveyPointData.append({
             "fullName": attr.fullName,
             "position": point,
-            "picked": isPickedSurveyPoint(observation),
+            "picked3d": isPickedSurveyPoint(observation),
         })
     return surveyPointData
 

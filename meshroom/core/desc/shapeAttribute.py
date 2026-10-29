@@ -101,7 +101,7 @@ class SurveyPoint(Shape):
                        commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
             FloatParam(name="ey", label="ey", description="Estimated y 2D coordinate.", value=float('nan'), keyable=keyable, keyType=keyType,
                        commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
-            BoolParam(name="picked", label="Picked", description="Whether the point was picked in 3D.", value=False,
+            BoolParam(name="picked3d", label="Picked 3D", description="Whether the point was picked in 3D.", value=False,
                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
                       enabled=enabled, visible=visible, exposed=exposed),
             BoolParam(name="picked2d", label="Picked 2D", description="Whether the point was placed in 2D.", value=False,

@@ -385,7 +385,7 @@ Item {
         function onSelectedShapeNamesChanged()
         {
             const obs = getSelectedObservation()
-            if (obs && obs.picked && orbit)
+            if (obs && obs.picked3d && orbit)
             {
                 orbit.setCenter(Qt.vector3d(obs.X, -obs.Y, -obs.Z))
             }

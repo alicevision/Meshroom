@@ -103,6 +103,9 @@ class SurveyPoint(Shape):
                        commandLineGroup=commandLineGroup, advanced=advanced, enabled=enabled, visible=visible, exposed=exposed),
             BoolParam(name="picked", label="Picked", description="Whether the point was picked in 3D.", value=False,
                       keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
+                      enabled=enabled, visible=visible, exposed=exposed),
+            BoolParam(name="picked2d", label="Picked 2D", description="Whether the point was placed in 2D.", value=False,
+                      keyable=keyable, keyType=keyType, commandLineGroup=commandLineGroup, advanced=advanced,
                       enabled=enabled, visible=visible, exposed=exposed)
         ]
         # ShapeAttribute constructor

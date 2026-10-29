@@ -1,5 +1,5 @@
 from meshroom.core import desc
-from meshroom.core.graph import Graph
+from meshroom.core.graph import Graph, loadGraph
 
 from .utils import registerNodeDesc, unregisterNodeDesc
 
@@ -545,3 +545,89 @@ class TestShapeAttribute:
         assert node.keyableLine.getShapeAsDict().get("observations") == {"0": observationLine}
         assert node.keyableRectangle.getShapeAsDict().get("observations") == {"0": observationRectangle}
         assert node.keyableCircle.getShapeAsDict().get("observations") == {"0": observationCircle}
+
+
+class NodeWithSurveyPoints(desc.Node):
+    inputs = [
+        desc.SurveyPoint(
+            name="surveyPoint",
+            label="Survey Point",
+            description="A survey point.",
+        ),
+        desc.SurveyPoint(
+            name="keyableSurveyPoint",
+            label="Keyable Survey Point",
+            description="A keyable survey point.",
+            keyable=True,
+            keyType="viewId"
+        ),
+    ]
+
+
+class TestSurveyPointAttribute:
+
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(NodeWithSurveyPoints)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(NodeWithSurveyPoints)
+
+    def test_picked2dFlag(self):
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithSurveyPoints.__name__)
+
+        # Both the 3d and 2d parts are unset by default
+        observation = node.surveyPoint.geometry.getObservation("0")
+        assert observation["picked"] is False
+        assert observation["picked2d"] is False
+        assert node.keyableSurveyPoint.geometry.getObservation("0") is None
+
+    def test_keyablePartialAndFullObservations(self):
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithSurveyPoints.__name__)
+        geometry = node.keyableSurveyPoint.geometry
+
+        # A partial observation (3d part only) is not a complete observation
+        geometry.setObservation("1", {"X": 1.0, "Y": 2.0, "Z": 3.0, "picked": True})
+        assert not geometry.hasObservation("1")
+        assert geometry.getObservation("1") is None
+
+        # A full observation round-trips
+        observation = {"X": 1.0, "Y": 2.0, "Z": 3.0, "x": -1.0, "y": -1.0, "ex": 0.0, "ey": 0.0,
+                       "picked": True, "picked2d": False}
+        geometry.setObservation("2", observation)
+        assert geometry.hasObservation("2")
+        assert geometry.getObservation("2") == observation
+
+    def test_incompleteObservationIsSerialized(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(NodeWithSurveyPoints.__name__)
+
+        # Only the 3d part is set, the 2d part keeps its default values
+        observation = {"X": 1.0, "Y": 2.0, "Z": 3.0, "x": -1.0, "y": -1.0, "ex": 0.0, "ey": 0.0,
+                       "picked": True, "picked2d": False}
+        node.keyableSurveyPoint.geometry.setObservation("1", observation)
+        node.surveyPoint.geometry.setObservation("0", observation)
+        graph.save()
+
+        loadedNode = loadGraph(graph.filepath).node(node.name)
+        assert loadedNode.keyableSurveyPoint.geometry.getObservation("1") == observation
+        assert loadedNode.surveyPoint.geometry.getObservation("0") == observation
+
+    def test_upgradeWithoutPicked2d(self):
+        graph = Graph("")
+        node = graph.addNewNode(NodeWithSurveyPoints.__name__)
+
+        # Values saved before the picked2d flag existed: placed in 2d if the 2d position is set
+        node.surveyPoint.upgradeValue({"geometry": {"X": 1.0, "Y": 2.0, "Z": 3.0, "x": 10.0, "y": 20.0, "picked": True}})
+        assert node.surveyPoint.geometry.getObservation("0")["picked2d"] is True
+
+        node.keyableSurveyPoint.upgradeValue({"geometry": {
+            "X": {"1": 1.0, "2": 1.0}, "Y": {"1": 2.0, "2": 2.0}, "Z": {"1": 3.0, "2": 3.0},
+            "x": {"1": 10.0, "2": -1.0}, "y": {"1": 20.0, "2": -1.0},
+            "ex": {"1": 0.0, "2": 0.0}, "ey": {"1": 0.0, "2": 0.0},
+            "picked": {"1": True, "2": True}}})
+        assert node.keyableSurveyPoint.geometry.getObservation("1")["picked2d"] is True
+        assert node.keyableSurveyPoint.geometry.getObservation("2")["picked2d"] is False

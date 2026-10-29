@@ -1775,6 +1775,33 @@ class ShapeAttribute(GroupAttribute):
         self.geometry.valueChanged.connect(self._onGeometryChanged)
 
     # Override
+    # A SurveyPoint saved before its picked2d flag existed was placed in 2d if its 2d position is set.
+    def upgradeValue(self, exportedValue):
+        if self.type == "SurveyPoint" and isinstance(exportedValue, dict):
+            exportedValue = self._upgradeSurveyPointPicked2d(exportedValue)
+        super().upgradeValue(exportedValue)
+
+    @staticmethod
+    def _upgradeSurveyPointPicked2d(exportedValue: dict) -> dict:
+        """
+        Return the given exported SurveyPoint value with its picked2d flag, if it is missing.
+        The flag is derived from the 2d position, which is -1 when not placed.
+        """
+        geometry = exportedValue.get("geometry")
+        if not isinstance(geometry, dict) or "picked2d" in geometry:
+            return exportedValue
+        x, y = geometry.get("x", -1.0), geometry.get("y", -1.0)
+        if isinstance(x, dict) and isinstance(y, dict):
+            # Keyable geometry: {key: value}
+            picked2d = {key: x[key] >= 0 and y.get(key, -1.0) >= 0 for key in x}
+        elif isinstance(x, (int, float)) and isinstance(y, (int, float)):
+            picked2d = x >= 0 and y >= 0
+        else:
+            # Link expression
+            return exportedValue
+        return {**exportedValue, "geometry": {**geometry, "picked2d": picked2d}}
+
+    # Override
     # Fix missing link expression serialization.
     # Should be remove if link expression serialization is added in GroupAttribute.
     def getSerializedValue(self):

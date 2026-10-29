@@ -53,6 +53,16 @@ def isSafeFolderName(name) -> bool:
     return isinstance(name, str) and name not in ("", "..") and Path(name).name == name
 
 
+def defaultFileMode() -> int:
+    """
+    Return the permissions of a regular file created by "open()": 0o666 minus the process umask.
+    """
+    # The umask can only be read by setting it: restore it right away.
+    umask = os.umask(0o022)
+    os.umask(umask)
+    return 0o666 & ~umask
+
+
 @contextmanager
 def atomicOpen(path: Path, mode: str = "w", prefix: str = tempfile.gettempprefix()):
     """
@@ -72,6 +82,8 @@ def atomicOpen(path: Path, mode: str = "w", prefix: str = tempfile.gettempprefix
     fd, tmpPath = tempfile.mkstemp(dir=path.parent, prefix=prefix)
     try:
         with os.fdopen(fd, mode) as f:
+            # "mkstemp" creates the file accessible by its owner only: give it the permissions of a new regular file.
+            os.chmod(tmpPath, defaultFileMode())
             yield f
         os.replace(tmpPath, path)
     except BaseException:

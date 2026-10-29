@@ -129,12 +129,3 @@ def resolveSelectedSurveyPointAttribute(graph, selectedNode, selectedShapeName):
         return None
 
     return selectedShape
-
-
-def getSelectedSurveyPointObservationKey(graph, selectedNode, selectedShapeName, viewId):
-    selectedShape = resolveSelectedSurveyPointAttribute(graph, selectedNode, selectedShapeName)
-    if selectedShape is None:
-        return ""
-
-    observationKey = getSurveyPointObservationKey(selectedShape, viewId)
-    return observationKey if observationKey else ""

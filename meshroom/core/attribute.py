@@ -16,6 +16,7 @@ from meshroom.core.desc.validators import NotEmptyValidator
 from meshroom.core import desc, hashValue
 
 from meshroom.core.desc import Attribute as AttributeDescription
+from meshroom.core.desc.attribute import convertToLabel
 
 from meshroom.core.keyValues import KeyValues
 from meshroom.core.exception import InvalidEdgeError
@@ -56,13 +57,18 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     name = descType.get('name')
     label = descType.get('label')
     description = descType.get('description')
-    value = descType.get('value')
+    # The default value is only serialized when it differs from the current value
+    value = descType.get('defaultValue')
+    if value is None:
+        value = descType.get('value')
     elementDesc = descType.get('elementDesc')
     items = descType.get('items')
     values = descType.get('values')
     exclusive = descType.get('exclusive')
     keyable = descType.get('keyable')
     shape = descType.get('shape')
+    advanced = descType.get('advanced')
+    valueRange = descType.get('range')
 
     kwargs = {'name': name, 'label': label, 'description': description}
 
@@ -89,6 +95,12 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
 
     if shape is not None:
         kwargs['shape'] = attributeDescriptionFactory(shape)
+
+    if advanced is not None:
+        kwargs['advanced'] = advanced
+
+    if valueRange is not None and issubclass(attrClass, (desc.IntParam, desc.FloatParam)):
+        kwargs['range'] = valueRange
 
     return attrClass(**kwargs)
 
@@ -441,6 +453,22 @@ class Attribute(BaseObject):
             "type": self.desc.__class__.__name__,
             "value": self.getSerializedValue()
         }
+        # Description parameters that can be edited on AnySet children
+        if self.desc.description:
+            serializedData["description"] = self.desc.description
+        if self.desc.advanced:
+            serializedData["advanced"] = True
+        if isinstance(self.desc, (desc.IntParam, desc.FloatParam)) and self.desc.range:
+            serializedData["range"] = list(self.desc.range)
+        if isinstance(self.desc, desc.ChoiceParam):
+            serializedData["values"] = list(self.desc.values)
+            if not self.desc.exclusive:
+                serializedData["exclusive"] = False
+        # A link expression is restored as the default value (e.g. for group items restored on a CompatibilityNode)
+        defaultValue = self.desc.value
+        if not self.isLink and not callable(defaultValue) and defaultValue is not None \
+                and defaultValue != serializedData["value"]:
+            serializedData["defaultValue"] = defaultValue
 
         return serializedData
 
@@ -1450,6 +1478,10 @@ class GroupAttribute(Attribute, Expandable):
             "type": self.desc.__class__.__name__,
             "items": [ item.asDict() for item in self.flatStaticChildren ]
         }
+        if self.desc.description:
+            serializedData["description"] = self.desc.description
+        if self.desc.advanced:
+            serializedData["advanced"] = True
         return serializedData
 
     # Override
@@ -1913,6 +1945,17 @@ class AnySet(GroupAttribute):
 
     _attributeNameRegex = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
+    # Description parameters of the attributes that can be created from the UI, by description type
+    _newAttributeParameters = {
+        "StringParam": {"value": ""},
+        "IntParam": {"value": 0, "range": [0, 10, 1]},
+        "FloatParam": {"value": 0.5, "range": [0.0, 1.0, 0.01]},
+        "BoolParam": {"value": False},
+        "ChoiceParam": {"value": "optionA", "values": ["optionA", "optionB"]},
+        "File": {"value": ""},
+        "ColorParam": {"value": "#2a82da"},
+    }
+
     def duplicateAttribute(self, attribute: Attribute, isOutput: bool|None=None) -> Attribute:
         """ Create an attribute as child of the current, with the same description as the given one.
             Duplicated name's are handled by _renameAttributeDescriptionInPlace()
@@ -2000,6 +2043,109 @@ class AnySet(GroupAttribute):
         self._value.insert(index, restoredAttribute)
         self.flatStaticChildrenChanged.emit()
         return restoredAttribute
+
+    def _validateAttributeName(self, name: str, attribute: Attribute | None = None) -> None:
+        """Raise a ValueError if 'name' is not a valid name for a child, or if it is already used by
+        another child than 'attribute'."""
+        if not self._attributeNameRegex.match(name):
+            raise ValueError(f"Invalid attribute name: '{name}'.")
+        if (attribute is None or name != attribute.name) and name in self._value.keys():
+            raise ValueError(f"Attribute name '{name}' already exists in '{self.fullName}'.")
+
+    def newAttributeData(self, attributeType: str) -> dict:
+        """
+        Return the serialized data of a new child attribute, to be added with insertAttribute().
+
+        Args:
+            attributeType: the description type of the attribute (e.g. "FloatParam").
+
+        Returns:
+            The serialized attribute, with a unique name derived from its type and default parameters.
+        """
+        if attributeType not in self._newAttributeParameters:
+            raise ValueError(f"Unsupported attribute type: '{attributeType}'.")
+
+        baseName = attributeType.replace("Param", "").lower()
+        name = baseName
+        index = -1
+        while name in self._value.keys():
+            index += 1
+            name = f"{baseName}_{index}"
+
+        return {
+            "name": name,
+            "label": convertToLabel(name),
+            "type": attributeType,
+            **copy.deepcopy(self._newAttributeParameters[attributeType])
+        }
+
+    def editedAttributeData(self, attribute: Attribute, parameters: dict) -> dict:
+        """
+        Return the serialized data of a child attribute with its description parameters edited.
+        The current value is kept, unless the attribute is at its default value: it then follows the new default value.
+
+        Args:
+            attribute: the child attribute to edit.
+            parameters: the edited parameters, among "name", "label", "description", "advanced",
+                        "defaultValue", "range" (numeric types) and "values" (choices).
+
+        Returns:
+            The serialized attribute, to be restored with replaceAttribute().
+
+        Raises:
+            ValueError: if the name, label, default value or range are invalid.
+        """
+        if attribute not in self._value:
+            raise ValueError(f"Attribute '{attribute.fullName}' is not a child of '{self.fullName}'.")
+
+        attributeDesc = attribute.desc
+        data = attribute.asDict()
+        followDefault = attribute.isDefault and not attribute.isLink
+
+        for key in ("name", "label", "description"):
+            if key in parameters:
+                data[key] = str(parameters[key]).strip()
+        if "advanced" in parameters:
+            data["advanced"] = bool(parameters["advanced"])
+
+        self._validateAttributeName(data["name"], attribute)
+        if not data["label"]:
+            raise ValueError("Attribute label cannot be empty.")
+
+        if "defaultValue" in parameters:
+            data["defaultValue"] = attributeDesc.validateValue(parameters["defaultValue"])
+        elif not callable(attributeDesc.value):
+            data["defaultValue"] = attributeDesc.value
+
+        if "range" in parameters and isinstance(attributeDesc, (desc.IntParam, desc.FloatParam)):
+            data["range"] = [attributeDesc.validateValue(v) for v in parameters["range"]]
+
+        if "values" in parameters and isinstance(attributeDesc, desc.ChoiceParam):
+            data["values"] = list(parameters["values"])
+
+        if followDefault:
+            data["value"] = data.get("defaultValue")
+        return data
+
+    def replaceAttribute(self, attribute: Attribute, serializedAttribute: dict) -> Attribute | None:
+        """Replace a child attribute by the one restored from 'serializedAttribute', at the same position."""
+        if attribute not in self._value:
+            raise ValueError(f"Attribute '{attribute.fullName}' is not a child of '{self.fullName}'.")
+        self._validateAttributeName(serializedAttribute.get("name", ""), attribute)
+
+        index = list(self._value).index(attribute)
+        self._value.remove(attribute)
+        try:
+            newAttribute = self.insertAttribute(serializedAttribute, index)
+        except Exception:
+            # Restore the original attribute if the new one could not be created
+            self._value.insert(index, attribute)
+            self.flatStaticChildrenChanged.emit()
+            raise
+        if newAttribute is None:
+            self._value.insert(index, attribute)
+            self.flatStaticChildrenChanged.emit()
+        return newAttribute
 
     def _renameAttributeDescriptionInPlace(self, attributeDesc: AttributeDescription, indexPattern:str="{name}_{index}"):
         """ If an attribute already exists with the same name,

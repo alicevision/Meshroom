@@ -190,6 +190,119 @@ def test_move_anyset_attribute_updates_order():
     assert [attribute.name for attribute in dynamicNode.ins.value] == initialOrder
 
 
+def test_new_anyset_attribute_data_has_unique_name_and_defaults():
+    graph, dynamicNode = initGraphAndNode()
+
+    floatData = dynamicNode.ins.newAttributeData("FloatParam")
+    assert floatData["name"] == "float"
+    assert floatData["type"] == "FloatParam"
+    dynamicNode.ins.insertAttribute(floatData, 0)
+
+    floatData0 = dynamicNode.ins.newAttributeData("FloatParam")
+    assert floatData0["name"] == "float_0"
+    floatAttr0 = dynamicNode.ins.insertAttribute(floatData0, 1)
+    assert floatAttr0.label == "Float 0"
+    assert floatAttr0.desc.range == [0.0, 1.0, 0.01]
+    assert floatAttr0.isDefault
+
+    choiceAttr = dynamicNode.ins.insertAttribute(dynamicNode.ins.newAttributeData("ChoiceParam"), 2)
+    assert choiceAttr.desc.values == ["optionA", "optionB"]
+
+    try:
+        dynamicNode.ins.newAttributeData("AnySet")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Only parameter types can be created from the UI.")
+
+
+def test_edit_anyset_attribute_updates_description_and_keeps_position():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    anySet.insertAttribute(anySet.newAttributeData("StringParam"), 0)
+    intAttr = anySet.insertAttribute(anySet.newAttributeData("IntParam"), 1)
+    anySet.insertAttribute(anySet.newAttributeData("BoolParam"), 2)
+
+    data = anySet.editedAttributeData(intAttr, {
+        "name": "downscale", "label": "Downscale", "description": "Downscale factor",
+        "advanced": True, "defaultValue": "2", "range": [1, 8.0, 1]
+    })
+    newAttr = anySet.replaceAttribute(intAttr, data)
+
+    assert [attribute.name for attribute in anySet.value] == ["string", "downscale", "bool"]
+    assert anySet.int is None
+    assert newAttr.label == "Downscale"
+    assert newAttr.desc.description == "Downscale factor"
+    assert newAttr.desc.advanced
+    assert newAttr.desc.range == [1, 8, 1]
+    # The attribute was at its default value: it follows the new default value
+    assert newAttr.value == 2
+    assert newAttr.isDefault
+
+
+def test_edit_anyset_attribute_keeps_modified_value():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    choiceAttr = anySet.insertAttribute(anySet.newAttributeData("ChoiceParam"), 0)
+    choiceAttr.value = "optionB"
+
+    data = anySet.editedAttributeData(choiceAttr, {"defaultValue": "low", "values": ["low", "optionB"]})
+    newAttr = anySet.replaceAttribute(choiceAttr, data)
+
+    assert newAttr.desc.values == ["low", "optionB"]
+    assert newAttr.desc.value == "low"
+    assert newAttr.value == "optionB"
+    assert not newAttr.isDefault
+
+
+def test_edit_anyset_attribute_rejects_invalid_parameters():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    anySet.insertAttribute(anySet.newAttributeData("FloatParam"), 0)
+    stringAttr = anySet.insertAttribute(anySet.newAttributeData("StringParam"), 1)
+    floatAttr = anySet.float
+
+    for parameters in ({"name": "float"}, {"name": "1invalid"}, {"label": " "}):
+        try:
+            anySet.editedAttributeData(stringAttr, parameters)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"Editing with {parameters} should fail.")
+
+    try:
+        anySet.editedAttributeData(floatAttr, {"defaultValue": "notANumber"})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("An invalid default value should be rejected.")
+
+
+def test_edited_anyset_attribute_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    floatAttr = anySet.insertAttribute(anySet.newAttributeData("FloatParam"), 0)
+    floatAttr = anySet.replaceAttribute(floatAttr, anySet.editedAttributeData(floatAttr, {
+        "name": "blend", "label": "Blend Weight", "description": "Weight of the secondary input",
+        "advanced": True, "defaultValue": 0.5, "range": [0.0, 2.0, 0.1]
+    }))
+    floatAttr.value = 0.65
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+
+    loadedAttr = loadGraph(graphFile).node(dynamicNode.name).ins.blend
+    assert loadedAttr.label == "Blend Weight"
+    assert loadedAttr.desc.description == "Weight of the secondary input"
+    assert loadedAttr.desc.advanced
+    assert loadedAttr.desc.range == [0.0, 2.0, 0.1]
+    assert loadedAttr.desc.value == 0.5
+    assert loadedAttr.value == 0.65
+    assert not loadedAttr.isDefault
+
+
 # ---------------------------------------------------------------------------
 # Serialization / deserialization tests
 # ---------------------------------------------------------------------------

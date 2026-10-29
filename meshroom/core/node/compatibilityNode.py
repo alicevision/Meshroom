@@ -70,14 +70,17 @@ class CompatibilityNode(BaseNode):
         for attrName, value in self._internalInputs.items():
             self._addAttribute(attrName, value, isOutput=False, internalAttr=True)
 
-        if self.nodeDescDict:
-            # Add internal flowInputs to internalAttributes
-            if "flowInputs" not in self._internalAttributes.keys():
-                self._addAttribute("flowInputs", None, isOutput=False, internalAttr=True)
-            # Add internal flowOutput to internalAttributes
-            if "flowOutput" not in self._internalAttributes.keys():
-                self._addAttribute("flowOutput", None, isOutput=True, internalAttr=True)
+        # Add the internal flow attributes, which are not serialized when they are not connected, so that
+        # flow edges to and from this node can always be restored (they do not depend on the node description)
+        existingAttrNames = set(self._attributes.keys()) | set(self._internalAttributes.keys())
+        for attrDesc in self._internalFlowDescriptions(isOutput=False):
+            if attrDesc.name not in existingAttrNames:
+                self._addAttribute(attrDesc.name, None, isOutput=False, internalAttr=True)
+        for attrDesc in self._internalFlowDescriptions(isOutput=True):
+            if attrDesc.name not in existingAttrNames:
+                self._addAttribute(attrDesc.name, None, isOutput=True, internalAttr=True)
 
+        if self.nodeDescDict:
             # Add any input/output attribute present in the node description but not in the serialized node data
             existingAttrNames = set(self._attributes.keys())
             for attrName in self.nodeDescDict.get("inputs", {}).keys():
@@ -99,6 +102,17 @@ class CompatibilityNode(BaseNode):
     def _updateNodeSize(self):
         # Block the recompute of the node size for compatibility nodes
         pass
+
+    def _internalFlowDescriptions(self, isOutput):
+        """
+        Return the descriptions of the internal flow input or output attributes of this node: the ones of its
+        node type if it is known, the ones of a base node otherwise.
+        """
+        if self.nodeDesc:
+            return self.nodeDesc.internalFlowOutputs if isOutput else self.nodeDesc.internalFlowInputs
+        if isOutput:
+            return InternalAttributesFactory.getInternalFlowOutputs(MrNodeType.BASENODE)
+        return InternalAttributesFactory.getInternalFlowInputs(MrNodeType.BASENODE)
 
     @staticmethod
     def attributeDescFromValue(attrName, value, isOutput):
@@ -303,20 +317,22 @@ class CompatibilityNode(BaseNode):
         attrDesc = None
         if self.nodeDesc:
             if internalAttr:
-                refAttrs = self.nodeDesc.internalInputs
+                refAttrs = (list(self.nodeDesc.internalInputs) + list(self.nodeDesc.internalFlowInputs)
+                            + list(self.nodeDesc.internalFlowOutputs))
             else:
                 refAttrs = self.nodeDesc.outputs if isOutput else self.nodeDesc.inputs
             attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
         matchDesc = attrDesc is not None
-        if attrDesc is None and self.nodeDescDict:
-            if internalAttr:
-                internalAttrs = InternalAttributesFactory.getInternalAttributes(MrNodeType.BASENODE)
-                internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(MrNodeType.BASENODE)
-                internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(MrNodeType.BASENODE)
-                refAttrs = internalAttrs + internalFlowInputs + internalFlowOutputs
-                attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
-            else:
-                attrDesc = CompatibilityNode.attributeDescFromDict(self.nodeDescDict, name, val, isOutput)
+        if attrDesc is None and internalAttr:
+            # Internal attributes are not serialized in the node description, but they are common to all
+            # node types: look for them in the base node ones, even without a node description
+            internalAttrs = InternalAttributesFactory.getInternalAttributes(MrNodeType.BASENODE)
+            internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(MrNodeType.BASENODE)
+            internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(MrNodeType.BASENODE)
+            refAttrs = internalAttrs + internalFlowInputs + internalFlowOutputs
+            attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
+        elif attrDesc is None and self.nodeDescDict:
+            attrDesc = CompatibilityNode.attributeDescFromDict(self.nodeDescDict, name, val, isOutput)
         if attrDesc is None:
             attrDesc = CompatibilityNode.attributeDescFromValue(name, val, isOutput)
         attribute = attributeFactory(attrDesc, val, isOutput, self)

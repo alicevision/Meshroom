@@ -19,6 +19,11 @@ from meshroom.core.plugins.metadata import PluginMetadata
 # Registered directly in sys.modules.
 PLUGINS_ROOT_PACKAGE = "_meshroomPlugins"
 
+# Reserved file name, at the root of a plugin's host modules, declaring the plugin's menus.
+# It is executed as "<PLUGINS_ROOT_PACKAGE>.<pluginName>.menu" when the plugin is loaded,
+# instead of being scanned for node/submitter providers like the other modules.
+PLUGIN_MENU_FILE = "menu.py"
+
 
 class _LoadIssues:
     """
@@ -69,7 +74,8 @@ class PluginLoader:
         Python package, and every standalone Python file directly inside a plain (non-package)
         subfolder is loaded. A NodeDescProvider is created for each node description that is found.
         A SubmitterProvider for each submitter class, that is found. The templates and the configuration
-        file are read from "pluginFolder".
+        file are read from "pluginFolder". A "menu.py" file at the root of the host modules, if any,
+        is executed so that the plugin can declare its menus.
 
         The plugin's final name and version are resolved from its configuration file (config.json),
         falling back to "pluginName"/"pluginVersion" when the configuration file does not provide them.
@@ -163,6 +169,9 @@ class PluginLoader:
         issues = _LoadIssues()
         self._loadRootFolder(plugin, pluginPackage, hostPath, issues)
 
+        # Execute the plugin's menu declarations, if any.
+        self._loadMenu(pluginPackage, hostPath, issues)
+
         # Log issues.
         issues.log(pluginName)
 
@@ -186,6 +195,26 @@ class PluginLoader:
         pluginPackage = f"{PLUGINS_ROOT_PACKAGE}.{pluginName}"
         for moduleName in [name for name in sys.modules if name == pluginPackage or name.startswith(f"{pluginPackage}.")]:
             del sys.modules[moduleName]
+
+    def _loadMenu(self, packageName: str, hostPath: Path, issues: _LoadIssues):
+        """
+        Execute the plugin's menu declaration file ("menu.py" at the root of its host modules),
+        so that the plugin can register its menus. The file is executed as the module
+        "<packageName>.menu" of the plugin's virtual package, and is not scanned for
+        node/submitter providers.
+
+        Args:
+            packageName: the dotted name of the plugin's virtual package.
+            hostPath: the plugin's host modules folder (its "meshroom" folder).
+            issues: the collector for the issues found while loading the plugin.
+        """
+        menuFile = hostPath / PLUGIN_MENU_FILE
+        if not menuFile.is_file():
+            return
+
+        # Register the package now that the folder is known to provide the menu module.
+        self._registerPackage(packageName, hostPath)
+        self._execModule(f"{packageName}.menu", menuFile, issues)
 
     def _loadRootFolder(self, plugin: Plugin, packageName: str, folderRootPath: Path, issues: _LoadIssues):
         """
@@ -284,6 +313,9 @@ class PluginLoader:
         for filePath in sorted([*folderPath.glob("*.py"), *folderPath.glob("*.pyc")]):
             # Skip special/dunder files like __init__.py
             if filePath.stem.startswith("__"):
+                continue
+            # Skip the reserved menu declaration file: it is executed by "_loadMenu".
+            if filePath.stem == "menu":
                 continue
 
             module = self._execModule(f"{packageName}.{filePath.stem}", filePath, issues)

@@ -31,6 +31,17 @@ def _brokenSource() -> str:
     return "raise RuntimeError('broken')\n"
 
 
+def _menuSource(counterFile: str) -> str:
+    """ Menu declaration writing its execution count to "counterFile", to detect how many
+    times it was executed. """
+    return (
+        "from pathlib import Path\n"
+        f"counter = Path({counterFile!r})\n"
+        "count = int(counter.read_text()) if counter.exists() else 0\n"
+        "counter.write_text(str(count + 1))\n"
+    )
+
+
 class TestPluginLoader:
 
     def test_flatRoot(self, tmp_path):
@@ -438,3 +449,53 @@ class TestPluginLoader:
         assert plugin.version == "1.0.0"
 
         loader.unloadPlugin("fallbackPlugin")
+
+    def test_menuLoaded(self, tmp_path):
+        """ A "menu.py" at the plugin's root is executed when the plugin is loaded. """
+        counterFile = tmp_path / "menu_count.txt"
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/menu.py", _menuSource(str(counterFile)))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("menuPlugin", str(tmp_path), PluginType.PATH)
+
+        assert plugin is not None
+        assert list(plugin.nodeDescProviders.keys()) == ["MyNode"]
+        # The menu file was executed exactly once.
+        assert counterFile.read_text() == "1"
+        # It is registered as a module of the plugin's virtual package.
+        menuModuleName = f"{PLUGINS_ROOT_PACKAGE}.menuPlugin.menu"
+        assert menuModuleName in sys.modules
+
+        loader.unloadPlugin("menuPlugin")
+        assert menuModuleName not in sys.modules
+
+    def test_menuLoadedWithoutNodes(self, tmp_path):
+        """ A plugin with only a menu declaration still gets its menu executed. """
+        counterFile = tmp_path / "menu_count.txt"
+        writeFile(tmp_path / "meshroom/menu.py", _menuSource(str(counterFile)))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("menuOnlyPlugin", str(tmp_path), PluginType.PATH)
+
+        # The plugin itself is empty and not returned...
+        assert plugin is None
+        # ... but its menu declaration was still executed.
+        assert counterFile.read_text() == "1"
+
+        loader.unloadPlugin("menuOnlyPlugin")
+
+    def test_brokenMenuDoesNotBlockPlugin(self, tmp_path, caplog):
+        """ A failing "menu.py" is logged as an issue, but the plugin still loads. """
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/menu.py", _brokenSource())
+
+        loader = PluginLoader()
+        with caplog.at_level(logging.WARNING):
+            plugin = loader.loadPlugin("brokenMenuPlugin", str(tmp_path), PluginType.PATH)
+
+        assert plugin is not None
+        assert list(plugin.nodeDescProviders.keys()) == ["MyNode"]
+        assert "menu" in caplog.text
+
+        loader.unloadPlugin("brokenMenuPlugin")

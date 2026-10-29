@@ -97,6 +97,26 @@ Plugins without a `pyproject.toml` can still use a `./meshroom/config.json` file
 
 In `config.json`, a relative `path` value is resolved against the `meshroom` folder, not the plugin root folder.
 
+## Plugin Menus
+
+A plugin can declare custom menus for the Meshroom UI with a `menu.py` file at the root of its `meshroom` folder. The file is executed when the plugin is loaded, and registers its menus with `MeshroomMenuManager`:
+
+```python
+from meshroom.ui.menu import Menu, MenuCallback, MeshroomMenuManager
+
+
+class OpenSettings(MenuCallback):
+    def __call__(self, menu, app, **kwargs):
+        ...
+
+
+menu = Menu("My Plugin")
+menu.addButton("Open Settings", callback=OpenSettings())
+MeshroomMenuManager.registerMenu(menu)
+```
+
+Menus are only loaded when Meshroom runs with its graphical interface: the file is ignored by the command-line tools (`meshroom_batch`, `meshroom_compute`).
+
 ## Installing a Plugin
 
 A plugin can be installed in one of three ways:

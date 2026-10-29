@@ -580,7 +580,7 @@ class TestSurveyPointAttribute:
 
         # Both the 3d and 2d parts are unset by default
         observation = node.surveyPoint.geometry.getObservation("0")
-        assert observation["picked"] is False
+        assert observation["picked3d"] is False
         assert observation["picked2d"] is False
         assert node.keyableSurveyPoint.geometry.getObservation("0") is None
 
@@ -590,13 +590,13 @@ class TestSurveyPointAttribute:
         geometry = node.keyableSurveyPoint.geometry
 
         # A partial observation (3d part only) is not a complete observation
-        geometry.setObservation("1", {"X": 1.0, "Y": 2.0, "Z": 3.0, "picked": True})
+        geometry.setObservation("1", {"X": 1.0, "Y": 2.0, "Z": 3.0, "picked3d": True})
         assert not geometry.hasObservation("1")
         assert geometry.getObservation("1") is None
 
         # A full observation round-trips
         observation = {"X": 1.0, "Y": 2.0, "Z": 3.0, "x": -1.0, "y": -1.0, "ex": 0.0, "ey": 0.0,
-                       "picked": True, "picked2d": False}
+                       "picked3d": True, "picked2d": False}
         geometry.setObservation("2", observation)
         assert geometry.hasObservation("2")
         assert geometry.getObservation("2") == observation
@@ -607,7 +607,7 @@ class TestSurveyPointAttribute:
 
         # Only the 3d part is set, the 2d part keeps its default values
         observation = {"X": 1.0, "Y": 2.0, "Z": 3.0, "x": -1.0, "y": -1.0, "ex": 0.0, "ey": 0.0,
-                       "picked": True, "picked2d": False}
+                       "picked3d": True, "picked2d": False}
         node.keyableSurveyPoint.geometry.setObservation("1", observation)
         node.surveyPoint.geometry.setObservation("0", observation)
         graph.save()
@@ -624,7 +624,7 @@ class TestSurveyPointAttribute:
 
         for shape, key in ((node.keyableSurveyPoint, "1"), (node.surveyPoint, "0")):
             geometry = shape.geometry
-            point3d = {"X": 1.0, "Y": 2.0, "Z": 3.0, "picked": True}
+            point3d = {"X": 1.0, "Y": 2.0, "Z": 3.0, "picked3d": True}
 
             # 3d pick first: full observation, the 2d part keeps its default values
             geometry.setObservation(key, mergeSurveyPointObservation(shape, key, point3d))
@@ -643,18 +643,23 @@ class TestSurveyPointAttribute:
             assert point3d.items() <= observation.items()
             assert (observation["x"], observation["y"], observation["picked2d"]) == (10.0, 20.0, False)
 
-    def test_upgradeWithoutPicked2d(self):
+    def test_upgradeOldFlags(self):
         graph = Graph("")
         node = graph.addNewNode(NodeWithSurveyPoints.__name__)
 
-        # Values saved before the picked2d flag existed: placed in 2d if the 2d position is set
+        # Values saved with the former picked flag and without picked2d:
+        # picked becomes picked3d, placed in 2d if the 2d position is set
         node.surveyPoint.upgradeValue({"geometry": {"X": 1.0, "Y": 2.0, "Z": 3.0, "x": 10.0, "y": 20.0, "picked": True}})
-        assert node.surveyPoint.geometry.getObservation("0")["picked2d"] is True
+        observation = node.surveyPoint.geometry.getObservation("0")
+        assert observation["picked3d"] is True
+        assert observation["picked2d"] is True
 
         node.keyableSurveyPoint.upgradeValue({"geometry": {
             "X": {"1": 1.0, "2": 1.0}, "Y": {"1": 2.0, "2": 2.0}, "Z": {"1": 3.0, "2": 3.0},
             "x": {"1": 10.0, "2": -1.0}, "y": {"1": 20.0, "2": -1.0},
             "ex": {"1": 0.0, "2": 0.0}, "ey": {"1": 0.0, "2": 0.0},
             "picked": {"1": True, "2": True}}})
+        assert node.keyableSurveyPoint.geometry.getObservation("1")["picked3d"] is True
         assert node.keyableSurveyPoint.geometry.getObservation("1")["picked2d"] is True
+        assert node.keyableSurveyPoint.geometry.getObservation("2")["picked3d"] is True
         assert node.keyableSurveyPoint.geometry.getObservation("2")["picked2d"] is False

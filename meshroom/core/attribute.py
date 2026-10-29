@@ -1775,20 +1775,26 @@ class ShapeAttribute(GroupAttribute):
         self.geometry.valueChanged.connect(self._onGeometryChanged)
 
     # Override
-    # A SurveyPoint saved before its picked2d flag existed was placed in 2d if its 2d position is set.
+    # Upgrade the flags of a SurveyPoint saved with an older description.
     def upgradeValue(self, exportedValue):
         if self.type == "SurveyPoint" and isinstance(exportedValue, dict):
-            exportedValue = self._upgradeSurveyPointPicked2d(exportedValue)
+            exportedValue = self._upgradeSurveyPointFlags(exportedValue)
         super().upgradeValue(exportedValue)
 
     @staticmethod
-    def _upgradeSurveyPointPicked2d(exportedValue: dict) -> dict:
+    def _upgradeSurveyPointFlags(exportedValue: dict) -> dict:
         """
-        Return the given exported SurveyPoint value with its picked2d flag, if it is missing.
-        The flag is derived from the 2d position, which is -1 when not placed.
+        Return the given exported SurveyPoint value with its current flags:
+        - the former picked flag is renamed picked3d.
+        - a missing picked2d flag is derived from the 2d position, which is -1 when not placed.
         """
         geometry = exportedValue.get("geometry")
-        if not isinstance(geometry, dict) or "picked2d" in geometry:
+        if not isinstance(geometry, dict):
+            return exportedValue
+        if "picked" in geometry and "picked3d" not in geometry:
+            geometry = {("picked3d" if name == "picked" else name): value for name, value in geometry.items()}
+            exportedValue = {**exportedValue, "geometry": geometry}
+        if "picked2d" in geometry:
             return exportedValue
         x, y = geometry.get("x", -1.0), geometry.get("y", -1.0)
         if isinstance(x, dict) and isinstance(y, dict):

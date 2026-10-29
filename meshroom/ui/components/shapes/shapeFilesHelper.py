@@ -53,8 +53,8 @@ class ShapeFilesHelper(BaseObject):
             self._loadShapeFiles()
 
     @Slot()
-    def _onSelectedViewIdChanged(self):
-        """Callback when the active project selected view id changes."""
+    def _onPickedViewIdChanged(self):
+        """Callback when the active project picked view id changes."""
         for shapeFile in self._shapeFiles:
             shapeFile.setViewId(self._activeProject.pickedViewId)
 

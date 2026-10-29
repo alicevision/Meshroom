@@ -17,10 +17,23 @@ import "Utils" as LayerUtils
 */
 BaseLayer {
     id: circleLayer
+    moveTarget: draggableShape
 
     // Circle radius from handleRadius position
     property real circleRadius: Math.max(1.0, Math.sqrt(Math.pow(handleRadius.x - handleCenter.x, 2) +
                                                         Math.pow(handleRadius.y - handleCenter.y, 2)))
+
+    // Commit the move of the circle (and of the other selected shapes)
+    function commitMove() {
+        if (commitSelectionMove())
+            return
+        _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
+            center: {
+                x: handleCenter.x + draggableShape.x,
+                y: handleCenter.y + draggableShape.y
+            }
+        })
+    }
                                      
     // Circle shape
     Shape {
@@ -58,16 +71,14 @@ BaseLayer {
             PathLine { x: handleRadius.x; y: handleRadius.y }
         }
 
-        // Selection area
-        MouseArea  {
+        // Selection and move area
+        LayerUtils.MoveArea {
             x: handleCenter.x - circleRadius
             y: handleCenter.y - circleRadius
             width: circleRadius * 2
             height: circleRadius * 2
-            acceptedButtons: Qt.LeftButton
-            cursorShape: circleLayer.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: selectionRequested()
-            enabled: circleLayer.editable && !circleLayer.selected
+            shapeLayer: circleLayer
+            onMoved: circleLayer.commitMove()
         }
         
         // Handle for circle center
@@ -76,17 +87,12 @@ BaseLayer {
             x: circleLayer.observation.center.x || 0
             y: circleLayer.observation.center.y || 0
             size: getScaledHandleSize()
+            scaleRatio: circleLayer.scaleRatio
             target: draggableShape
             cursorShape: Qt.SizeAllCursor
             visible: circleLayer.editable && circleLayer.selected
-            onMoved: {
-                _currentScene.setObservationFromName(circleLayer.name, _currentScene.selectedViewId, { 
-                    center: {
-                        x: handleCenter.x + draggableShape.x, 
-                        y: handleCenter.y + draggableShape.y 
-                    } 
-                })
-            }
+            onTapped: function(modifiers) { selectionRequested(modifiers) }
+            onMoved: circleLayer.commitMove()
         }
 
         // Handle for circle radius
@@ -95,6 +101,7 @@ BaseLayer {
             x: circleLayer.observation.center.x + circleLayer.observation.radius || 0
             y: circleLayer.observation.center.y || 0
             size: getScaledHandleSize()
+            scaleRatio: circleLayer.scaleRatio
             cursorShape: Qt.SizeBDiagCursor
             visible: circleLayer.editable && circleLayer.selected
             onMoved: {

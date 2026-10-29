@@ -17,12 +17,43 @@ import "Utils" as LayerUtils
 */
 BaseLayer {
     id: rectangleLayer
+    moveTarget: draggableRectangle
 
-    // Rectangle width from handleWidth position
-    property real rectangleWidth: Math.max(1.0, Math.abs(handleCenter.x- handleWidth.x) * 2)
+    // Rectangle edges from the observation, updated while a corner handle is dragged
+    property real rectangleLeft: (rectangleLayer.observation.center.x - rectangleLayer.observation.size.width * 0.5) || 0
+    property real rectangleRight: (rectangleLayer.observation.center.x + rectangleLayer.observation.size.width * 0.5) || 0
+    property real rectangleTop: (rectangleLayer.observation.center.y - rectangleLayer.observation.size.height * 0.5) || 0
+    property real rectangleBottom: (rectangleLayer.observation.center.y + rectangleLayer.observation.size.height * 0.5) || 0
 
-    // Rectangle height from handleHeight position
-    property real rectangleHeight: Math.max(1.0, Math.abs(handleCenter.y - handleHeight.y) * 2)
+    // Rectangle size from its edges (a corner can be dragged past the opposite one)
+    property real rectangleWidth: Math.max(1.0, Math.abs(rectangleRight - rectangleLeft))
+    property real rectangleHeight: Math.max(1.0, Math.abs(rectangleBottom - rectangleTop))
+
+    // Commit the move of the rectangle (and of the other selected shapes)
+    function commitMove() {
+        if (commitSelectionMove())
+            return
+        _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
+            center: {
+                x: handleCenter.x + draggableRectangle.x,
+                y: handleCenter.y + draggableRectangle.y
+            }
+        })
+    }
+
+    // Commit the resize of the rectangle from its edges
+    function commitResize() {
+        _currentScene.setObservationFromName(name, _currentScene.selectedViewId, {
+            center: {
+                x: (rectangleLeft + rectangleRight) * 0.5,
+                y: (rectangleTop + rectangleBottom) * 0.5
+            },
+            size: {
+                width: rectangleWidth,
+                height: rectangleHeight
+            }
+        })
+    }
 
     // Rectangle shape
     Shape {
@@ -35,92 +66,89 @@ BaseLayer {
             strokeWidth: getScaledStrokeWidth()
 
             PathRectangle {
-                x: rectangleLayer.observation.center.x - (rectangleWidth * 0.5)
-                y: rectangleLayer.observation.center.y - (rectangleHeight * 0.5)
+                x: Math.min(rectangleLayer.rectangleLeft, rectangleLayer.rectangleRight)
+                y: Math.min(rectangleLayer.rectangleTop, rectangleLayer.rectangleBottom)
                 width: rectangleWidth
                 height: rectangleHeight
             }
         }
 
-        // Size helper path
-        ShapePath {
-            fillColor: "transparent"
-            strokeColor: rectangleLayer.selected ? "#bbffffff" : "transparent"
-            strokeWidth: getScaledHelperStrokeWidth()
-
-            PathMove { x: rectangleLayer.observation.center.x; y: rectangleLayer.observation.center.y }
-            PathLine { x: handleWidth.x; y: handleWidth.y }
-            PathMove { x: rectangleLayer.observation.center.x; y: rectangleLayer.observation.center.y }
-            PathLine { x: handleHeight.x; y: handleHeight.y }
-        }
-
-        // Selection area
-        MouseArea  {
-            x: handleCenter.x - rectangleWidth * 0.5
-            y: handleCenter.y - rectangleHeight * 0.5
+        // Selection and move area
+        LayerUtils.MoveArea {
+            x: Math.min(rectangleLayer.rectangleLeft, rectangleLayer.rectangleRight)
+            y: Math.min(rectangleLayer.rectangleTop, rectangleLayer.rectangleBottom)
             width: rectangleWidth
             height: rectangleHeight
-            acceptedButtons: Qt.LeftButton
-            cursorShape: rectangleLayer.editable ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: selectionRequested()
-            enabled: rectangleLayer.editable && !rectangleLayer.selected
+            shapeLayer: rectangleLayer
+            onMoved: rectangleLayer.commitMove()
         }
 
         // Handle for rectangle center
         LayerUtils.Handle {
             id: handleCenter
-            x: rectangleLayer.observation.center.x || 0
-            y: rectangleLayer.observation.center.y || 0
+            x: (rectangleLayer.rectangleLeft + rectangleLayer.rectangleRight) * 0.5
+            y: (rectangleLayer.rectangleTop + rectangleLayer.rectangleBottom) * 0.5
             size: getScaledHandleSize()
+            scaleRatio: rectangleLayer.scaleRatio
             target: draggableRectangle
             cursorShape: Qt.SizeAllCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
-            onMoved: {
-                _currentScene.setObservationFromName(rectangleLayer.name, _currentScene.selectedViewId, { 
-                    center: {
-                        x: handleCenter.x + draggableRectangle.x,
-                        y: handleCenter.y + draggableRectangle.y,
-                    }
-                })
-            }
+            onTapped: function(modifiers) { selectionRequested(modifiers) }
+            onMoved: rectangleLayer.commitMove()
         }
 
-        // Handle for rectangle width
+        // Corner handles: drag a corner to resize the rectangle, the opposite corner stays in place
+        // Note: the dragged handle updates the edges, which the other handles follow
         LayerUtils.Handle {
-            id: handleWidth
-            x: rectangleLayer.observation.center.x + (rectangleLayer.observation.size.width * 0.5)  || 0
-            y: handleCenter.y  || 0
+            id: handleTopLeft
+            x: rectangleLayer.rectangleLeft
+            y: rectangleLayer.rectangleTop
             size: getScaledHandleSize()
-            yAxisEnabled: false
-            cursorShape: Qt.SizeHorCursor
+            scaleRatio: rectangleLayer.scaleRatio
+            cursorShape: Qt.SizeFDiagCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
-            onMoved: {
-                _currentScene.setObservationFromName(rectangleLayer.name, _currentScene.selectedViewId, { 
-                    size: {
-                        width: rectangleWidth,
-                        height: rectangleHeight 
-                    }
-                })
-            }
+            onXChanged: { if (active) rectangleLayer.rectangleLeft = x }
+            onYChanged: { if (active) rectangleLayer.rectangleTop = y }
+            onMoved: rectangleLayer.commitResize()
         }
 
-        // Handle for rectangle height
         LayerUtils.Handle {
-            id: handleHeight
-            x: rectangleLayer.observation.center.x || 0
-            y: rectangleLayer.observation.center.y - (rectangleLayer.observation.size.height * 0.5)  || 0
+            id: handleTopRight
+            x: rectangleLayer.rectangleRight
+            y: rectangleLayer.rectangleTop
             size: getScaledHandleSize()
-            xAxisEnabled: false
-            cursorShape: Qt.SizeVerCursor
+            scaleRatio: rectangleLayer.scaleRatio
+            cursorShape: Qt.SizeBDiagCursor
             visible: rectangleLayer.editable && rectangleLayer.selected
-            onMoved: {
-                _currentScene.setObservationFromName(rectangleLayer.name, _currentScene.selectedViewId, { 
-                    size: {
-                        width: rectangleWidth,
-                        height: rectangleHeight 
-                    }
-                })
-            }
+            onXChanged: { if (active) rectangleLayer.rectangleRight = x }
+            onYChanged: { if (active) rectangleLayer.rectangleTop = y }
+            onMoved: rectangleLayer.commitResize()
+        }
+
+        LayerUtils.Handle {
+            id: handleBottomLeft
+            x: rectangleLayer.rectangleLeft
+            y: rectangleLayer.rectangleBottom
+            size: getScaledHandleSize()
+            scaleRatio: rectangleLayer.scaleRatio
+            cursorShape: Qt.SizeBDiagCursor
+            visible: rectangleLayer.editable && rectangleLayer.selected
+            onXChanged: { if (active) rectangleLayer.rectangleLeft = x }
+            onYChanged: { if (active) rectangleLayer.rectangleBottom = y }
+            onMoved: rectangleLayer.commitResize()
+        }
+
+        LayerUtils.Handle {
+            id: handleBottomRight
+            x: rectangleLayer.rectangleRight
+            y: rectangleLayer.rectangleBottom
+            size: getScaledHandleSize()
+            scaleRatio: rectangleLayer.scaleRatio
+            cursorShape: Qt.SizeFDiagCursor
+            visible: rectangleLayer.editable && rectangleLayer.selected
+            onXChanged: { if (active) rectangleLayer.rectangleRight = x }
+            onYChanged: { if (active) rectangleLayer.rectangleBottom = y }
+            onMoved: rectangleLayer.commitResize()
         }
     }
 }

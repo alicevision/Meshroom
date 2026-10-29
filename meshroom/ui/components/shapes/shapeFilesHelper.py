@@ -19,7 +19,7 @@ class ShapeFilesHelper(BaseObject):
         self._activeProject = activeProject
         self._currentNode = activeProject.selectedNode
         self._shapeFiles = ListModel()
-        self._activeProject.selectedViewIdChanged.connect(self._onSelectedViewIdChanged)
+        self._activeProject.pickedViewIdChanged.connect(self._onPickedViewIdChanged)
         self._activeProject.selectedNodeChanged.connect(self._onSelectedNodeChanged)
 
     def _loadShapeFilesFromAttributes(self, attributes):
@@ -32,7 +32,7 @@ class ShapeFilesHelper(BaseObject):
                 self._loadShapeFilesFromAttributes(attribute.value)
             elif attribute.type == "File" and attribute.desc.semantic == "shapeFile":
                 self._shapeFiles.append(ShapeFile(fileAttribute=attribute,
-                                                  viewId=self._activeProject.selectedViewId,
+                                                  viewId=self._activeProject.pickedViewId,
                                                   parent=self._shapeFiles))
 
     @Slot()
@@ -46,10 +46,10 @@ class ShapeFilesHelper(BaseObject):
         self.nodeShapeFilesChanged.emit()
 
     @Slot()
-    def _onSelectedViewIdChanged(self):
-        """Callback when the active project selected view id changes."""
+    def _onPickedViewIdChanged(self):
+        """Callback when the active project picked (displayed) view id changes."""
         for shapeFile in self._shapeFiles:
-            shapeFile.setViewId(self._activeProject.selectedViewId)
+            shapeFile.setViewId(self._activeProject.pickedViewId)
 
     @Slot()
     def _onSelectedNodeChanged(self):

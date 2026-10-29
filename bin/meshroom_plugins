@@ -106,6 +106,21 @@ def requireLocalPlugin(name: str) -> Optional[Plugin]:
     return plugin
 
 
+def findRecord(name: str) -> Optional[PluginRecord]:
+    """
+    Return the first PluginRecord named "name" in the registered plugin registries, whether a plugin
+    of that name is installed or not, or None.
+
+    Args:
+        name: the name of the plugin to look up.
+    """
+    for registry in pluginManager.getPluginRegistries().values():
+        record = registry.getRecord(name)
+        if record is not None:
+            return record
+    return None
+
+
 def resolveInstallSource(name: str, version: Optional[str]) -> Optional[tuple[PluginProvider, PluginRecord]]:
     """
     Resolve the PluginProvider and PluginRecord to install/update plugin "name" from (optionally at
@@ -115,11 +130,10 @@ def resolveInstallSource(name: str, version: Optional[str]) -> Optional[tuple[Pl
         name: the name of the plugin to resolve.
         version: the version to check the availability of, or None to skip that check.
     """
-    records = pluginManager.searchPlugin([name], strict=True, installed=False, available=True)
-    if not records:
+    record = findRecord(name)
+    if not record:
         print(f"No available plugin found for: {name}.")
         return None
-    record = records[0]
     provider = getPluginProviderFromUrl(record.url)
     if not provider:
         print(f"Plugin {name}: unsupported source '{record.url}'.")
@@ -150,7 +164,18 @@ def handleInfo(args):
     for name in args.name:
         plugin = pluginManager.getPlugin(name)
         if not plugin:
-            print(f"No plugin found for: {name}.")
+            # Not installed: describe the plugin available from the registries, if any.
+            record = findRecord(name)
+            if not record:
+                print(f"No plugin found for: {name}.")
+                continue
+            print(f" - Name: {name}\n"
+                  f" - Latest version: {record.version}\n"
+                  f" - Versions: {', '.join(record.versions)}\n"
+                  f" - Publisher: {record.publisher}\n"
+                  f" - Description: {record.description}\n"
+                  f" - URL: {record.url}\n"
+                  f" - Installed: no\n")
             continue
         print(f" - Name: {name}\n"
               f" - Version: {plugin.version}\n"
@@ -236,6 +261,14 @@ def handleUpdate(args):
         if not resolved:
             continue
         provider, record = resolved
+        # Only update from the publisher of the installed plugin, as the user interface does.
+        if record.publisher != plugin.publisher:
+            print(f"Plugin {name}: the available plugin is published by '{record.publisher}', "
+                  f"not by '{plugin.publisher}'.")
+            continue
+        if (version or record.version) == plugin.version:
+            print(f"Plugin {name} is already at version {plugin.version}.")
+            continue
         # Update plugin
         try:
             PluginUpdater(provider, record, version).execute()

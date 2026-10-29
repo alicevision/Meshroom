@@ -7,7 +7,6 @@ import Docking 1.0
 import MaterialIcons 2.2
 import ImageGallery 1.0
 import Viewer 1.0
-import Viewer3D 1.0
 
 /**
  * WorkspaceView is an aggregation of Meshroom's main modules.
@@ -34,7 +33,7 @@ Item {
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
-        if (panel3dViewerLoader.active) {
+        if (panel3dViewerLoader.item) {
             panel3dViewerLoader.item.viewer3D.view(filepath, undefined)
         }
     }
@@ -42,7 +41,7 @@ Item {
     Connections {
         target: currentScene
         function onGraphChanged() {
-            if (panel3dViewerLoader.active) {
+            if (panel3dViewerLoader.item) {
                 panel3dViewerLoader.item.viewer3D.collection.clear()
             }
         }
@@ -56,7 +55,7 @@ Item {
         var activeNode = _currentScene.activeNodes ? _currentScene.activeNodes.get('sfm').node : null
         if (!activeNode)
             return
-        if (panel3dViewerLoader.active) {
+        if (panel3dViewerLoader.item) {
             panel3dViewerLoader.item.viewer3D.viewAttribute(activeNode.attribute('output'))
         }
     }
@@ -227,58 +226,13 @@ Item {
             active: viewer3DPanel.isOpen
             visible: active
             anchors.fill: parent
-            sourceComponent: panel3dViewerComponent
-        }
-    }
+            // Loaded by URL: a missing meshViewer plugin (QtAliceVision) only disables this panel
+            source: "Viewer3D/Viewer3DPanel.qml"
 
-    Component {
-        id: panel3dViewerComponent
-        Panel {
-            id: panel3dViewer
-            title: "3D Viewer"
-            // The title is displayed by the tab of the panel
-            headerVisible: false
-
-            property alias viewer3D: c_viewer3D
-
-            MSplitView {
-                id: c_viewer3DRowLayout
-                anchors.fill: parent
-                orientation: Qt.Horizontal
-
-                Viewer3D {
-                    id: c_viewer3D
-                    SplitView.fillWidth: true
-                    SplitView.minimumWidth: 50
-
-                    DropArea {
-                        anchors.fill: parent
-                        keys: ["text/uri-list"]
-                        onDropped: function(drop) {
-                            drop.urls.forEach(function(url) {
-                                load3DMedia(url)
-                            })
-                        }
-                    }
-
-                    Connections {
-                        target: viewer2D
-                        function onSync3DSelectedChanged() {
-                            //Viewer3DSettings.syncWithPickedViewId = viewer2D.sync3DSelected
-                        }
-                    }
-                }
-                
-                // Inspector Panel
-                Inspector3D {
-                    id: inspector3d
-                    collection: c_viewer3D.collection
-                    visible: true
-                    height: c_viewer3DRowLayout.height
-                    SplitView.preferredWidth: 260
-                    SplitView.minimumWidth: 180
-                    SplitView.maximumWidth: 420
-                }
+            Label {
+                anchors.centerIn: parent
+                visible: panel3dViewerLoader.status === Loader.Error
+                text: "3D Viewer unavailable: missing meshViewer plugin from QtAliceVision."
             }
         }
     }

@@ -372,20 +372,29 @@ class CompatibilityNode(BaseNode):
 
     @property
     def internalInputs(self):
-        """ Get current node's internal attributes """
+        """ Get current node internal inputs, where links could differ from original serialized node data
+        (i.e. after node duplication or flow connections changes) """
         if not self.graph:
             return self._internalInputs
-        return {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items()}
+        return {k: v.getSerializedValue() for k, v in self._internalAttributes.objects.items() if v.isInput}
 
     def toDict(self):
         """
         Return the original serialized node that generated a compatibility issue.
 
-        Serialized inputs are updated to handle instances that have been duplicated
-        and might be connected to different nodes.
+        Serialized inputs and internal inputs are updated to handle instances that have been duplicated
+        and might be connected to different nodes, or whose (flow) connections have changed.
         """
         # update inputs to get up-to-date connections
         self.nodeDict.update({"inputs": self.inputs})
+        if self.graph:
+            # update internal inputs to get up-to-date flow connections, with the same filtering as Node.toDict:
+            # flowInputs is only serialized if it is not the default value, and empty values are skipped
+            internalInputs = {k: v for k, v in self.internalInputs.items() if v is not None}
+            flowInputs = self._internalAttributes.get("flowInputs")
+            if flowInputs is not None and flowInputs.isDefault and not flowInputs.isLink:
+                internalInputs.pop("flowInputs", None)
+            self.nodeDict.update({"internalInputs": internalInputs})
         # update position
         self.nodeDict.update({"position": self.position})
         return self.nodeDict

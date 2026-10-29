@@ -5,6 +5,7 @@ import json
 import logging
 import sys
 
+from meshroom.common import Backend
 from meshroom.core.plugins.base import PluginType, NodeDescProviderStatus, SubmitterProviderStatus
 from meshroom.core.plugins.loader import PLUGINS_ROOT_PACKAGE, PluginLoader
 from ..utils import writeFile
@@ -450,8 +451,9 @@ class TestPluginLoader:
 
         loader.unloadPlugin("fallbackPlugin")
 
-    def test_menuLoaded(self, tmp_path):
+    def test_menuLoaded(self, tmp_path, monkeypatch):
         """ A "menu.py" at the plugin's root is executed when the plugin is loaded. """
+        monkeypatch.setattr("meshroom.core.plugins.loader.CurrentBackend", Backend.PYSIDE)
         counterFile = tmp_path / "menu_count.txt"
         writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
         writeFile(tmp_path / "meshroom/menu.py", _menuSource(str(counterFile)))
@@ -470,8 +472,9 @@ class TestPluginLoader:
         loader.unloadPlugin("menuPlugin")
         assert menuModuleName not in sys.modules
 
-    def test_menuLoadedWithoutNodes(self, tmp_path):
+    def test_menuLoadedWithoutNodes(self, tmp_path, monkeypatch):
         """ A plugin with only a menu declaration still gets its menu executed. """
+        monkeypatch.setattr("meshroom.core.plugins.loader.CurrentBackend", Backend.PYSIDE)
         counterFile = tmp_path / "menu_count.txt"
         writeFile(tmp_path / "meshroom/menu.py", _menuSource(str(counterFile)))
 
@@ -485,8 +488,9 @@ class TestPluginLoader:
 
         loader.unloadPlugin("menuOnlyPlugin")
 
-    def test_brokenMenuDoesNotBlockPlugin(self, tmp_path, caplog):
+    def test_brokenMenuDoesNotBlockPlugin(self, tmp_path, caplog, monkeypatch):
         """ A failing "menu.py" is logged as an issue, but the plugin still loads. """
+        monkeypatch.setattr("meshroom.core.plugins.loader.CurrentBackend", Backend.PYSIDE)
         writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
         writeFile(tmp_path / "meshroom/menu.py", _brokenSource())
 
@@ -499,3 +503,20 @@ class TestPluginLoader:
         assert "menu" in caplog.text
 
         loader.unloadPlugin("brokenMenuPlugin")
+
+    def test_menuNotLoadedOutsidePysideBackend(self, tmp_path):
+        """ The menu declaration file is ignored when the PySide backend is not active. """
+        counterFile = tmp_path / "menu_count.txt"
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/menu.py", _menuSource(str(counterFile)))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("standaloneMenuPlugin", str(tmp_path), PluginType.PATH)
+
+        assert plugin is not None
+        assert list(plugin.nodeDescProviders.keys()) == ["MyNode"]
+        # The menu file was not executed.
+        assert not counterFile.exists()
+        assert f"{PLUGINS_ROOT_PACKAGE}.standaloneMenuPlugin.menu" not in sys.modules
+
+        loader.unloadPlugin("standaloneMenuPlugin")

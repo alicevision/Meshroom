@@ -9,7 +9,7 @@ from types import ModuleType
 from pathlib import Path
 from typing import List, Optional
 
-from meshroom.common import BaseObject
+from meshroom.common import BaseObject, Backend, CurrentBackend
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.plugins.base import PluginType, PluginContext, Plugin
@@ -203,11 +203,17 @@ class PluginLoader:
         "<packageName>.menu" of the plugin's virtual package, and is not scanned for
         node/submitter providers.
 
+        Menus are a UI concept: the file is only executed when Meshroom runs with its
+        graphical interface (the PySide backend), and ignored by the command-line tools.
+
         Args:
             packageName: the dotted name of the plugin's virtual package.
             hostPath: the plugin's host modules folder (its "meshroom" folder).
             issues: the collector for the issues found while loading the plugin.
         """
+        if CurrentBackend != Backend.PYSIDE:
+            return
+
         menuFile = hostPath / PLUGIN_MENU_FILE
         if not menuFile.is_file():
             return

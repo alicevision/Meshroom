@@ -1000,6 +1000,28 @@ class TestUidConflict:
 
             assert loadedNodeB.param.at(0).inputLink == loadedNodeA.output
 
+    def test_uidConflictingNodesPreserveFlowConnectionsOnGraphLoad(self, graphSavedOnDisk):
+        with registeredNodeTypes([UidTestingNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            nodeA = graph.addNewNode(UidTestingNodeV2.__name__)
+            nodeB = graph.addNewNode(UidTestingNodeV2.__name__)
+
+            nodeB.internalAttribute("flowInputs").append("0")
+            graph.addEdge(nodeA.internalAttribute("flowOutput"), nodeB.internalAttribute("flowInputs").at(0))
+
+            graph.save()
+            replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
+
+            # UID conflicting nodes are recreated without their node description
+            loadedGraph = loadGraph(graph.filepath)
+            assert len(loadedGraph.compatibilityNodes) == 2
+
+            loadedNodeA = loadedGraph.node(nodeA.name)
+            loadedNodeB = loadedGraph.node(nodeB.name)
+
+            flowInput = loadedNodeB.internalAttribute("flowInputs").at(0)
+            assert flowInput.inputLink == loadedNodeA.internalAttribute("flowOutput")
+
     def test_upgradingConflictingNodesPreserveConnections(self, graphSavedOnDisk):
         with registeredNodeTypes([UidTestingNodeV2]):
             graph: Graph = graphSavedOnDisk
@@ -1324,6 +1346,22 @@ class TestUpgradeConnections:
         self.upgrade(graph, nodeName)
 
         assert isinstance(graph.node(nodeName), Node)
+        assert self.edgeNames(graph) == edgesBefore
+
+    def test_recreatingCompatibilityNodeWithoutNodeDescriptionPreservesConnections(self, connectedGraphFactory):
+        """
+        Mirrors the undo of the RemoveNodeCommand (UI), which recreates the CompatibilityNode
+        from its serialized data only, without its node description.
+        """
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        edgesBefore = self.edgeNames(graph)
+
+        nodeDict = copy.deepcopy(graph.node(nodeName).toDict())
+        _, outEdges, outListAttributes = graph.removeNode(nodeName)
+        graph.addNode(nodeFactory(nodeDict, nodeName), nodeName)
+        graph._restoreOutEdges(outEdges, outListAttributes)
+
+        assert isinstance(graph.node(nodeName), CompatibilityNode)
         assert self.edgeNames(graph) == edgesBefore
 
     def test_undoUpgradeRestoresCompatibilityNodeAndConnections(self, connectedGraphFactory):

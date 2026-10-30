@@ -24,6 +24,7 @@ GridLayout {
     // Optional item in the top-left corner, above the rows' headers
     property Component cornerDelegate: null
     property real minColumnWidth: 60
+    property color headerColor: Qt.darker(palette.window, 1.3)
 
     Loader {
         Layout.row: 0
@@ -33,6 +34,13 @@ GridLayout {
         Layout.preferredHeight: Math.max(horizontalHeader.implicitHeight, implicitHeight)
         visible: verticalHeader.visible
         sourceComponent: root.cornerDelegate
+
+        // Extend the header's background to the corner
+        Rectangle {
+            anchors.fill: parent
+            z: -1
+            color: root.headerColor
+        }
     }
 
     HorizontalHeaderView {
@@ -45,6 +53,23 @@ GridLayout {
         contentX: tableView.contentX
         resizableColumns: true
         clip: true
+
+        delegate: Label {
+            required property var display
+            text: display !== undefined ? display : ""
+            font.bold: true
+            padding: 6
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
+            background: Rectangle {
+                color: root.headerColor
+                border.color: palette.mid
+            }
+            ToolTip.visible: truncated && headerHoverHandler.hovered
+            ToolTip.text: text
+            HoverHandler { id: headerHoverHandler }
+        }
     }
 
     VerticalHeaderView {

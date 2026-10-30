@@ -40,7 +40,9 @@ MTableView {
             anchors.centerIn: cell.isCheckBox ? parent : undefined
             anchors.margins: 1
             attribute: cell.object
-            editable: root.editable
+            // Same rules as AttributeItemDelegate, for each child attribute (which can be linked on its own)
+            editable: root.editable && !!cell.object && !cell.object.isLink &&
+                      !(cell.object.keyable && _currentScene.selectedViewId === "-1")
             // Nested containers can't be edited in a table: only summarize them
             sourceComponent: ["ListAttribute", "GroupAttribute", "AnySet"].includes(cell.object.type) ? containerComponent : valueComponent
         }

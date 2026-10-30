@@ -303,6 +303,107 @@ def test_edited_anyset_attribute_restored_after_load(tmp_path):
     assert not loadedAttr.isDefault
 
 
+def test_new_anyset_attribute_kinds():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+
+    textAttr = anySet.insertAttribute(anySet.newAttributeData("TextParam"), 0)
+    assert textAttr.type == "StringParam"
+    assert textAttr.desc.semantic == "multiline"
+
+    hueAttr = anySet.insertAttribute(anySet.newAttributeData("HueParam"), 1)
+    assert hueAttr.type == "FloatParam"
+    assert hueAttr.desc.semantic == "color/hue"
+
+    choicesAttr = anySet.insertAttribute(anySet.newAttributeData("MultiChoiceParam"), 2)
+    assert not choicesAttr.desc.exclusive
+    assert choicesAttr.value == ["optionA"]
+
+    listAttr = anySet.insertAttribute(anySet.newAttributeData("ListAttribute", "IntParam"), 3)
+    assert listAttr.type == "ListAttribute"
+    assert listAttr.desc.elementDesc.type == "IntParam"
+    assert len(listAttr.value) == 0
+
+    sizeAttr = anySet.insertAttribute(anySet.newAttributeData("Size2d"), 4)
+    assert [item.name for item in sizeAttr.value] == ["width", "height"]
+    vectorAttr = anySet.insertAttribute(anySet.newAttributeData("Vec2d"), 5)
+    assert [item.name for item in vectorAttr.value] == ["x", "y"]
+
+    flowAttr = anySet.insertAttribute(anySet.newAttributeData("Flow"), 6)
+    assert flowAttr.type == "Flow"
+
+    try:
+        anySet.newAttributeData("ListAttribute", "ChoiceParam")
+    except ValueError:
+        pass
+    else:
+        # The values of a choice are not serialized with the element description of a list
+        raise AssertionError("Lists of choices cannot be created.")
+
+
+def test_edit_anyset_group_and_list_keep_values():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    vectorAttr = anySet.insertAttribute(anySet.newAttributeData("Vec2d"), 0)
+    vectorAttr.x.value = 3.0
+    listAttr = anySet.insertAttribute(anySet.newAttributeData("ListAttribute", "FloatParam"), 1)
+    listAttr.append(1.5)
+
+    vectorData = anySet.editedAttributeData(vectorAttr, {"name": "offset", "label": "Offset"})
+    newVector = anySet.replaceAttribute(vectorAttr, vectorData)
+    assert newVector.label == "Offset"
+    assert newVector.x.value == 3.0
+
+    newList = anySet.replaceAttribute(listAttr, anySet.editedAttributeData(listAttr, {"description": "Weights"}))
+    assert newList.desc.description == "Weights"
+    assert newList.desc.elementDesc.type == "FloatParam"
+    assert [element.value for element in newList.value] == [1.5]
+
+
+def test_new_anyset_attribute_kinds_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    for kind in ("TextParam", "HueParam", "MultiChoiceParam", "Vec2d", "Flow"):
+        anySet.insertAttribute(anySet.newAttributeData(kind), anySet.value.count)
+    anySet.insertAttribute(anySet.newAttributeData("ListAttribute", "FloatParam"), anySet.value.count)
+    anySet.text.value = "first line\nsecond line"
+    anySet.hue.value = 0.25
+    anySet.choices.value = ["optionA", "optionB"]
+    anySet.vector.y.value = 2.0
+    anySet.list.append(0.5)
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedAnySet = loadGraph(graphFile).node(dynamicNode.name).ins
+
+    assert [attribute.name for attribute in loadedAnySet.value] == ["text", "hue", "choices", "vector", "flow", "list"]
+    assert loadedAnySet.text.desc.semantic == "multiline"
+    assert loadedAnySet.text.value == "first line\nsecond line"
+    assert loadedAnySet.hue.desc.semantic == "color/hue"
+    assert loadedAnySet.hue.value == 0.25
+    assert not loadedAnySet.choices.desc.exclusive
+    assert loadedAnySet.choices.value == ["optionA", "optionB"]
+    assert loadedAnySet.vector.y.value == 2.0
+    assert loadedAnySet.flow.type == "Flow"
+    assert [element.value for element in loadedAnySet.list.value] == [0.5]
+
+
+def test_anyset_lists_of_every_element_kind_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    for elementKind in AnySet._listElementKinds:
+        anySet.insertAttribute(anySet.newAttributeData("ListAttribute", elementKind), anySet.value.count)
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedAnySet = loadGraph(graphFile).node(dynamicNode.name).ins
+    assert [attribute.desc.elementDesc.type for attribute in loadedAnySet.value] == list(AnySet._listElementKinds)
+
+
 # ---------------------------------------------------------------------------
 # Serialization / deserialization tests
 # ---------------------------------------------------------------------------

@@ -68,6 +68,7 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     keyable = descType.get('keyable')
     shape = descType.get('shape')
     advanced = descType.get('advanced')
+    semantic = descType.get('semantic')
     valueRange = descType.get('range')
 
     kwargs = {'name': name, 'label': label, 'description': description}
@@ -90,7 +91,7 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     if exclusive is not None:
         kwargs['exclusive'] = exclusive
 
-    if keyable is not None:
+    if keyable:
         kwargs['keyable'] = keyable
 
     if shape is not None:
@@ -98,6 +99,10 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
 
     if advanced is not None:
         kwargs['advanced'] = advanced
+
+    # Flow has no semantic
+    if semantic and not issubclass(attrClass, desc.Flow):
+        kwargs['semantic'] = semantic
 
     if valueRange is not None and issubclass(attrClass, (desc.IntParam, desc.FloatParam)):
         kwargs['range'] = valueRange
@@ -458,6 +463,8 @@ class Attribute(BaseObject):
             serializedData["description"] = self.desc.description
         if self.desc.advanced:
             serializedData["advanced"] = True
+        if self.desc.semantic:
+            serializedData["semantic"] = self.desc.semantic
         if isinstance(self.desc, (desc.IntParam, desc.FloatParam)) and self.desc.range:
             serializedData["range"] = list(self.desc.range)
         if isinstance(self.desc, desc.ChoiceParam):
@@ -1945,16 +1952,26 @@ class AnySet(GroupAttribute):
 
     _attributeNameRegex = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
-    # Description parameters of the attributes that can be created from the UI, by description type
+    # Attributes that can be created from the UI, by kind: base name and description parameters
     _newAttributeParameters = {
-        "StringParam": {"value": ""},
-        "IntParam": {"value": 0, "range": [0, 10, 1]},
-        "FloatParam": {"value": 0.5, "range": [0.0, 1.0, 0.01]},
-        "BoolParam": {"value": False},
-        "ChoiceParam": {"value": "optionA", "values": ["optionA", "optionB"]},
-        "File": {"value": ""},
-        "ColorParam": {"value": "#2a82da"},
+        "StringParam": {"name": "string", "type": "StringParam", "value": ""},
+        "TextParam": {"name": "text", "type": "StringParam", "semantic": "multiline", "value": ""},
+        "IntParam": {"name": "int", "type": "IntParam", "value": 0, "range": [0, 10, 1]},
+        "FloatParam": {"name": "float", "type": "FloatParam", "value": 0.5, "range": [0.0, 1.0, 0.01]},
+        "HueParam": {"name": "hue", "type": "FloatParam", "semantic": "color/hue", "value": 0.0, "range": [0.0, 1.0, 0.01]},
+        "BoolParam": {"name": "bool", "type": "BoolParam", "value": False},
+        "ChoiceParam": {"name": "choice", "type": "ChoiceParam", "value": "optionA", "values": ["optionA", "optionB"]},
+        "MultiChoiceParam": {"name": "choices", "type": "ChoiceParam", "value": ["optionA"], "values": ["optionA", "optionB"],
+                             "exclusive": False},
+        "File": {"name": "file", "type": "File", "value": ""},
+        "ColorParam": {"name": "color", "type": "ColorParam", "value": "#2a82da"},
+        "ListAttribute": {"name": "list", "type": "ListAttribute", "value": []},
+        "Size2d": {"name": "size", "type": "Size2d"},
+        "Vec2d": {"name": "vector", "type": "Vec2d"},
+        "Flow": {"name": "flow", "type": "Flow"},
     }
+    # Kinds of attributes that can be the elements of a ListAttribute
+    _listElementKinds = ("StringParam", "IntParam", "FloatParam", "BoolParam", "File", "ColorParam")
 
     def duplicateAttribute(self, attribute: Attribute, isOutput: bool|None=None) -> Attribute:
         """ Create an attribute as child of the current, with the same description as the given one.
@@ -2030,9 +2047,13 @@ class AnySet(GroupAttribute):
         if attributeDesc is None:
             return None
 
+        value = serializedAttribute.get("value", None)
+        if value is None and "items" in serializedAttribute:
+            # A group serializes the values of its items with their descriptions
+            value = {item["name"]: item.get("value") for item in serializedAttribute["items"]}
         restoredAttribute = attributeFactory(
             description=attributeDesc,
-            value=serializedAttribute.get("value", None),
+            value=value,
             isOutput=self.isOutput,
             node=self.node,
             root=self
@@ -2052,32 +2073,39 @@ class AnySet(GroupAttribute):
         if (attribute is None or name != attribute.name) and name in self._value.keys():
             raise ValueError(f"Attribute name '{name}' already exists in '{self.fullName}'.")
 
-    def newAttributeData(self, attributeType: str) -> dict:
+    def newAttributeData(self, attributeKind: str, elementKind: str | None = None) -> dict:
         """
         Return the serialized data of a new child attribute, to be added with insertAttribute().
 
         Args:
-            attributeType: the description type of the attribute (e.g. "FloatParam").
+            attributeKind: the kind of attribute, among the keys of _newAttributeParameters:
+                           a description type (e.g. "FloatParam") or a variant of it (e.g. "HueParam").
+            elementKind: for a "ListAttribute", the kind of its elements, among _listElementKinds.
 
         Returns:
-            The serialized attribute, with a unique name derived from its type and default parameters.
+            The serialized attribute, with a unique name derived from its kind and default parameters.
         """
-        if attributeType not in self._newAttributeParameters:
-            raise ValueError(f"Unsupported attribute type: '{attributeType}'.")
+        if attributeKind not in self._newAttributeParameters:
+            raise ValueError(f"Unsupported attribute type: '{attributeKind}'.")
 
-        baseName = attributeType.replace("Param", "").lower()
+        data = copy.deepcopy(self._newAttributeParameters[attributeKind])
+        baseName = data["name"]
         name = baseName
         index = -1
         while name in self._value.keys():
             index += 1
             name = f"{baseName}_{index}"
+        data["name"] = name
+        data["label"] = convertToLabel(name)
 
-        return {
-            "name": name,
-            "label": convertToLabel(name),
-            "type": attributeType,
-            **copy.deepcopy(self._newAttributeParameters[attributeType])
-        }
+        if attributeKind == "ListAttribute":
+            elementKind = elementKind or "StringParam"
+            if elementKind not in self._listElementKinds:
+                raise ValueError(f"Unsupported list element type: '{elementKind}'.")
+            elementDesc = copy.deepcopy(self._newAttributeParameters[elementKind])
+            elementDesc["label"] = convertToLabel(elementDesc["name"])
+            data["elementDesc"] = elementDesc
+        return data
 
     def editedAttributeData(self, attribute: Attribute, parameters: dict) -> dict:
         """
@@ -2100,7 +2128,9 @@ class AnySet(GroupAttribute):
 
         attributeDesc = attribute.desc
         data = attribute.asDict()
-        followDefault = attribute.isDefault and not attribute.isLink
+        # Groups and Flows have no default value of their own
+        hasDefaultValue = not isinstance(attributeDesc, (desc.GroupAttribute, desc.Flow))
+        followDefault = hasDefaultValue and attribute.isDefault and not attribute.isLink
 
         for key in ("name", "label", "description"):
             if key in parameters:
@@ -2112,7 +2142,9 @@ class AnySet(GroupAttribute):
         if not data["label"]:
             raise ValueError("Attribute label cannot be empty.")
 
-        if "defaultValue" in parameters:
+        if not hasDefaultValue:
+            pass
+        elif "defaultValue" in parameters:
             data["defaultValue"] = attributeDesc.validateValue(parameters["defaultValue"])
         elif not callable(attributeDesc.value):
             data["defaultValue"] = attributeDesc.value

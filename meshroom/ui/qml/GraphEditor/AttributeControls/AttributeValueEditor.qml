@@ -59,8 +59,9 @@ Loader {
     sourceComponent: valueComponent
 
     function setTextFieldAttribute(value) {
-        // editingFinished called even when TextField is readonly
-        if (!root.editable)
+        // editingFinished called even when TextField is readonly.
+        // Controls can also commit while being destroyed, after their attribute has been removed.
+        if (!root.editable || !root.attribute)
             return
         switch (root.attribute.type) {
             case "IntParam":

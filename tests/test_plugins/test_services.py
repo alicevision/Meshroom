@@ -9,6 +9,7 @@ import tarfile
 
 import pytest
 
+from meshroom.core.plugins.metadata import PluginInstalledAsset
 from meshroom.core.plugins.record import PluginRecord
 from meshroom.core.plugins.local import installer as installerModule, releases
 from meshroom.core.plugins.provider import ArchivePluginProvider
@@ -56,10 +57,11 @@ def isExecutable(path):
     return bool(path.stat().st_mode & stat.S_IXUSR)
 
 
-def installer(archive, pluginsPath, name="myPlugin"):
+def installer(archive, pluginsPath, name="myPlugin", reusableAssets=None):
     """ Return a PluginInstaller for the plugin archive "archive". """
     record = PluginRecord(name, "1.0", "me", archive.as_uri())
-    return PluginInstaller(ArchivePluginProvider(archive.as_uri()), record, pluginsPath=pluginsPath)
+    return PluginInstaller(ArchivePluginProvider(archive.as_uri()), record, pluginsPath=pluginsPath,
+                           reusableAssets=reusableAssets)
 
 
 def updater(archive, pluginsPath, name="myPlugin"):
@@ -68,9 +70,14 @@ def updater(archive, pluginsPath, name="myPlugin"):
     return PluginUpdater(ArchivePluginProvider(archive.as_uri()), record, pluginsPath=pluginsPath)
 
 
+def readLock(pluginFolder):
+    """ Return the content of the "plugin.lock" of the plugin installed in "pluginFolder". """
+    return json.loads((pluginFolder / "plugin.lock").read_text())
+
+
 def lockVersion(pluginFolder):
     """ Return the version written in the "plugin.lock" of the plugin installed in "pluginFolder". """
-    return json.loads((pluginFolder / "plugin.lock").read_text())["version"]
+    return readLock(pluginFolder)["version"]
 
 
 class TestInstaller:
@@ -146,6 +153,56 @@ class TestInstaller:
         assert (pluginFolder / "weights.pt").read_text() == "weights"
         lockAssets = json.loads((pluginFolder / "plugin.lock").read_text())["assets"]
         assert [entry["path"] for entry in lockAssets] == ["models/sub/weights.pt", "weights.pt"]
+
+    def test_lockRecordsInstallation(self, tmp_path):
+        """ The "plugin.lock" records the source, the files of the archive and the installed assets. """
+        assetFile = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[asset(assetFile.as_uri())],
+                                 files={"meshroom/node.py": ""})
+        installer(archive, tmp_path / "plugins").execute()
+
+        lock = readLock(tmp_path / "plugins" / "myPlugin")
+        assert lock["source"] == {"url": archive.as_uri(), "version": "1.0"}
+        assert lock["files"] == ["meshroom/config.json", "meshroom/node.py"]
+        assert lock["installedAssets"] == [{"name": "weights", "path": "weights.pt", "url": assetFile.as_uri(),
+                                            "sha256": sha256Of(assetFile), "extracted": False}]
+
+    def test_reuseAssets(self, tmp_path):
+        """ A reusable asset with the same path and sha256 is moved instead of downloaded, another one is not. """
+        sha256 = hashlib.sha256(b"weights").hexdigest()
+        reusable = writeFile(tmp_path / "previous" / "weights.pt", "weights")
+        changed = writeFile(tmp_path / "previous" / "other.pt", "old")
+        newFile = writeFile(tmp_path / "remote" / "other.pt", "new")
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[
+            # The url does not exist: the asset can only be installed from the reusable one.
+            asset((tmp_path / "missing.pt").as_uri(), sha256=sha256),
+            asset(newFile.as_uri(), name="other", path="other.pt", sha256=sha256Of(newFile)),
+        ])
+        installer(archive, tmp_path / "plugins", reusableAssets=[
+            (PluginInstalledAsset("weights", "weights.pt", "https://old", sha256), reusable),
+            (PluginInstalledAsset("other", "other.pt", "https://old", hashlib.sha256(b"old").hexdigest()), changed),
+        ]).execute()
+
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        assert (pluginFolder / "weights.pt").read_text() == "weights"
+        assert not reusable.exists()
+        assert (pluginFolder / "other.pt").read_text() == "new"
+        assert changed.read_text() == "old"
+        assert [entry["sha256"] for entry in readLock(pluginFolder)["installedAssets"]] == [sha256, sha256Of(newFile)]
+
+    def test_failureRestoresReusedAssets(self, tmp_path):
+        """ When the installation fails, the reused assets are moved back. """
+        sha256 = hashlib.sha256(b"weights").hexdigest()
+        reusable = writeFile(tmp_path / "previous" / "weights.pt", "weights")
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[
+            asset((tmp_path / "missing.pt").as_uri(), sha256=sha256),
+            asset((tmp_path / "missing.pt").as_uri(), name="other", path="other.pt"),
+        ])
+        with pytest.raises(PluginServiceError):
+            installer(archive, tmp_path / "plugins", reusableAssets=[
+                (PluginInstalledAsset("weights", "weights.pt", "https://old", sha256), reusable)]).execute()
+        assert reusable.read_text() == "weights"
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
 
     def test_assetChecksumMismatch(self, tmp_path):
         """ An asset that does not match its sha256 fails the installation, and leaves nothing behind. """

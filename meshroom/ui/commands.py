@@ -626,11 +626,11 @@ class RemoveAnySetAttributeCommand(GraphCommand):
 
 
 class AddAnySetAttributeCommand(GraphCommand):
-    def __init__(self, graph, anySetAttribute, attributeType, parent=None):
+    def __init__(self, graph, anySetAttribute, attributeKind, elementKind=None, parent=None):
         super().__init__(graph, parent)
         assert isinstance(anySetAttribute, AnySet)
         self.anySetAttrName = anySetAttribute.fullName
-        self.value = anySetAttribute.newAttributeData(attributeType)
+        self.value = anySetAttribute.newAttributeData(attributeKind, elementKind)
         self.index = anySetAttribute.value.count
         self.setText(f"Add {self.anySetAttrName}.{self.value['name']}")
 

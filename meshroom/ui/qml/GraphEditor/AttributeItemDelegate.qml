@@ -362,6 +362,8 @@ RowLayout {
                 case "GroupAttribute":
                     return groupAttributeComponent
                 case "AnySet":
+                case "Size2d":
+                case "Vec2d":
                     return groupAttributeComponent
                 case "StringParam":
                     if (attribute.desc.semantic.includes('multiline'))
@@ -748,26 +750,64 @@ RowLayout {
                         Menu {
                             id: addAnySetAttributeMenu
 
+                            function addAttribute(attributeKind, elementKind) {
+                                groupItem.expanded = true
+                                var newAttribute = _currentScene.addAnySetAttribute(attribute, attributeKind, elementKind)
+                                // Edit the description of the new attribute right away, under its row
+                                if (newAttribute && groupItem.childrenEditor)
+                                    groupItem.childrenEditor.editedAnySetAttribute = newAttribute
+                            }
+
                             Repeater {
                                 model: [
-                                    { "label": "String", "type": "StringParam" },
-                                    { "label": "Integer", "type": "IntParam" },
-                                    { "label": "Float", "type": "FloatParam" },
-                                    { "label": "Boolean", "type": "BoolParam" },
-                                    { "label": "Choice", "type": "ChoiceParam" },
-                                    { "label": "File", "type": "File" },
-                                    { "label": "Color", "type": "ColorParam" }
+                                    { "label": "String", "kind": "StringParam" },
+                                    { "label": "Text (multiline)", "kind": "TextParam" },
+                                    { "label": "Integer", "kind": "IntParam" },
+                                    { "label": "Float", "kind": "FloatParam" },
+                                    { "label": "Hue", "kind": "HueParam" },
+                                    { "label": "Boolean", "kind": "BoolParam" },
+                                    { "label": "Choice", "kind": "ChoiceParam" },
+                                    { "label": "Multiple Choice", "kind": "MultiChoiceParam" },
+                                    { "label": "File", "kind": "File" },
+                                    { "label": "Color", "kind": "ColorParam" }
                                 ]
                                 delegate: MenuItem {
                                     text: modelData.label
-                                    onTriggered: {
-                                        groupItem.expanded = true
-                                        var newAttribute = _currentScene.addAnySetAttribute(attribute, modelData.type)
-                                        // Edit the description of the new attribute right away, under its row
-                                        if (newAttribute && groupItem.childrenEditor)
-                                            groupItem.childrenEditor.editedAnySetAttribute = newAttribute
+                                    onTriggered: addAnySetAttributeMenu.addAttribute(modelData.kind, "")
+                                }
+                            }
+
+                            MenuSeparator {}
+
+                            Menu {
+                                title: "List of"
+
+                                Repeater {
+                                    model: [
+                                        { "label": "Strings", "kind": "StringParam" },
+                                        { "label": "Integers", "kind": "IntParam" },
+                                        { "label": "Floats", "kind": "FloatParam" },
+                                        { "label": "Booleans", "kind": "BoolParam" },
+                                        { "label": "Files", "kind": "File" },
+                                        { "label": "Colors", "kind": "ColorParam" }
+                                    ]
+                                    delegate: MenuItem {
+                                        text: modelData.label
+                                        onTriggered: addAnySetAttributeMenu.addAttribute("ListAttribute", modelData.kind)
                                     }
                                 }
+                            }
+                            MenuItem {
+                                text: "2D Size"
+                                onTriggered: addAnySetAttributeMenu.addAttribute("Size2d", "")
+                            }
+                            MenuItem {
+                                text: "2D Vector"
+                                onTriggered: addAnySetAttributeMenu.addAttribute("Vec2d", "")
+                            }
+                            MenuItem {
+                                text: "Flow"
+                                onTriggered: addAnySetAttributeMenu.addAttribute("Flow", "")
                             }
                         }
                     }

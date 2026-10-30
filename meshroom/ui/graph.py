@@ -1448,21 +1448,22 @@ class UIGraph(QObject):
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
-    @Slot(Attribute, str, result=Attribute)
-    def addAnySetAttribute(self, attribute, attributeType):
+    @Slot(Attribute, str, str, result=Attribute)
+    def addAnySetAttribute(self, attribute, attributeKind, elementKind):
         """
-        Add a new child attribute of the given description type to an AnySet attribute.
+        Add a new child attribute of the given kind to an AnySet attribute.
 
         Args:
             attribute (Attribute): the AnySet attribute
-            attributeType (str): the description type of the new attribute (e.g. "FloatParam")
+            attributeKind (str): the kind of the new attribute (e.g. "FloatParam", "HueParam", "ListAttribute")
+            elementKind (str): for a list, the kind of its elements (e.g. "FloatParam"); ignored otherwise
 
         Returns:
             Attribute: the created attribute, or None if it could not be created
         """
         if not isinstance(attribute, AnySet):
             return None
-        command = commands.AddAnySetAttributeCommand(self._graph, attribute, attributeType)
+        command = commands.AddAnySetAttributeCommand(self._graph, attribute, attributeKind, elementKind or None)
         if not self.push(command):
             return None
         return self._graph.attribute(f"{attribute.fullName}.{command.value['name']}")

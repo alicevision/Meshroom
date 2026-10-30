@@ -72,31 +72,55 @@ GridLayout {
         rightMargin: verticalScrollBar.width
         bottomMargin: horizontalScrollBar.height
 
-        // Columns' widths are all set explicitly, as the header only follows explicit widths.
-        // The widths set automatically are kept to tell them apart from the ones set by the user.
+        // Sizes are all set explicitly, as the headers only follow explicit sizes.
+        // Automatic widths are kept to tell them apart from the ones set by the user.
         property var autoColumnWidths: []
+        // Largest content measured so far: TableView only measures loaded cells, and columns and rows
+        // must not shrink when they are scrolled out of the view
+        property var contentColumnWidths: []
+        property var contentRowHeights: []
 
         function updateColumnWidths() {
             const stretchedWidth = (width - rightMargin) / columns
+            let totalWidth = 0
             for (let column = 0; column < columns; column++) {
-                const explicitWidth = explicitColumnWidth(column)
-                if (explicitWidth >= 0 && explicitWidth !== autoColumnWidths[column])
-                    continue
-                const autoWidth = Math.max(implicitColumnWidth(column), horizontalHeader.implicitColumnWidth(column),
-                                           root.minColumnWidth, stretchedWidth)
-                // Only set changed widths, as each change triggers a new layout
-                if (autoWidth !== explicitWidth) {
-                    autoColumnWidths[column] = autoWidth
-                    setColumnWidth(column, autoWidth)
+                contentColumnWidths[column] = Math.max(contentColumnWidths[column] || 0, implicitColumnWidth(column),
+                                                       horizontalHeader.implicitColumnWidth(column))
+                let columnWidth = explicitColumnWidth(column)
+                if (columnWidth < 0 || columnWidth === autoColumnWidths[column]) {
+                    const autoWidth = Math.max(contentColumnWidths[column], root.minColumnWidth, stretchedWidth)
+                    // Only set changed widths, as each change triggers a new layout
+                    if (autoWidth !== columnWidth) {
+                        autoColumnWidths[column] = autoWidth
+                        setColumnWidth(column, autoWidth)
+                    }
+                    columnWidth = autoWidth
                 }
+                totalWidth += columnWidth
+            }
+            // Instead of TableView's estimate from the loaded columns, which makes the scroll bar jump
+            contentWidth = totalWidth
+        }
+
+        function updateRowHeights() {
+            for (let row = 0; row < rows; row++) {
+                contentRowHeights[row] = Math.max(contentRowHeights[row] || 0, implicitRowHeight(row),
+                                                  verticalHeader.implicitRowHeight(row))
+                // Rows that have never been loaded can't be measured yet
+                if (contentRowHeights[row] > 0 && contentRowHeights[row] !== explicitRowHeight(row))
+                    setRowHeight(row, contentRowHeights[row])
             }
         }
 
         onWidthChanged: Qt.callLater(updateColumnWidths)
-        onLayoutChanged: Qt.callLater(updateColumnWidths)
+        onLayoutChanged: {
+            Qt.callLater(updateColumnWidths)
+            Qt.callLater(updateRowHeights)
+        }
         onColumnsChanged: {
             clearColumnWidths()
             autoColumnWidths = []
+            contentColumnWidths = []
             Qt.callLater(updateColumnWidths)
         }
 

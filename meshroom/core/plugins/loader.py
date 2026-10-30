@@ -236,7 +236,8 @@ class PluginLoader:
             folderRootPath: the plugin's root folder to load.
             issues: the collector for the issues found while loading the plugin.
         """
-        self._loadFlatFolder(plugin, packageName, folderRootPath, issues)
+        # The menu declaration file (menu.py) is reserved at the root only
+        self._loadFlatFolder(plugin, packageName, folderRootPath, issues, excludedStems=(Path(PLUGIN_MENU_FILE).stem,))
 
         for subFolderPath in sorted(p for p in folderRootPath.iterdir()
                                     if p.is_dir() and not p.name.startswith(("__", "."))):
@@ -308,7 +309,8 @@ class PluginLoader:
                 continue
             self._collectProviders(plugin, childModule, issues)
 
-    def _loadFlatFolder(self, plugin: Plugin, packageName: str, folderPath: Path, issues: _LoadIssues):
+    def _loadFlatFolder(self, plugin: Plugin, packageName: str, folderPath: Path, issues: _LoadIssues,
+                        excludedStems: tuple = ()):
         """
         Load every Python file directly contained in "folderPath" as a module of the virtual
         package "packageName", and collect the node/submitter providers these modules define.
@@ -317,13 +319,13 @@ class PluginLoader:
             packageName: the dotted name of the virtual package the folder stands for.
             folderPath: the folder containing the Python files to load.
             issues: the collector for the issues found while loading the plugin.
+            excludedStems: the stems of the files of "folderPath" that must not be loaded.
         """
         for filePath in sorted([*folderPath.glob("*.py"), *folderPath.glob("*.pyc")]):
             # Skip special/dunder files like __init__.py
             if filePath.stem.startswith("__"):
                 continue
-            # Skip the reserved menu declaration file: it is executed by "_loadMenu".
-            if filePath.stem == "menu":
+            if filePath.stem in excludedStems:
                 continue
 
             module = self._execModule(f"{packageName}.{filePath.stem}", filePath, issues)

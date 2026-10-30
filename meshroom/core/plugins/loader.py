@@ -9,7 +9,8 @@ from types import ModuleType
 from pathlib import Path
 from typing import List, Optional
 
-from meshroom.common import BaseObject, Backend, CurrentBackend
+import meshroom.common
+from meshroom.common import BaseObject, Backend
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.plugins.base import PluginType, PluginContext, Plugin
@@ -211,7 +212,8 @@ class PluginLoader:
             hostPath: the plugin's host modules folder (its "meshroom" folder).
             issues: the collector for the issues found while loading the plugin.
         """
-        if CurrentBackend != Backend.PYSIDE:
+        # Read at call time: the backend is chosen after this module may have been imported.
+        if meshroom.common.CurrentBackend != Backend.PYSIDE:
             return
 
         menuFile = hostPath / PLUGIN_MENU_FILE

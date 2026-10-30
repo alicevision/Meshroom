@@ -4,6 +4,10 @@ import QtQuick.Controls
 Menu {
     id: root
     required property var menuData
+    // Nesting level of this menu: 0 for a menu of the menu bar
+    property int depth: 0
+    // Maximum nesting level of the sub-menus (radio buttons included): deeper ones are displayed disabled, and not built
+    property int maxDepth: 2
 
     title: (menuData != undefined) ? menuData.label : ""
 
@@ -51,6 +55,19 @@ Menu {
     Component {
         id: separatorComponent
         MenuSeparator {}
+    }
+
+    // Sub-menu beyond the maximum depth: displayed, but disabled and empty
+    Component {
+        id: disabledMenuComponent
+        Menu {
+            id: disabledMenu
+            required property var itemData
+            title: itemData.label
+            enabled: false
+
+            Component.onCompleted: root.setMenuIcon(disabledMenu, itemData.icon)
+        }
     }
 
     Component {
@@ -114,6 +131,16 @@ Menu {
         })
     }
 
+    // Add a disabled entry for a sub-menu that cannot be nested deeper
+    function addDisabledMenu(itemData) {
+        console.warn("UserMenu: the sub-menu '" + itemData.label + "' of '" + title + "' is disabled: sub-menus cannot be nested more than " + maxDepth + " levels deep.")
+        const disabledMenu = disabledMenuComponent.createObject(null, {"itemData": itemData})
+        if (disabledMenu) {
+            root.addMenu(disabledMenu)
+            _createdItems.push(disabledMenu)
+        }
+    }
+
     function buildMenu() {
         if (menuData == undefined)
             return
@@ -134,12 +161,16 @@ Menu {
                     break
                 }
                 case "menu": {
+                    if (depth >= maxDepth) {
+                        addDisabledMenu(itemData)
+                        break
+                    }
                     const subMenuComponent = Qt.createComponent(Qt.resolvedUrl("UserMenu.qml"))
                     if (subMenuComponent.status !== Component.Ready) {
                         console.error("UserMenu: cannot create the sub-menu '" + itemData.label + "': " + subMenuComponent.errorString())
                         break
                     }
-                    const subMenu = subMenuComponent.createObject(null, {"menuData": itemData.submenu})
+                    const subMenu = subMenuComponent.createObject(null, {"menuData": itemData.submenu, "depth": depth + 1, "maxDepth": maxDepth})
                     if (subMenu) {
                         root.addMenu(subMenu)
                         closeNestedMenusOnHover(subMenu)
@@ -148,6 +179,10 @@ Menu {
                     break
                 }
                 case "radiobutton": {
+                    if (depth >= maxDepth) {
+                        addDisabledMenu(itemData)
+                        break
+                    }
                     const groupMenu = radioMenuComponent.createObject(null, {"itemData": itemData})
                     if (groupMenu) {
                         root.addMenu(groupMenu)

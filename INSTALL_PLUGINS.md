@@ -115,6 +115,12 @@ menu.addButton("Open Settings", callback=OpenSettings())
 MeshroomMenuManager.registerMenu(menu)
 ```
 
+A `menu.py` file can register several menus. Within a menu, entries are identified by their name: two entries (or two items of a radio button) cannot share a name or a label. The optional `index` argument inserts an entry, or a top-level menu, at a given position instead of appending it. Callbacks must be callables (a function or a `MenuCallback` instance), called with the menu, the `MeshroomApp` and context-dependent keyword arguments (`enabled` for checkboxes, `selected` for radio buttons).
+
+Sub-menus (radio buttons included) can be nested up to 2 levels below a menu of the menu bar: deeper ones are displayed disabled, without their content, and a warning is logged. Characters of a label that no installed font can display (e.g. emojis without an emoji font) are removed from it.
+
+Only the `menu.py` file at the root of the `meshroom` folder is reserved: a `menu.py` in a subfolder is loaded like any other module.
+
 Menus are only loaded when Meshroom runs with its graphical interface: the file is ignored by the command-line tools (`meshroom_batch`, `meshroom_compute`).
 
 ## Installing a Plugin

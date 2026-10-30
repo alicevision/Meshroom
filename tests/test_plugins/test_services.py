@@ -64,10 +64,11 @@ def installer(archive, pluginsPath, name="myPlugin", reusableAssets=None):
                            reusableAssets=reusableAssets)
 
 
-def updater(archive, pluginsPath, name="myPlugin"):
+def updater(archive, pluginsPath, name="myPlugin", installedName=None):
     """ Return a PluginUpdater for the plugin archive "archive". """
     record = PluginRecord(name, "2.0", "me", archive.as_uri())
-    return PluginUpdater(ArchivePluginProvider(archive.as_uri()), record, pluginsPath=pluginsPath)
+    return PluginUpdater(ArchivePluginProvider(archive.as_uri()), record, pluginsPath=pluginsPath,
+                         installedName=installedName)
 
 
 def readLock(pluginFolder):
@@ -341,6 +342,29 @@ class TestReleaseAssets:
             installer(archive, tmp_path / "plugins").execute()
         assert not (tmp_path / "plugins" / "myPlugin").exists()
 
+    def test_updateKeepsUnchangedArchive(self, tmp_path, api):
+        """ An update keeps the extracted archive of an unchanged release, and downloads a changed one. """
+        linuxArchive, windowsArchive = self.writeToolArchives(tmp_path / "remote")
+        self.publishRelease(api, [linuxArchive, windowsArchive])
+        assets = [releaseAsset()]
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=assets), tmp_path / "plugins").execute()
+        toolFolder = tmp_path / "plugins" / "myPlugin" / "tool"
+        writeFile(toolFolder / "generated.txt", "generated")
+
+        # The release is unchanged but cannot be downloaded anymore: the update must keep the installed one.
+        linuxArchive.unlink()
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=assets), tmp_path / "plugins").execute()
+        assert (toolFolder / "generated.txt").read_text() == "generated"
+        assert readLock(tmp_path / "plugins" / "myPlugin")["installedAssets"][0]["extracted"] is True
+
+        # A new release is downloaded.
+        newArchive = writeZip(tmp_path / "remote" / "tool-2.0-linux-x86_64.zip", {"tool-2.0/bin/tool": "linux 2.0"})
+        self.publishRelease(api, [newArchive], release="myOrg/myTool@v2.0")
+        updater(writePluginZip(tmp_path / "v3.zip", "3.0", assets=[releaseAsset("myOrg/myTool@v2.0")]),
+                tmp_path / "plugins").execute()
+        assert (toolFolder / "bin" / "tool").read_text() == "linux 2.0"
+        assert not (toolFolder / "generated.txt").exists()
+
     def test_executableFile(self, tmp_path, api):
         """ A release file that is not an archive is downloaded as is in the asset's path, and made executable. """
         linuxTool = writeFile(tmp_path / "remote" / "tool-linux-x86_64", "linux")
@@ -406,6 +430,156 @@ class TestUpdater:
             updater(writeFile(tmp_path / "v2.zip", "not a zip"), tmp_path / "plugins").execute()
         assert lockVersion(tmp_path / "plugins" / "myPlugin") == "1.0"
         assert [p.name for p in (tmp_path / "plugins").iterdir()] == ["myPlugin"]
+
+    def test_keepsUnchangedAssets(self, tmp_path):
+        """ An asset with the same path and sha256 is kept, a changed one is downloaded again. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        other = writeFile(tmp_path / "remote" / "other.pt", "old")
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=[
+            asset(weights.as_uri(), sha256=sha256Of(weights)),
+            asset(other.as_uri(), name="other", path="other.pt", sha256=sha256Of(other)),
+        ]), tmp_path / "plugins").execute()
+
+        # The unchanged asset cannot be downloaded anymore: the update must keep the installed one.
+        weights.unlink()
+        newOther = writeFile(tmp_path / "remote" / "newOther.pt", "new")
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=[
+            asset(weights.as_uri(), sha256=hashlib.sha256(b"weights").hexdigest()),
+            asset(newOther.as_uri(), name="other", path="other.pt", sha256=sha256Of(newOther)),
+        ]), tmp_path / "plugins").execute()
+
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        assert (pluginFolder / "weights.pt").read_text() == "weights"
+        assert (pluginFolder / "other.pt").read_text() == "new"
+        assert [p.name for p in (tmp_path / "plugins").iterdir()] == ["myPlugin"]
+
+    def test_assetWithoutSha256IsDownloadedAgain(self, tmp_path):
+        """ An asset without a known sha256 cannot be compared, it is downloaded again. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "old")
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=[asset(weights.as_uri())]), tmp_path / "plugins").execute()
+        weights.write_text("new")
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=[asset(weights.as_uri())]), tmp_path / "plugins").execute()
+        assert (tmp_path / "plugins" / "myPlugin" / "weights.pt").read_text() == "new"
+
+    def test_carriesOverAddedFiles(self, tmp_path):
+        """ The files added to the plugin are carried over, not the files of the previous version, nor generated ones. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=[asset(weights.as_uri())],
+                                 files={"meshroom/removed.py": "", "meshroom/kept.py": "v1"}), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        writeFile(pluginFolder / "data" / "user.txt", "user")
+        writeFile(pluginFolder / "meshroom" / "local.py", "user")
+        writeFile(pluginFolder / "meshroom" / "__pycache__" / "removed.pyc")
+        writeFile(pluginFolder / "venv" / "lib" / "package.py")
+        writeFile(pluginFolder / "uv.lock")
+
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", files={"meshroom/kept.py": "v2"}), tmp_path / "plugins").execute()
+
+        assert (pluginFolder / "data" / "user.txt").read_text() == "user"
+        assert (pluginFolder / "meshroom" / "local.py").read_text() == "user"
+        assert (pluginFolder / "meshroom" / "kept.py").read_text() == "v2"
+        assert not (pluginFolder / "meshroom" / "removed.py").exists()
+        assert not (pluginFolder / "meshroom" / "__pycache__").exists()
+        assert not (pluginFolder / "venv").exists()
+        assert not (pluginFolder / "uv.lock").exists()
+        # The asset is no longer declared.
+        assert not (pluginFolder / "weights.pt").exists()
+
+    def test_addedFileReplacedByNewVersion(self, tmp_path):
+        """ An added file whose path is taken by the new version is carried over next to it. """
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0"), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        writeFile(pluginFolder / "notes.txt", "user")
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", files={"notes.txt": "v2"}), tmp_path / "plugins").execute()
+        assert (pluginFolder / "notes.txt").read_text() == "v2"
+        assert (pluginFolder / "notes.txt.previous").read_text() == "user"
+
+    def test_addedFileInNewAssetPath(self, tmp_path):
+        """ An added file in the path of an asset of the new version is not carried over. """
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0"), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        writeFile(pluginFolder / "models" / "byHand.pt", "user")
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=[asset(weights.as_uri(), path="models")]),
+                tmp_path / "plugins").execute()
+        assert (pluginFolder / "models").read_text() == "weights"
+
+    def test_lockWithoutInstallation(self, tmp_path):
+        """
+        A plugin installed before its installation was recorded keeps its declared assets with a sha256,
+        but its added files cannot be told apart from the files of its archive: none is carried over.
+        """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        assets = [asset(weights.as_uri(), sha256=sha256Of(weights))]
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=assets), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        lock = readLock(pluginFolder)
+        for key in ("source", "installedAssets", "files"):
+            del lock[key]
+        writeFile(pluginFolder / "plugin.lock", json.dumps(lock))
+        writeFile(pluginFolder / "user.txt", "user")
+
+        weights.unlink()
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=assets), tmp_path / "plugins").execute()
+        assert (pluginFolder / "weights.pt").read_text() == "weights"
+        assert not (pluginFolder / "user.txt").exists()
+
+    def test_failedUpdateKeepsAssetsAndFiles(self, tmp_path):
+        """ When the new version cannot be installed, the installed plugin is put back with its assets and files. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        assets = [asset(weights.as_uri(), sha256=sha256Of(weights))]
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=assets), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        writeFile(pluginFolder / "user.txt", "user")
+
+        missing = asset((tmp_path / "missing.pt").as_uri(), name="missing", path="missing.pt")
+        with pytest.raises(PluginServiceError):
+            updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=assets + [missing]), tmp_path / "plugins").execute()
+        assert lockVersion(pluginFolder) == "1.0"
+        assert (pluginFolder / "weights.pt").read_text() == "weights"
+        assert (pluginFolder / "user.txt").read_text() == "user"
+        assert [p.name for p in (tmp_path / "plugins").iterdir()] == ["myPlugin"]
+
+    def test_failedCarryOverRestoresPlugin(self, tmp_path, monkeypatch):
+        """ When the added files cannot be carried over, the installed plugin is put back as it was. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        assets = [asset(weights.as_uri(), sha256=sha256Of(weights))]
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=assets), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        writeFile(pluginFolder / "a.txt", "a")
+        writeFile(pluginFolder / "b.txt", "b")
+
+        rename = os.rename
+
+        def failingRename(source, destination):
+            if str(source).endswith("b.txt"):
+                raise OSError("Cannot move")
+            rename(source, destination)
+
+        monkeypatch.setattr(os, "rename", failingRename)
+        with pytest.raises(PluginServiceError, match="carry over"):
+            updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=assets), tmp_path / "plugins").execute()
+        monkeypatch.undo()
+
+        assert lockVersion(pluginFolder) == "1.0"
+        assert sorted(p.name for p in pluginFolder.iterdir()) == ["a.txt", "b.txt", "meshroom", "plugin.lock", "weights.pt"]
+        assert [p.name for p in (tmp_path / "plugins").iterdir()] == ["myPlugin"]
+
+    def test_renamedPlugin(self, tmp_path):
+        """ A plugin renamed by its new version is installed in its new folder, in place of the installed one. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        assets = [asset(weights.as_uri(), sha256=sha256Of(weights))]
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=assets), tmp_path / "plugins").execute()
+        writeFile(tmp_path / "plugins" / "myPlugin" / "user.txt", "user")
+
+        weights.unlink()
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", name="newName", assets=assets), tmp_path / "plugins",
+                name="newName", installedName="myPlugin").execute()
+        newFolder = tmp_path / "plugins" / "newName"
+        assert [p.name for p in (tmp_path / "plugins").iterdir()] == ["newName"]
+        assert lockVersion(newFolder) == "2.0"
+        assert (newFolder / "weights.pt").read_text() == "weights"
+        assert (newFolder / "user.txt").read_text() == "user"
 
     def test_cancel(self, tmp_path):
         """ A cancelled update leaves the installed plugin in place. """

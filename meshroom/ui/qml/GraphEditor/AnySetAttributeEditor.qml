@@ -3,12 +3,14 @@ import QtQuick.Layouts
 import QtQuick.Controls
 
 import Utils 1.0
+import "AttributeControls" as AttributeControls
 import "AnySetUtils.js" as AnySetUtils
 
 /**
  * Inline form to edit the description of an AnySet child attribute: its name and label,
- * and the parameters that depend on its type (default value, range, choice values).
+ * and the parameters that depend on its type (range, choice values, default value).
  * It is displayed right under the attribute's row, with the labels above the fields so that it fits narrow panels.
+ * The default value is edited with the same controls as the attribute's value in the Node Editor.
  */
 
 Pane {
@@ -20,20 +22,28 @@ Pane {
     signal closed()
 
     readonly property string attributeType: targetAttribute ? targetAttribute.type : ""
+    readonly property string semantic: targetAttribute ? targetAttribute.desc.semantic : ""
     readonly property bool isInt: attributeType === "IntParam"
     readonly property bool isNumber: isInt || attributeType === "FloatParam"
+    readonly property bool isHue: attributeType === "FloatParam" && semantic === "color/hue"
     readonly property bool isBool: attributeType === "BoolParam"
     readonly property bool isChoice: attributeType === "ChoiceParam"
     readonly property bool isMultiChoice: isChoice && !targetAttribute.desc.exclusive
+    readonly property bool isMultiline: attributeType === "StringParam" && semantic.includes("multiline")
     readonly property bool hasDefaultValue: ["StringParam", "File", "IntParam", "FloatParam", "BoolParam", "ChoiceParam", "ColorParam"].includes(attributeType)
+
+    // Pending default value, set by the value control and applied with the other parameters
+    property var defaultValue: targetAttribute && hasDefaultValue ? targetAttribute.desc.value : undefined
+
+    // Context expected by the AttributeControls, which are usually created by an AttributeItemDelegate
+    readonly property var errorMessages: []
+    readonly property Item parameterLabel: root
 
     readonly property bool nameValid: nameField.acceptableInput && AnySetUtils.isNameAvailable(targetAttribute, nameField.text.trim())
     readonly property bool labelValid: labelField.text.trim() !== ""
-    readonly property bool rangeValid: !isNumber || (minField.text === "" && maxField.text === "" && stepField.text === "")
-                                       || (minField.acceptableInput && maxField.acceptableInput && stepField.acceptableInput)
-    readonly property bool valid: nameValid && labelValid && rangeValid
-                                  && (!isNumber || defaultField.acceptableInput)
-                                  && (!isChoice || choiceValues().length > 0)
+    readonly property bool hasRange: isNumber && minField.text !== "" && minField.acceptableInput && maxField.acceptableInput && stepField.acceptableInput
+    readonly property bool rangeValid: !isNumber || hasRange || (minField.text === "" && maxField.text === "" && stepField.text === "")
+    readonly property bool valid: nameValid && labelValid && rangeValid && (!isChoice || choiceValues().length > 0)
 
     readonly property var numberRegex: isInt ? /^-?\d+$/ : /^-?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/
 
@@ -52,16 +62,15 @@ Pane {
         })
     }
 
+    function typeText() {
+        if (attributeType === "ListAttribute")
+            return "ListAttribute of " + targetAttribute.baseType
+        return semantic ? attributeType + " (" + semantic + ")" : attributeType
+    }
+
     function rangeValue(index) {
         var range = targetAttribute ? targetAttribute.desc.range : undefined
         return range && range.length > index ? String(range[index]) : ""
-    }
-
-    function defaultValueText() {
-        var value = targetAttribute.desc.value
-        if (value === undefined || value === null)
-            return ""
-        return isMultiChoice ? value.join(", ") : String(value)
     }
 
     function splitList(text) {
@@ -79,16 +88,15 @@ Pane {
             "description": descriptionField.text,
             "advanced": advancedCheckBox.checked
         }
-        if (isBool)
-            params["defaultValue"] = defaultCheckBox.checked
-        else if (isNumber)
-            params["defaultValue"] = Number(defaultField.text)
-        else if (isMultiChoice)
-            params["defaultValue"] = splitList(defaultField.text)
-        else if (hasDefaultValue)
-            params["defaultValue"] = defaultField.text
         if (isNumber)
-            params["range"] = minField.text === "" ? [] : [Number(minField.text), Number(maxField.text), Number(stepField.text)]
+            params["defaultValue"] = Number(defaultValue)
+        else if (isMultiChoice)
+            // Only keep the default choices that are still available
+            params["defaultValue"] = defaultValue.filter(function(v) { return choiceValues().includes(v) })
+        else if (hasDefaultValue)
+            params["defaultValue"] = defaultValue
+        if (isNumber)
+            params["range"] = hasRange ? [Number(minField.text), Number(maxField.text), Number(stepField.text)] : []
         if (isChoice)
             params["values"] = choiceValues()
         return params
@@ -156,61 +164,29 @@ Pane {
             ErrorBorder { visible: !root.labelValid }
         }
 
-        GridLayout {
-            columns: 2
-            columnSpacing: 6
-            rowSpacing: 4
+        RowLayout {
+            spacing: 6
             Layout.fillWidth: true
 
-            FieldLabel {
-                text: "Default"
-                visible: root.hasDefaultValue
-                Layout.preferredWidth: 1
-            }
-            FieldLabel {
+            Label {
                 text: "Type"
-                Layout.preferredWidth: 1
-            }
-
-            Item {
-                visible: root.hasDefaultValue
-                Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                Layout.minimumWidth: 0
-                implicitHeight: root.isBool ? defaultCheckBox.implicitHeight : defaultField.implicitHeight
-
-                FormField {
-                    id: defaultField
-                    visible: !root.isBool
-                    width: parent.width
-                    text: root.targetAttribute && root.hasDefaultValue ? root.defaultValueText() : ""
-                    validator: RegularExpressionValidator { regularExpression: root.isNumber ? root.numberRegex : /.*/ }
-                    ErrorBorder { visible: root.isNumber && !defaultField.acceptableInput }
-                }
-                CheckBox {
-                    id: defaultCheckBox
-                    visible: root.isBool
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: root.isBool && root.targetAttribute.desc.value === true
-                    padding: 0
-                }
+                font.pointSize: 8
             }
             Label {
-                text: root.attributeType
+                text: root.typeText()
                 color: Colors.lightgrey
                 elide: Text.ElideRight
                 Layout.fillWidth: true
-                Layout.preferredWidth: 1
                 Layout.minimumWidth: 0
             }
         }
 
         FieldLabel {
-            visible: root.isNumber
+            visible: root.isNumber && !root.isHue
             text: "Range (min · max · step)"
         }
         RowLayout {
-            visible: root.isNumber
+            visible: root.isNumber && !root.isHue
             spacing: 6
             Layout.fillWidth: true
 
@@ -252,6 +228,37 @@ Pane {
             ErrorBorder { visible: root.isChoice && root.choiceValues().length === 0 }
         }
 
+        FieldLabel {
+            visible: root.hasDefaultValue
+            text: "Default"
+        }
+        Loader {
+            id: defaultValueLoader
+            active: root.hasDefaultValue
+            visible: active
+            Layout.fillWidth: true
+            // TextAreaFlick has a fixed height and no implicit height
+            Layout.preferredHeight: item ? (item.implicitHeight > 0 ? item.implicitHeight : item.height) : 0
+
+            sourceComponent: {
+                if (root.isBool)
+                    return checkBoxComponent
+                if (root.isHue)
+                    return hueComponent
+                if (root.isNumber)
+                    return sliderComponent
+                if (root.isMultiChoice)
+                    return choiceMultiComponent
+                if (root.isChoice)
+                    return choiceComponent
+                if (root.attributeType === "ColorParam")
+                    return colorComponent
+                if (root.isMultiline)
+                    return textAreaComponent
+                return textFieldComponent
+            }
+        }
+
         FieldLabel { text: "Description" }
         FormField {
             id: descriptionField
@@ -279,6 +286,148 @@ Pane {
                 text: "Cancel"
                 onClicked: root.cancel()
             }
+        }
+    }
+
+    Component {
+        id: textFieldComponent
+        AttributeControls.TextFieldRow {
+            text: root.defaultValue !== undefined && root.defaultValue !== null ? root.defaultValue : ""
+            mandatory: false
+            attribute: root.targetAttribute
+            editable: true
+            onEditingFinished: (text) => root.defaultValue = text
+            onAccepted: (parameterLabel, text) => {
+                root.defaultValue = text
+                root.apply()
+            }
+            onDropped: (hasUrls, hasText, urlText, text) => {
+                if (hasUrls)
+                    root.defaultValue = urlText
+                else if (hasText)
+                    root.defaultValue = text
+            }
+            onTriggered: (text, start, end, length, clipboard) => {
+                root.defaultValue = text.substr(0, start) + clipboard + text.substr(end, length)
+            }
+        }
+    }
+
+    Component {
+        id: textAreaComponent
+        AttributeControls.TextAreaFlick {
+            label: root.defaultValue
+            editable: true
+            onEditingFinished: (text) => root.defaultValue = text
+            onDropped: (hasUrls, hasText, urlText, text) => {
+                if (hasUrls)
+                    root.defaultValue = urlText
+                else if (hasText)
+                    root.defaultValue = text
+            }
+        }
+    }
+
+    Component {
+        id: sliderComponent
+        AttributeControls.SliderField {
+            checked: root.defaultValue
+            type: root.attributeType
+            // The slider follows the range being edited
+            length: root.hasRange ? 3 : 0
+            start: root.hasRange ? Number(minField.text) : 0
+            end: root.hasRange ? Number(maxField.text) : 0
+            step: root.hasRange ? Number(stepField.text) : 0
+            editable: true
+            onEditingFinished: (hasExprError, evaluatedValue, text, displayValue) => {
+                if (!hasExprError)
+                    root.defaultValue = evaluatedValue
+            }
+            onAccepted: (hasExprError, evaluatedValue, text, displayValue) => {
+                if (!hasExprError) {
+                    root.defaultValue = evaluatedValue
+                    root.apply()
+                }
+            }
+            onPressedChanged: (pressed, formattedValue) => {
+                if (!pressed)
+                    root.defaultValue = formattedValue
+            }
+        }
+    }
+
+    Component {
+        id: hueComponent
+        AttributeControls.ColorHue {
+            value: root.defaultValue
+            editable: true
+            onEditingFinished: (text) => root.defaultValue = Number(text)
+            onAccepted: (text) => {
+                root.defaultValue = Number(text)
+                root.apply()
+            }
+            onPressedChanged: (pressed, formattedValue) => {
+                if (!pressed)
+                    root.defaultValue = formattedValue
+            }
+        }
+    }
+
+    Component {
+        id: checkBoxComponent
+        AttributeControls.CheckBoxRow {
+            editable: true
+            checked: root.defaultValue
+            onToggled: root.defaultValue = !root.defaultValue
+        }
+    }
+
+    Component {
+        id: choiceComponent
+        AttributeControls.Choice {
+            // The possible values follow the values being edited
+            value: root.defaultValue
+            values: root.choiceValues()
+            onEditingFinished: (value) => root.defaultValue = value
+        }
+    }
+
+    Component {
+        id: choiceMultiComponent
+        AttributeControls.ChoiceMulti {
+            value: root.defaultValue
+            values: root.choiceValues()
+            customValueColor: Colors.orange
+            onToggled: (value, checked) => {
+                var defaultValue = root.defaultValue.slice()
+                if (checked)
+                    defaultValue.push(value)
+                else
+                    defaultValue.splice(defaultValue.indexOf(value), 1)
+                root.defaultValue = defaultValue
+            }
+        }
+    }
+
+    Component {
+        id: colorComponent
+        AttributeControls.Color {
+            id: colorControl
+            value: root.defaultValue
+            editable: true
+            onClicked: (checked, previousColor, colorTextValue) => {
+                if (checked) {
+                    if (colorTextValue !== "")
+                        root.defaultValue = colorTextValue
+                    else
+                        root.defaultValue = previousColor !== "" ? previousColor : "#0000FF"
+                } else {
+                    colorControl.previousColor = root.defaultValue
+                    root.defaultValue = ""
+                }
+            }
+            onEditingFinished: (text) => root.defaultValue = text
+            onAccepted: (text) => root.defaultValue = text
         }
     }
 }

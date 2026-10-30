@@ -28,3 +28,18 @@ function canMoveBy(attribute, offset) {
     }
     return index + offset >= 0 && index + offset < childCount(attribute)
 }
+
+function isNameAvailable(attribute, name) {
+    if (!attribute || !attribute.root || attribute.root.type !== "AnySet") {
+        return false
+    }
+
+    const anySetValue = attribute.root.value
+    for (let i = 0; i < anySetValue.count; i++) {
+        const child = anySetValue.at(i)
+        if (child !== attribute && child.name === name) {
+            return false
+        }
+    }
+    return true
+}

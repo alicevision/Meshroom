@@ -626,6 +626,83 @@ class RemoveAnySetAttributeCommand(GraphCommand):
         return True
 
 
+class AddAnySetAttributeCommand(GraphCommand):
+    def __init__(self, graph, anySetAttribute, attributeKind, elementKind=None, parent=None):
+        super().__init__(graph, parent)
+        assert isinstance(anySetAttribute, AnySet)
+        self.anySetAttrName = anySetAttribute.fullName
+        self.value = anySetAttribute.newAttributeData(attributeKind, elementKind)
+        self.index = anySetAttribute.value.count
+        self.setText(f"Add {self.anySetAttrName}.{self.value['name']}")
+
+    def redoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        if anySetAttribute is None:
+            return False
+        return anySetAttribute.insertAttribute(self.value, self.index) is not None
+
+    def undoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        attribute = self.graph.attribute(f"{self.anySetAttrName}.{self.value['name']}")
+        if anySetAttribute is None or attribute is None:
+            return False
+        anySetAttribute.removeAttribute(attribute)
+        return True
+
+
+class EditAnySetAttributeCommand(GraphCommand):
+    """ Edit the description parameters of an AnySet child, by replacing it with an attribute built
+    from the edited description. Its connections are restored on the new attribute. """
+    def __init__(self, graph, attribute, parameters, parent=None):
+        super().__init__(graph, parent)
+        anySetAttribute = attribute.root
+        assert isinstance(anySetAttribute, AnySet)
+        self.anySetAttrName = anySetAttribute.fullName
+        self.oldValue = attribute.asDict()
+        self.newValue = anySetAttribute.editedAttributeData(attribute, parameters)
+        attributes = [attribute] + attribute.flatStaticChildren
+        self.edges = [
+            (edge.src.fullName, edge.dst.fullName)
+            for edge in self.graph.edges.values()
+            if edge.src in attributes or edge.dst in attributes
+        ]
+        self.setText(f"Edit {attribute.fullName}")
+
+    def _renamedAttributeName(self, attributeName, oldName, newName):
+        """ Return the full name of an attribute after its AnySet child ancestor has been renamed. """
+        oldPrefix = f"{self.anySetAttrName}.{oldName}"
+        if attributeName == oldPrefix or attributeName.startswith((oldPrefix + ".", oldPrefix + "[")):
+            return f"{self.anySetAttrName}.{newName}" + attributeName[len(oldPrefix):]
+        return attributeName
+
+    def _replace(self, fromValue, toValue):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        attribute = self.graph.attribute(f"{self.anySetAttrName}.{fromValue['name']}")
+        if anySetAttribute is None or attribute is None:
+            return False
+
+        for srcName, dstName in self.edges:
+            dstAttr = self.graph.anyAttribute(self._renamedAttributeName(dstName, self.oldValue["name"], fromValue["name"]))
+            if dstAttr is not None:
+                self.graph.removeEdge(dstAttr)
+
+        if anySetAttribute.replaceAttribute(attribute, toValue) is None:
+            return False
+
+        for srcName, dstName in self.edges:
+            srcAttr = self.graph.anyAttribute(self._renamedAttributeName(srcName, self.oldValue["name"], toValue["name"]))
+            dstAttr = self.graph.anyAttribute(self._renamedAttributeName(dstName, self.oldValue["name"], toValue["name"]))
+            if srcAttr is not None and dstAttr is not None:
+                self.graph.addEdge(srcAttr, dstAttr)
+        return True
+
+    def redoImpl(self):
+        return self._replace(self.oldValue, self.newValue)
+
+    def undoImpl(self):
+        return self._replace(self.newValue, self.oldValue)
+
+
 class RenameAnySetAttributeCommand(GraphCommand):
     def __init__(self, graph, attribute, name, label, parent=None):
         super().__init__(graph, parent)

@@ -83,7 +83,7 @@ class MenuItem(QObject):
     def __init__(self, name, label=None, tooltip=None, shortcut=None, parent=None):
         super().__init__(parent)
         self._name = name
-        self._label = label or name
+        self._label = pruneUnsupportedCharacters(label or name)
         self._tooltip = tooltip or ""
         self._shortcut = shortcut or ""
 
@@ -96,10 +96,18 @@ class MenuItem(QObject):
 class MenuObject(QObject):
     """Item registered as an entry in a menu.
     """
-    def __init__(self, parent: "Menu", callback: Optional[MenuCallback], **kwargs):
-        super().__init__(parent)
+    # Type of the entry, used by the QML to pick the matching component
+    menuObjectType: str = None
 
-        self.menuObjectType = None
+    def __init__(self, parent: "Menu", callback: Optional[MenuCallback], **kwargs):
+        # Catch a common mistake early: passing the result of a call ("callback=func()") instead of the function
+        if callback is not None and not callable(callback):
+            raise TypeError(
+                f"Invalid callback for menu entry '{kwargs.get('name', '')}': expected a callable, "
+                f"got {type(callback).__name__}. Pass the function itself, without calling it."
+            )
+
+        super().__init__(parent)
 
         self._uid: str = uuid.uuid4().hex
         self.parentMenu: "Menu" = parent
@@ -131,9 +139,10 @@ class MenuObject(QObject):
 
 
 class MenuTypeMenu(MenuObject):
+    menuObjectType = "menu"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.menuObjectType = "menu"
         self._submenu: "Menu" = kwargs.get("submenu", None)
 
     def _setSubmenu(self, menu: "Menu"):
@@ -143,21 +152,18 @@ class MenuTypeMenu(MenuObject):
 
 
 class MenuTypeSeparator(MenuObject):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.menuObjectType = "separator"
+    menuObjectType = "separator"
 
 
 class MenuTypeButton(MenuObject):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.menuObjectType = "button"
+    menuObjectType = "button"
 
 
 class MenuTypeCheckbox(MenuObject):
+    menuObjectType = "checkbox"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.menuObjectType = "checkbox"
         self._checked: bool = kwargs.get("checked", False)
 
     def _setChecked(self, value):
@@ -170,9 +176,10 @@ class MenuTypeCheckbox(MenuObject):
 
 
 class MenuTypeRadiobutton(MenuObject):
+    menuObjectType = "radiobutton"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.menuObjectType = "radiobutton"
         self._items: list = kwargs.get("items") or []
         self._selectedUid: str = kwargs.get("selectedUid", "")
 
@@ -224,10 +231,15 @@ class Menu(QObject):
                 raise ValueError(f"Menu '{self._name}' already has an entry labelled '{label}'.")
 
     def _addObject(self, obj: MenuObject):
-        self._objects.append(obj)
+        """ Insert "obj" at its index if it is a valid position, or append it otherwise. """
+        if 0 <= obj.index < len(self._objects):
+            self._objects.insert(obj.index, obj)
+        else:
+            self._objects.append(obj)
         self.objectsChanged.emit()
 
     def addSubmenu(self, name, icon=None, tooltip="", index=-1) -> "Menu":
+        self._checkNewEntry(name, name)
         submenu = Menu(name, icon=icon, tooltip=tooltip, parent=self, index=index)
         submenu.menuObject._setSubmenu(submenu)
         self._addObject(submenu.menuObject)
@@ -240,23 +252,35 @@ class Menu(QObject):
 
     def addButton(self, name, callback: MenuCallback, label=None,
                   icon=None, tooltip="", index=-1, shortcut=None):
-        obj = MenuTypeButton(self, callback, name=name, label=label or name, icon=icon, 
+        self._checkNewEntry(name, label or name)
+        obj = MenuTypeButton(self, callback, name=name, label=label or name, icon=icon,
                              tooltip=tooltip, index=index, shortcut=shortcut)
         self._addObject(obj)
         return obj
 
     def addCheckbox(self, name, callback: MenuCallback, label=None, icon=None,
-                     tooltip="", index=-1, shortcut=None, checked=False):
-        obj = MenuTypeCheckbox(self, callback, name=name, label=label or name, icon=icon, 
+                    tooltip="", index=-1, shortcut=None, checked=False):
+        self._checkNewEntry(name, label or name)
+        obj = MenuTypeCheckbox(self, callback, name=name, label=label or name, icon=icon,
                                tooltip=tooltip, index=index, shortcut=shortcut, checked=checked)
         self._addObject(obj)
         return obj
 
     def addRadioButton(self, name, items: list[MenuItem], callback: MenuCallback,
-                        label=None, icon=None, tooltip="", index=-1):
+                       label=None, icon=None, tooltip="", index=-1):
         """
         Acts as a sub-menu: each entry in `items` becomes a selectable radio entry.
+
+        Raises:
+            ValueError: if two items have the same name or label, as an item is selected by its name.
         """
+        self._checkNewEntry(name, label or name)
+        for attr in ("name", "label"):
+            values = [getattr(item, attr) for item in items]
+            duplicates = sorted({v for v in values if values.count(v) > 1})
+            if duplicates:
+                raise ValueError(f"Radio button '{name}' has items with the same {attr}: {', '.join(duplicates)}.")
+
         for item in items:
             item.setParent(self)
 
@@ -274,7 +298,7 @@ class Menu(QObject):
 
     objectsChanged = Signal()
     uid = Property(str, lambda self: self._uid, constant=True)
-    label = Property(str, lambda self: self._name, constant=True)
+    label = Property(str, lambda self: self.menuObject.label, constant=True)
     icon = Property(str, lambda self: self._icon, constant=True)
     tooltip = Property(str, lambda self: self._tooltip, constant=True)
     objects = Property(Variant, lambda self: self._objects, notify=objectsChanged)
@@ -316,7 +340,7 @@ class MenuExtension:
 class MeshroomMenuManager(QObject):
     """
     Registry of all user menus and their objects.
-    
+
     - _menus are the list of menus that are registered
     - _objects is a dict to retrieve objects from their UID. The interface has access to the object
       UID and therefore when we click on it, we retrieve the object throught the UID and we can
@@ -330,7 +354,7 @@ class MeshroomMenuManager(QObject):
     _menusByName: dict[str, Menu] = {}
     # _menuExtensions can be attached to top-level menus
     _menuExtensions: dict[str, list["MenuExtension"]] = {}
-    
+
     LIST_OBJ_TYPES = (MenuTypeRadiobutton,)
 
     def __init__(self, parent=None):
@@ -343,12 +367,16 @@ class MeshroomMenuManager(QObject):
             if menu._initialized:
                 continue
             logging.info(f"Initialize User Menu: {menu}")
-            menu.onCreated()
             menu._initialized = True
+            # User code: a failing menu must not prevent Meshroom from starting
+            try:
+                menu.onCreated()
+            except Exception as exc:
+                logging.error(f"Failed to initialize the user menu '{menu._name}': {exc}", exc_info=True)
 
-    @classmethod  
-    def clear(cls):  
-        """Clear all registered menus and objects. Useful for testing and resetting state."""  
+    @classmethod
+    def clear(cls):
+        """Clear all registered menus and objects. Useful for testing and resetting state."""
         cls._menus.clear()
         cls._objects.clear()
         cls._menusByName.clear()
@@ -380,13 +408,31 @@ class MeshroomMenuManager(QObject):
                 )
                 continue
             for extension in extensions:
-                extension._bind(parentMenu)
+                # Bind only once, even if the manager is instantiated several times
+                if getattr(extension, "parentMenu", None) is not None:
+                    continue
+                # User code: a failing extension must not prevent Meshroom from starting
+                try:
+                    extension._bind(parentMenu)
+                except Exception as exc:
+                    logging.error(f"Failed to extend the menu '{parentMenuName}' with "
+                                  f"{extension.__class__.__name__}: {exc}", exc_info=True)
                 # re-index parent menus
                 cls._indexMenu(parentMenu)
 
     @classmethod
     def registerMenu(cls, menu: Menu):
-        cls._menus.append(menu)
+        """
+        Register a top-level menu, inserted at its index if it is a valid position, or appended otherwise.
+        A menu with the same name as an already registered one is ignored.
+        """
+        if menu._name in cls._menusByName:
+            logging.warning(f"A user menu named '{menu._name}' is already registered: {menu} is ignored.")
+            return
+        if 0 <= menu.index < len(cls._menus):
+            cls._menus.insert(menu.index, menu)
+        else:
+            cls._menus.append(menu)
         cls._menusByName[menu._name] = menu
         cls._indexMenu(menu)
 
@@ -402,7 +448,13 @@ class MeshroomMenuManager(QObject):
         return self._menuModel
 
     def getObject(self, uid: str) -> Optional[MenuObject]:
-        return self._objects.get(uid)
+        obj = self._objects.get(uid)
+        if obj is None:
+            # Entries can be added after their menu was registered (e.g. in "Menu.onCreated"): index them now
+            for menu in self._menus:
+                self._indexMenu(menu)
+            obj = self._objects.get(uid)
+        return obj
 
     def trigger(self, uid: str, **kwargs):
         obj = self.getObject(uid)

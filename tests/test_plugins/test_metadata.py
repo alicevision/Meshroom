@@ -3,7 +3,7 @@
 
 import json
 
-from meshroom.core.plugins.metadata import PluginAsset, PluginMetadata
+from meshroom.core.plugins.metadata import PluginAsset, PluginInstalledAsset, PluginMetadata
 from ..utils import writeFile
 
 
@@ -370,6 +370,11 @@ class TestLockfile:
             env=[{"key": "MY_VAR", "type": "string", "value": "myValue"}],
             assets=[PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt", "a" * 64),
                     PluginAsset("tool", "binary", None, "tool", release="myOrg/myRepo@v1.0.0", executable=True)],
+            sourceUrl="https://github.com/myOrg/myPlugin",
+            sourceVersion="v1.2.3",
+            installedAssets=[PluginInstalledAsset("weights", "models/weights.pt", "https://example.com/weights.pt", "a" * 64),
+                             PluginInstalledAsset("tool", "tool", "https://example.com/tool-linux.zip", "b" * 64, True)],
+            files=["meshroom/__init__.py", "pyproject.toml"],
         )
         lockfilePath = tmp_path / "plugin.lock"
 
@@ -386,3 +391,29 @@ class TestLockfile:
         assert reloaded.license == metadata.license
         assert reloaded.env == metadata.env
         assert reloaded.assets == metadata.assets
+        assert reloaded.sourceUrl == metadata.sourceUrl
+        assert reloaded.sourceVersion == metadata.sourceVersion
+        assert reloaded.installedAssets == metadata.installedAssets
+        assert reloaded.files == metadata.files
+
+    def test_installationUnknown(self, tmp_path):
+        """ A lockfile written before the installation was recorded has no source, installed assets or files. """
+        path = writeFile(tmp_path / "plugin.lock", json.dumps({"name": "my-plugin", "version": "1.0"}))
+        metadata = PluginMetadata.loadJson(path)
+        assert metadata.sourceUrl is None
+        assert metadata.sourceVersion is None
+        assert metadata.installedAssets is None
+        assert metadata.files is None
+
+    def test_invalidInstallation(self, tmp_path):
+        """ Invalid installed assets are ignored, invalid files make the files unknown. """
+        valid = {"name": "weights", "path": "weights.pt", "url": "https://example.com/weights.pt", "sha256": "A" * 64}
+        content = {
+            "source": "not a table",
+            "installedAssets": [valid, {**valid, "path": "../weights.pt"}, {**valid, "sha256": "x"}, "not a table"],
+            "files": ["meshroom/__init__.py", "../outside.txt"],
+        }
+        metadata = PluginMetadata.loadJson(writeFile(tmp_path / "plugin.lock", json.dumps(content)))
+        assert metadata.sourceUrl is None
+        assert metadata.installedAssets == [PluginInstalledAsset("weights", "weights.pt", valid["url"], "a" * 64)]
+        assert metadata.files is None

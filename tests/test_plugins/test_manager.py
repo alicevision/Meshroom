@@ -8,6 +8,7 @@ from ..utils import registeredPlugin, writeFile
 
 import json
 import os
+import shutil
 import time
 
 # The folder of the test plugins.
@@ -302,5 +303,52 @@ class TestGetUpdateRecord:
             registry = self._withRegistry(tmp_path, publisher=f"not-{plugin.publisher}", versions=["2.0"])
             try:
                 assert pluginManager.getUpdateRecord(plugin) is None
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+
+class TestRenamedPlugin:
+    """ A plugin renamed by its source is found from the url it was installed from. """
+
+    def _installedPlugin(self, tmp_path, sourceUrl):
+        """ Return the folder of a copy of "pluginA" named "oldName", installed from "sourceUrl". """
+        folder = tmp_path / "oldName"
+        shutil.copytree(os.path.join(pluginsFolder, "pluginA"), folder, ignore=shutil.ignore_patterns("__pycache__"))
+        lock = {"name": "oldName", "version": "1.0", "publisher": "publisher",
+                "source": {"url": sourceUrl, "version": "1.0"}}
+        writeFile(folder / "plugin.lock", json.dumps(lock))
+        return str(folder)
+
+    def _withRegistry(self, tmp_path):
+        """ Register a temporary PluginRegistry describing the plugin under the name "newName". """
+        entry = {"name": "newName", "url": "https://github.com/publisher/newName", "versions": ["2.0"]}
+        path = writeFile(tmp_path / "registry.json", json.dumps({"entries": [entry]}))
+        registry = PluginRegistry(path)
+        registry.updateRecords()
+        pluginManager._pluginRegistries[registry.name] = registry
+        return registry
+
+    def test_updateRecord(self, tmp_path):
+        """ The record with the url the plugin was installed from is an update of the plugin, not another plugin. """
+        with registeredPlugin("oldName", self._installedPlugin(tmp_path, "https://github.com/publisher/newName.git/")):
+            plugin = pluginManager.getPlugin("oldName")
+            assert plugin.sourceUrl == "https://github.com/publisher/newName.git/"
+            registry = self._withRegistry(tmp_path)
+            try:
+                record = pluginManager.getUpdateRecord(plugin)
+                assert record is not None
+                assert record.name == "newName"
+                assert pluginManager.searchPlugin(["newName"], installed=False, available=True) == []
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+    def test_otherSource(self, tmp_path):
+        """ A record with another url is another plugin. """
+        with registeredPlugin("oldName", self._installedPlugin(tmp_path, "https://github.com/publisher/oldName")):
+            plugin = pluginManager.getPlugin("oldName")
+            registry = self._withRegistry(tmp_path)
+            try:
+                assert pluginManager.getUpdateRecord(plugin) is None
+                assert [record.name for record in pluginManager.searchPlugin(["newName"], installed=False)] == ["newName"]
             finally:
                 del pluginManager._pluginRegistries[registry.name]

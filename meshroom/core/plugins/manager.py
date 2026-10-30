@@ -17,6 +17,12 @@ from meshroom.core.plugins.base import (
 )
 
 
+def _normalizeUrl(url: str) -> str:
+    """ Return "url" normalized to be compared with another url of the same source. """
+    url = url.strip().rstrip("/").lower()
+    return url[:-len(".git")] if url.endswith(".git") else url
+
+
 class PluginManager(BaseObject):
     """
     Manager for all the loaded Plugin objects as well as the registered NodeDescProvider objects and
@@ -390,7 +396,8 @@ class PluginManager(BaseObject):
         Return the PluginRecord describing an available update for "plugin", if any.
 
         An update is available when a registered PluginRecord shares "plugin"'s name and publisher,
-        and advertises a different version.
+        and advertises a different version. When no record has "plugin"'s name, a record with the url
+        "plugin" was installed from and the same publisher describes the plugin under a new name.
 
         Args:
             plugin: the installed Plugin to check for an available update.
@@ -398,10 +405,36 @@ class PluginManager(BaseObject):
         Returns:
             PluginRecord | None: the matching record if an update is available, None otherwise.
         """
+        record = self._getRecordByName(plugin) or self.getRenamedRecord(plugin)
+        if record is not None and record.version != plugin.version:
+            return record
+        return None
+
+    def _getRecordByName(self, plugin: Plugin) -> Optional[PluginRecord]:
+        """ Return the first registered PluginRecord with "plugin"'s name and publisher, or None. """
         for registry in self._pluginRegistries.values():
             record = registry.getRecord(plugin.name)
-            if record is not None and record.publisher == plugin.publisher and record.version != plugin.version:
+            if record is not None and record.publisher == plugin.publisher:
                 return record
+        return None
+
+    def getRenamedRecord(self, plugin: Plugin) -> Optional[PluginRecord]:
+        """
+        Return the registered PluginRecord describing the installed "plugin" under another name: the
+        record with the url "plugin" was installed from (as recorded in its "plugin.lock") and the
+        same publisher, or None.
+
+        Args:
+            plugin: the installed Plugin.
+        """
+        if not plugin.sourceUrl:
+            return None
+        sourceUrl = _normalizeUrl(plugin.sourceUrl)
+        for registry in self._pluginRegistries.values():
+            for record in registry.records:
+                if (record.name != plugin.name and record.publisher == plugin.publisher
+                        and _normalizeUrl(record.url) == sourceUrl):
+                    return record
         return None
 
     @Slot(result=list)
@@ -432,9 +465,12 @@ class PluginManager(BaseObject):
         plugins: dict[str, Plugin | PluginRecord] = {}
         # Available plugins
         if available:
+            # A record with the url an installed plugin was installed from describes that plugin,
+            # possibly renamed: it is an update of it, not another plugin.
+            installedSources = {_normalizeUrl(plugin.sourceUrl) for plugin in self._plugins.values() if plugin.sourceUrl}
             for registry in self._pluginRegistries.values():
                 for record in registry.records:
-                    if record.name in self._plugins:
+                    if record.name in self._plugins or _normalizeUrl(record.url) in installedSources:
                         continue
                     plugins[record.name] = record
         # Installed plugins

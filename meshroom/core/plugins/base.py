@@ -68,6 +68,7 @@ class Plugin(BaseObject):
         license: a human-readable description of the plugin's license
         rootPath: the absolute path of the plugin's root folder
         hostPath: the absolute path of the plugin's host modules (its "meshroom" folder)
+        sourceUrl: the url the plugin was installed from (local plugins), or an empty string if unknown
         isUserPlugin: whether the plugin is a user plugin (not maintained by the core Meshroom team)
         env: the dictionary containing the environment variables of the plugin
         fullEnv: the dictionary containing the environment variables of the plugin and os.environ
@@ -119,6 +120,8 @@ class Plugin(BaseObject):
     rootPath = Property(str, lambda self: str(self._context.rootPath), constant=True)
     # The absolute path of the plugin's host modules (its "meshroom" folder).
     hostPath = Property(str, lambda self: str(self._context.hostPath), constant=True)
+    # The url the plugin was installed from (local plugins), or an empty string if unknown.
+    sourceUrl = Property(str, lambda self: self._context.metadata.sourceUrl or "", constant=True)
     # Whether the plugin is a user plugin (not maintained by the core Meshroom team).
     isUserPlugin = Property(bool, lambda self: self._context.isUserPlugin, constant=True)
 

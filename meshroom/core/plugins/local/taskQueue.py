@@ -108,8 +108,10 @@ class PluginTaskQueue(BaseObject):
         if not provider:
             logging.error(f"Cannot update plugin '{pluginName}': no plugin provider for '{record.url}'")
             return None
+        # The record may describe the plugin under a new name: update the installed folder.
         return self._addTask(PluginTaskKind.UPDATE, pluginName,
-                             PluginUpdater(provider, record, version or None, self._pluginsPath))
+                             PluginUpdater(provider, record, version or None, self._pluginsPath,
+                                           installedName=Path(plugin.rootPath).name))
 
     @Slot(str, result=Variant)
     def remove(self, pluginName: str) -> Optional[PluginTask]:

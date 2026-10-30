@@ -14,10 +14,12 @@ Example :
 """
 
 import logging
+import unicodedata
 import uuid
 from typing import Optional, Callable
 
 from PySide6.QtCore import QObject
+from PySide6.QtGui import QFontMetrics, QGuiApplication
 from meshroom.common.qt import (
     Property,
     Signal,
@@ -26,6 +28,45 @@ from meshroom.common.qt import (
     VariantList,
     ListModel
 )
+
+
+def pruneUnsupportedCharacters(text: str, isSupported: Optional[Callable[[int], bool]] = None) -> str:
+    """
+    Remove the characters of "text" that no installed font can display (they would be rendered as boxes),
+    e.g. emojis or CJK characters on a system without the matching fonts.
+
+    Args:
+        text: the text to prune.
+        isSupported: returns whether a character (as a code point) can be displayed. Defaults to a check
+                     with the application font and its fallback fonts; without a GUI application, the
+                     displaying font is unknown and the text is returned unchanged.
+
+    Returns:
+        str: the pruned text, or "text" itself if none of its characters can be displayed.
+    """
+    if isSupported is None:
+        if not isinstance(QGuiApplication.instance(), QGuiApplication):
+            return text
+        isSupported = QFontMetrics(QGuiApplication.font()).inFontUcs4
+
+    pruned = ""
+    previousKept = True
+    for c in text:
+        # Combining marks, zero-width joiners and variation selectors (as in emoji sequences) are not drawn
+        # on their own: they follow the character they apply to
+        kept = previousKept if unicodedata.category(c) in ("Cf", "Mn") else isSupported(ord(c))
+        if kept:
+            pruned += c
+        previousKept = kept
+    if pruned == text:
+        return text
+    # Collapse the whitespace left around the removed characters
+    pruned = " ".join(pruned.split())
+    if not pruned:
+        logging.warning(f"Menu label '{text}' has no displayable character: it is kept as is.")
+        return text
+    logging.warning(f"Menu label '{text}' has unsupported characters that are removed: '{pruned}'.")
+    return pruned
 
 
 class MenuCallback:
@@ -66,7 +107,7 @@ class MenuObject(QObject):
 
         # General properties
         self._name: str = kwargs.get("name", "")
-        self._label: str = kwargs.get("label", self._name)
+        self._label: str = pruneUnsupportedCharacters(kwargs.get("label", self._name))
         self._icon: str = kwargs.get("icon") or ""
         self._tooltip: str = kwargs.get("tooltip") or ""
         self._shortcut: str = kwargs.get("shortcut") or ""
@@ -165,7 +206,23 @@ class Menu(QObject):
 
     def __repr__(self):
         return f'<Menu name="{self._name}"|uid={self._uid}|size={len(self._objects)}>'
-    
+
+    def _checkNewEntry(self, name: str, label: str):
+        """
+        Check that an entry named "name" and displayed as "label" can be added to the menu.
+
+        Raises:
+            ValueError: if another entry of the menu has the same name or label.
+        """
+        for obj in self._objects:
+            if isinstance(obj, MenuTypeSeparator):
+                continue
+            if obj._name == name:
+                raise ValueError(f"Menu '{self._name}' already has an entry named '{name}'.")
+            # Compare the displayed labels
+            if obj._label == pruneUnsupportedCharacters(label):
+                raise ValueError(f"Menu '{self._name}' already has an entry labelled '{label}'.")
+
     def _addObject(self, obj: MenuObject):
         self._objects.append(obj)
         self.objectsChanged.emit()

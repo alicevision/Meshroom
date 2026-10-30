@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import Controls 1.0
 
@@ -13,6 +14,8 @@ ListView {
     property int labelWidth: 180
     property bool objectsHideable: true
     property string filterText: ""
+    // AnySet child attribute whose description is being edited in the form under its row
+    property var editedAnySetAttribute: null
 
     signal upgradeRequest()
     signal attributeDoubleClicked(var mouse, var attribute)
@@ -36,26 +39,71 @@ ListView {
             ) && object.matchText(filterText)
         visible: active
 
-        sourceComponent: AttributeItemDelegate {
+        sourceComponent: Item {
+            id: delegateItem
+            readonly property bool editing: root.editedAnySetAttribute === object
+
             width: root.width - scrollBar.width
-            readOnly: root.readOnly
-            labelWidth: root.labelWidth
-            filterText: root.filterText
-            objectsHideable: root.objectsHideable
-            attribute: object
+            implicitHeight: delegateLayout.implicitHeight
 
-            onDoubleClicked: function(mouse, attr) {
-                root.attributeDoubleClicked(mouse, attr)
+            // Highlight the attribute while its description is being edited
+            Rectangle {
+                visible: delegateItem.editing
+                width: parent.width
+                height: attributeDelegate.height
+                color: Qt.rgba(palette.highlight.r, palette.highlight.g, palette.highlight.b, 0.2)
             }
-            onInAttributeClicked: function(srcItem, mouse, inAttributes) {
-                root.inAttributeClicked(srcItem, mouse, inAttributes)
-            }
-            onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
-                root.outAttributeClicked(srcItem, mouse, outAttributes)
+            Rectangle {
+                visible: delegateItem.editing
+                anchors.fill: parent
+                color: "transparent"
+                border.color: palette.highlight
+                radius: 2
+                z: 1
             }
 
-            onShowInViewer: function(attr) {
-                root.showInViewer(attr)
+            ColumnLayout {
+                id: delegateLayout
+                width: parent.width
+                spacing: 0
+
+                AttributeItemDelegate {
+                    id: attributeDelegate
+                    Layout.fillWidth: true
+                    readOnly: root.readOnly
+                    labelWidth: root.labelWidth
+                    filterText: root.filterText
+                    objectsHideable: root.objectsHideable
+                    attribute: object
+
+                    onDoubleClicked: function(mouse, attr) {
+                        root.attributeDoubleClicked(mouse, attr)
+                    }
+                    onInAttributeClicked: function(srcItem, mouse, inAttributes) {
+                        root.inAttributeClicked(srcItem, mouse, inAttributes)
+                    }
+                    onOutAttributeClicked: function(srcItem, mouse, outAttributes) {
+                        root.outAttributeClicked(srcItem, mouse, outAttributes)
+                    }
+
+                    onShowInViewer: function(attr) {
+                        root.showInViewer(attr)
+                    }
+
+                    onEditAnySetAttributeRequested: function(attr) {
+                        root.editedAnySetAttribute = attr
+                    }
+                }
+
+                Loader {
+                    active: delegateItem.editing
+                    visible: active
+                    Layout.fillWidth: true
+                    sourceComponent: AnySetAttributeEditor {
+                        targetAttribute: object
+                        onClosed: root.editedAnySetAttribute = null
+                    }
+                }
             }
         }
 

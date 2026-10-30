@@ -6,16 +6,18 @@ import Utils 1.0
 import "AnySetUtils.js" as AnySetUtils
 
 /**
- * Dialog to edit the description of an AnySet child attribute: its name and label,
+ * Inline form to edit the description of an AnySet child attribute: its name and label,
  * and the parameters that depend on its type (default value, range, choice values).
+ * It is displayed right under the attribute's row, with the labels above the fields so that it fits narrow panels.
  */
 
-Dialog {
+Pane {
     id: root
 
     property var targetAttribute: null
-    property real preferredX: 0
-    property real preferredY: 0
+
+    // Emitted when the form is done, whether the changes were applied or discarded
+    signal closed()
 
     readonly property string attributeType: targetAttribute ? targetAttribute.type : ""
     readonly property bool isInt: attributeType === "IntParam"
@@ -35,16 +37,20 @@ Dialog {
 
     readonly property var numberRegex: isInt ? /^-?\d+$/ : /^-?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/
 
-    title: "Edit Attribute"
-    modal: true
-    parent: Overlay.overlay
-    contentWidth: 330
-    x: parent ? Math.max(0, Math.min(preferredX, parent.width - width)) : 0
-    y: parent ? Math.max(0, Math.min(preferredY, parent.height - height)) : 0
-    standardButtons: Dialog.Ok | Dialog.Cancel
-    closePolicy: Popup.CloseOnEscape
+    padding: 8
+    background: Rectangle {
+        color: Qt.darker(root.palette.window, 1.1)
+    }
 
-    Component.onCompleted: standardButton(Dialog.Ok).enabled = Qt.binding(function() { return root.valid })
+    Keys.onEscapePressed: root.cancel()
+
+    Component.onCompleted: {
+        // Wait for the menu that requested the edition to close and give the focus back before taking it
+        Qt.callLater(function() {
+            nameField.forceActiveFocus()
+            nameField.selectAll()
+        })
+    }
 
     function rangeValue(index) {
         var range = targetAttribute ? targetAttribute.desc.range : undefined
@@ -88,6 +94,20 @@ Dialog {
         return params
     }
 
+    function apply() {
+        if (!targetAttribute || !valid)
+            return
+        var attribute = targetAttribute
+        var params = parameters()
+        // Close first: the edited attribute is replaced by a new one, which destroys this form
+        root.closed()
+        _currentScene.editAnySetAttribute(attribute, params)
+    }
+
+    function cancel() {
+        root.closed()
+    }
+
     // Red border on top of the default background of an invalid field
     component ErrorBorder: Rectangle {
         anchors.fill: parent
@@ -97,88 +117,97 @@ Dialog {
         z: 1
     }
 
-    component NumberField: TextField {
+    component FieldLabel: Label {
+        font.pointSize: 8
+        Layout.fillWidth: true
+        elide: Text.ElideRight
+    }
+
+    component FormField: TextField {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         selectByMouse: true
-        validator: RegularExpressionValidator { regularExpression: root.numberRegex }
-        onAccepted: root.tryAccept()
+        onAccepted: root.apply()
     }
 
-    GridLayout {
-        columns: 2
-        columnSpacing: 8
-        rowSpacing: 8
-        width: root.contentWidth
+    component NumberField: FormField {
+        validator: RegularExpressionValidator { regularExpression: root.numberRegex }
+    }
 
-        Label {
-            text: "Name"
-            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-        }
-        TextField {
+    ColumnLayout {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        spacing: 4
+
+        FieldLabel { text: "Name" }
+        FormField {
             id: nameField
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
             text: root.targetAttribute ? root.targetAttribute.name : ""
-            selectByMouse: true
             validator: RegularExpressionValidator { regularExpression: /^[A-Za-z_][A-Za-z0-9_]*$/ }
-            onAccepted: root.tryAccept()
             ErrorBorder { visible: !root.nameValid }
             ToolTip.text: nameField.acceptableInput ? "An attribute with this name already exists." : "Invalid attribute name."
             ToolTip.visible: !root.nameValid && hovered
         }
 
-        Label {
-            text: "Label"
-            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-        }
-        TextField {
+        FieldLabel { text: "Label" }
+        FormField {
             id: labelField
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
             text: root.targetAttribute ? root.targetAttribute.label : ""
-            selectByMouse: true
-            onAccepted: root.tryAccept()
             ErrorBorder { visible: !root.labelValid }
         }
 
-        Label {
-            text: "Type"
-            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-        }
-        Label {
-            text: root.attributeType
-            color: Colors.lightgrey
+        GridLayout {
+            columns: 2
+            columnSpacing: 6
+            rowSpacing: 4
             Layout.fillWidth: true
+
+            FieldLabel {
+                text: "Default"
+                visible: root.hasDefaultValue
+                Layout.preferredWidth: 1
+            }
+            FieldLabel {
+                text: "Type"
+                Layout.preferredWidth: 1
+            }
+
+            Item {
+                visible: root.hasDefaultValue
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Layout.minimumWidth: 0
+                implicitHeight: root.isBool ? defaultCheckBox.implicitHeight : defaultField.implicitHeight
+
+                FormField {
+                    id: defaultField
+                    visible: !root.isBool
+                    width: parent.width
+                    text: root.targetAttribute && root.hasDefaultValue ? root.defaultValueText() : ""
+                    validator: RegularExpressionValidator { regularExpression: root.isNumber ? root.numberRegex : /.*/ }
+                    ErrorBorder { visible: root.isNumber && !defaultField.acceptableInput }
+                }
+                CheckBox {
+                    id: defaultCheckBox
+                    visible: root.isBool
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: root.isBool && root.targetAttribute.desc.value === true
+                    padding: 0
+                }
+            }
+            Label {
+                text: root.attributeType
+                color: Colors.lightgrey
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                Layout.minimumWidth: 0
+            }
         }
 
-        Label {
-            visible: root.hasDefaultValue
-            text: "Default"
-            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-        }
-        TextField {
-            id: defaultField
-            visible: root.hasDefaultValue && !root.isBool
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            text: root.targetAttribute && root.hasDefaultValue ? root.defaultValueText() : ""
-            selectByMouse: true
-            validator: RegularExpressionValidator { regularExpression: root.isNumber ? root.numberRegex : /.*/ }
-            onAccepted: root.tryAccept()
-            ErrorBorder { visible: root.isNumber && !defaultField.acceptableInput }
-        }
-        CheckBox {
-            id: defaultCheckBox
-            visible: root.isBool
-            checked: root.isBool && root.targetAttribute.desc.value === true
-            padding: 0
-        }
-
-        Label {
+        FieldLabel {
             visible: root.isNumber
-            text: "Range"
-            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            text: "Range (min · max · step)"
         }
         RowLayout {
             visible: root.isNumber
@@ -211,61 +240,45 @@ Dialog {
             }
         }
 
-        Label {
+        FieldLabel {
             visible: root.isChoice
             text: "Values"
-            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
         }
-        TextField {
+        FormField {
             id: valuesField
             visible: root.isChoice
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
             text: root.isChoice ? root.targetAttribute.desc.values.join(", ") : ""
             placeholderText: "Comma-separated values"
-            selectByMouse: true
-            onAccepted: root.tryAccept()
             ErrorBorder { visible: root.isChoice && root.choiceValues().length === 0 }
         }
 
-        Label {
-            text: "Description"
-            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-        }
-        TextField {
+        FieldLabel { text: "Description" }
+        FormField {
             id: descriptionField
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
             text: root.targetAttribute ? root.targetAttribute.desc.description : ""
-            selectByMouse: true
-            onAccepted: root.tryAccept()
         }
 
-        Item { width: 1; height: 1 }
         CheckBox {
             id: advancedCheckBox
             text: "Advanced"
             checked: root.targetAttribute ? root.targetAttribute.desc.advanced : false
             padding: 0
+            Layout.topMargin: 2
+        }
+
+        RowLayout {
+            spacing: 6
+            Layout.alignment: Qt.AlignRight
+
+            Button {
+                text: "OK"
+                enabled: root.valid
+                onClicked: root.apply()
+            }
+            Button {
+                text: "Cancel"
+                onClicked: root.cancel()
+            }
         }
     }
-
-    function tryAccept() {
-        if (valid)
-            accept()
-    }
-
-    onOpened: {
-        nameField.forceActiveFocus()
-        nameField.selectAll()
-    }
-
-    onAccepted: {
-        if (targetAttribute && valid) {
-            _currentScene.editAnySetAttribute(targetAttribute, parameters())
-        }
-        destroy()
-    }
-
-    onRejected: destroy()
 }

@@ -33,6 +33,7 @@ RowLayout {
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
     signal showInViewer(var attr)
+    signal editAnySetAttributeRequested(var attr)
 
     Connections {
         target: attribute
@@ -45,9 +46,6 @@ RowLayout {
         id: removeAnySetAttributeMenuComp
         Menu {
             id: anySetMenu
-
-            property real preferredX: 0
-            property real preferredY: 0
 
             MenuItem {
                 text: "Move Up"
@@ -63,23 +61,9 @@ RowLayout {
             MenuItem {
                 text: "Edit Attribute..."
                 enabled: root.isAnySetChild && !root.readOnly
-                onTriggered: root.openEditAnySetAttributeDialog(attribute, anySetMenu.preferredX, anySetMenu.preferredY)
+                onTriggered: root.editAnySetAttributeRequested(attribute)
             }
         }
-    }
-
-    Component {
-        id: editAnySetAttributeDialogComp
-        AnySetAttributeDialog {}
-    }
-
-    function openEditAnySetAttributeDialog(targetAttribute, x, y) {
-        var dialog = editAnySetAttributeDialogComp.createObject(Overlay.overlay, {
-            "targetAttribute": targetAttribute,
-            "preferredX": x,
-            "preferredY": y
-        })
-        dialog.open()
     }
 
     spacing: 2
@@ -172,8 +156,6 @@ RowLayout {
                     property Component menuComp: Menu {
                         id: paramMenu
 
-                        property real preferredX: 0
-                        property real preferredY: 0
                         property bool isFileAttribute: attribute.type === "File"
                         property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.evalValue)
 
@@ -264,7 +246,7 @@ RowLayout {
                             height: visible ? implicitHeight : 0
                             text: "Edit Attribute..."
                             enabled: !root.readOnly
-                            onTriggered: root.openEditAnySetAttributeDialog(attribute, paramMenu.preferredX, paramMenu.preferredY)
+                            onTriggered: root.editAnySetAttributeRequested(attribute)
                         }
 
                     }
@@ -273,9 +255,6 @@ RowLayout {
                         forceActiveFocus()
                         if (mouse.button == Qt.RightButton) {
                             var menu = menuComp.createObject(parameterLabel)
-                            var position = parameterMA.mapToItem(Overlay.overlay, mouse.x, mouse.y)
-                            menu.preferredX = position.x
-                            menu.preferredY = position.y
                             menu.parent = parameterLabel
                             menu.popup()
                         }
@@ -687,6 +666,7 @@ RowLayout {
                 spacing: 0
                 property bool expanded: true
                 readonly property bool isAnySet: attribute.type === "AnySet"
+                property var childrenEditor: null
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -704,7 +684,10 @@ RowLayout {
                         text: attribute.label
                         font.bold: true
                         font.pointSize: 8
-                        Layout.fillWidth: !groupItem.isAnySet
+                        // Shrink and elide rather than overflow in a narrow panel
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        Layout.maximumWidth: groupItem.isAnySet ? implicitWidth : Number.POSITIVE_INFINITY
                         elide: Text.ElideRight
                         padding: 3
 
@@ -727,9 +710,6 @@ RowLayout {
                             onClicked: function(mouse) {
                                 if (mouse.button == Qt.RightButton && root.isAnySetChild) {
                                     var menu = removeAnySetAttributeMenuComp.createObject(labelMA)
-                                    var position = labelMA.mapToItem(Overlay.overlay, mouse.x, mouse.y)
-                                    menu.preferredX = position.x
-                                    menu.preferredY = position.y
                                     menu.parent = labelMA
                                     menu.popup()
                                     return
@@ -747,6 +727,10 @@ RowLayout {
                         font.pointSize: 8
                         leftPadding: 4
                         rightPadding: 4
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        Layout.maximumWidth: implicitWidth
                     }
 
                     ToolButton {
@@ -779,11 +763,9 @@ RowLayout {
                                     onTriggered: {
                                         groupItem.expanded = true
                                         var newAttribute = _currentScene.addAnySetAttribute(attribute, modelData.type)
-                                        if (newAttribute) {
-                                            // Edit the description of the new attribute right away
-                                            var position = addAnySetAttributeButton.mapToItem(Overlay.overlay, 0, addAnySetAttributeButton.height)
-                                            root.openEditAnySetAttributeDialog(newAttribute, position.x, position.y)
-                                        }
+                                        // Edit the description of the new attribute right away, under its row
+                                        if (newAttribute && groupItem.childrenEditor)
+                                            groupItem.childrenEditor.editedAnySetAttribute = newAttribute
                                     }
                                 }
                             }
@@ -799,13 +781,15 @@ RowLayout {
                                                {
                                                    'model': Qt.binding(function() { return attribute.value }),
                                                    'readOnly': Qt.binding(function() { return root.readOnly }),
-                                                   'labelWidth': Qt.binding(function() { return root.labelWidth }),
+                                                   // Leave room for the values of the children in a narrow panel
+                                                   'labelWidth': Qt.binding(function() { return Math.min(root.labelWidth, Math.max(80, groupItem.width / 2)) }),
                                                    'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
                                                    'filterText': Qt.binding(function() { return root.filterText }),
                                                    'visible': Qt.binding(function() { return groupItem.expanded }),
                                                })
                     obj.Layout.fillWidth = true;
                     obj.Layout.leftMargin = 8;
+                    groupItem.childrenEditor = obj;
                     obj.attributeDoubleClicked.connect(
                         function(mouse, attr) {
                             root.doubleClicked(mouse, attr)

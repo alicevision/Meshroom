@@ -11,6 +11,8 @@ import os
 import shutil
 import time
 
+import pytest
+
 # The folder of the test plugins.
 pluginsFolder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "plugins")
 
@@ -292,6 +294,39 @@ class TestGetUpdateRecord:
             registry = self._withRegistry(tmp_path, publisher=plugin.publisher, versions=[plugin.version])
             try:
                 assert pluginManager.getUpdateRecord(plugin) is None
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+    def _installedPlugin(self, tmp_path, version, sourceVersion=None):
+        """ Return the folder of a copy of "pluginA" at "version", installed from "sourceVersion" of its source. """
+        folder = tmp_path / "pluginA"
+        shutil.copytree(os.path.join(pluginsFolder, "pluginA"), folder, ignore=shutil.ignore_patterns("__pycache__"))
+        lock = {"name": "pluginA", "version": version, "publisher": "publisher"}
+        if sourceVersion:
+            lock["source"] = {"url": "https://github.com/publisher/pluginA", "version": sourceVersion}
+        writeFile(folder / "plugin.lock", json.dumps(lock))
+        return str(folder)
+
+    @pytest.mark.parametrize("version,sourceVersion,recordVersion,expected", [
+        # The tag of a release, without its "v" in the plugin's own version.
+        ("1.0.3", "v1.0.3", "v1.0.3", None),
+        # A commit of a branch, which the plugin's own version does not mention.
+        ("1.0.3", "main+02d976e", "main+02d976e", None),
+        ("1.0.3", "main+02d976e", "main+1475613", "main+1475613"),
+        # An older tag, even if it did not bump the plugin's own version.
+        ("1.0.3", "v1.0.2", "v1.0.3", "v1.0.3"),
+        # Installed before the source was recorded: only the "v" of a tag can be told apart.
+        ("1.0.3", None, "v1.0.3", None),
+        ("1.0.2", None, "v1.0.3", "v1.0.3"),
+    ])
+    def test_comparesTheVersionInstalledFromTheSource(self, tmp_path, version, sourceVersion, recordVersion, expected):
+        """ A record is compared to the version of the source the plugin was installed from, if known. """
+        with registeredPlugin("pluginA", self._installedPlugin(tmp_path, version, sourceVersion)):
+            plugin = pluginManager.getPlugin("pluginA")
+            registry = self._withRegistry(tmp_path, publisher="publisher", versions=[recordVersion])
+            try:
+                record = pluginManager.getUpdateRecord(plugin)
+                assert (record.version if record else None) == expected
             finally:
                 del pluginManager._pluginRegistries[registry.name]
 

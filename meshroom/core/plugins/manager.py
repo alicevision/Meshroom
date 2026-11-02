@@ -396,8 +396,9 @@ class PluginManager(BaseObject):
         Return the PluginRecord describing an available update for "plugin", if any.
 
         An update is available when a registered PluginRecord shares "plugin"'s name and publisher,
-        and advertises a different version. When no record has "plugin"'s name, a record with the url
-        "plugin" was installed from and the same publisher describes the plugin under a new name.
+        and advertises another version than the installed one. When no record has "plugin"'s name, a
+        record with the url "plugin" was installed from and the same publisher describes the plugin under
+        a new name.
 
         Args:
             plugin: the installed Plugin to check for an available update.
@@ -406,9 +407,30 @@ class PluginManager(BaseObject):
             PluginRecord | None: the matching record if an update is available, None otherwise.
         """
         record = self._getRecordByName(plugin) or self.getRenamedRecord(plugin)
-        if record is not None and record.version != plugin.version:
+        if record is not None and not self.isInstalledVersion(plugin, record.version):
             return record
         return None
+
+    @staticmethod
+    def isInstalledVersion(plugin: Plugin, version: str) -> bool:
+        """
+        Return whether "version", as named by a PluginRecord, is the installed version of "plugin".
+
+        A record names the version of a source (a tag, or a branch and a commit), which may differ
+        from the version the plugin declares for itself: it is compared to the version of the source
+        "plugin" was installed from. If unknown, it is compared to the version of the plugin, regardless
+        of the "v" of a tag.
+
+        Args:
+            plugin: the installed Plugin.
+            version: the version named by a PluginRecord.
+
+        Returns:
+            bool: True if "version" is the installed version of "plugin".
+        """
+        if plugin.sourceVersion:
+            return plugin.sourceVersion == version
+        return version.removeprefix("v") == plugin.version.removeprefix("v")
 
     def _getRecordByName(self, plugin: Plugin) -> Optional[PluginRecord]:
         """ Return the first registered PluginRecord with "plugin"'s name and publisher, or None. """

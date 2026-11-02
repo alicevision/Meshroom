@@ -13,6 +13,7 @@ class Backend(Enum):
     PYSIDE = 2
 
 
+CurrentBackend = None
 DictModel = None
 ListModel = None
 Slot = None
@@ -25,7 +26,8 @@ JSValue = None
 
 
 def init(backend):
-    global DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList, JSValue
+    global CurrentBackend, DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList, JSValue
+    CurrentBackend = backend
     if backend == Backend.PYSIDE:
         # PySide types
         from .qt import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList, JSValue

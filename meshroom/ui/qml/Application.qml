@@ -686,6 +686,8 @@ Page {
             }
         }
         MenuBar {
+            id: menuBar
+
             palette.window: Qt.darker(activePalette.window, 1.15)
             Menu {
                 title: "File"
@@ -973,6 +975,7 @@ Page {
                     onTriggered: _window.close()
                 }
             }
+
             Menu {
                 title: "Edit"
                 MenuItem {
@@ -1026,6 +1029,7 @@ Page {
                     }
                 }
             }
+
             Menu {
                 title: "View"
                 // Open or close each panel
@@ -1057,6 +1061,7 @@ Page {
                     onTriggered: _window.visibility == ApplicationWindow.FullScreen ? _window.showNormal() : showFullScreen()
                 }
             }
+
             Menu {
                 title: "Process"
                 Action {
@@ -1091,6 +1096,21 @@ Page {
                     }
                 }
             }
+
+            Instantiator {
+                model: MeshroomMenuManager.menus
+
+                delegate: UserMenu {
+                    // Required to have the index because UserMenu is not an Item/Component
+                    required property int index
+
+                    menuData: MeshroomMenuManager.menus.at(index)
+                }
+
+                onObjectAdded: (index, object) => menuBar.insertMenu(menuBar.count - 1, object)
+                onObjectRemoved: (index, object) => menuBar.removeMenu(object)
+            }
+
             Menu {
                 title: "Help"
                 Action {

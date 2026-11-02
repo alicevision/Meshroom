@@ -5,6 +5,7 @@ from shiboken6 import isValid
 
 from meshroom.common import BaseObject, Property, Variant, Signal, Slot
 from meshroom.core.attribute import ListAttribute, ShapeListAttribute
+from .surveyPoint import getSurveyPointPartialObservation, mergeSurveyPointObservation
 
 
 class ShapeViewerHelper(BaseObject):
@@ -109,7 +110,12 @@ class ShapeViewerHelper(BaseObject):
             self.selectedShapeNamesChanged.emit()
 
     def _hasCurrentObservation(self, shape) -> bool:
-        """Whether the given shape has an observation for the current view."""
+        """
+        Whether the given shape has an observation for the current view.
+        A SurveyPoint has one once placed in 2d, even if its 3d part was picked first.
+        """
+        if shape.type == "SurveyPoint":
+            return bool(getSurveyPointPartialObservation(shape, self._activeProject.selectedViewId)["picked2d"])
         geometry = shape.geometry
         if geometry.observationKeyable:
             return geometry.hasObservation(self._activeProject.selectedViewId)
@@ -237,7 +243,7 @@ class ShapeViewerHelper(BaseObject):
     def removeSelectedShapeObservation(self):
         """
         Remove the observation for the current view of all selected shapes (the shape itself if static,
-        its current keyframe if keyable) in a single undo step, and clear the selection.
+        its current keyframe if keyable, only the 2d part of a SurveyPoint) in a single undo step, and clear the selection.
         ShapeLists, non-editable shapes and shapes without current observation are skipped.
         """
         graph = self._activeProject.graph
@@ -254,7 +260,11 @@ class ShapeViewerHelper(BaseObject):
         viewId = self._activeProject.selectedViewId
         with self._activeProject.groupedGraphModification("Remove Shape Observations"):
             for shape in shapes:
-                self._activeProject.removeObservation(shape, viewId)
+                if shape.type == "SurveyPoint":
+                    # Only remove the 2d part, keep the 3d pick
+                    self._setShapeObservation(shape, viewId, {"picked2d": False})
+                else:
+                    self._activeProject.removeObservation(shape, viewId)
         self.cancelPlacement()
 
     def getObservationAt(self, shapeType: str, x: float, y: float, visibleWidth: float, visibleHeight: float) -> Variant:
@@ -262,7 +272,7 @@ class ShapeViewerHelper(BaseObject):
         Create a shape observation at the given image position, sized relative to the visible viewport.
 
         Args:
-            shapeType: the shape type (Point2d, Line2d, Circle, Rectangle).
+            shapeType: the shape type (Point2d, SurveyPoint, Line2d, Circle, Rectangle).
             x, y: the position in image coordinates.
             visibleWidth, visibleHeight: the visible viewport size in image coordinates.
 
@@ -272,6 +282,8 @@ class ShapeViewerHelper(BaseObject):
         match shapeType:
             case "Point2d":
                 return {"x": x, "y": y}
+            case "SurveyPoint":
+                return {"x": x, "y": y, "picked2d": True}
             case "Line2d":
                 halfLength = visibleWidth / 6.0
                 return {"a": {"x": x - halfLength, "y": y},
@@ -288,13 +300,13 @@ class ShapeViewerHelper(BaseObject):
     def getDragObservation(shapeType: str, x0: float, y0: float, x1: float, y1: float) -> Variant:
         """
         Create a shape observation defined by a drag from (x0, y0) to (x1, y1).
-        - Point2d: at the end position.
+        - Point2d, SurveyPoint: at the end position.
         - Line2d: from the start to the end position.
         - Circle: the largest circle inside the dragged rectangle, in the corner of the start position.
         - Rectangle: the dragged rectangle.
 
         Args:
-            shapeType: the shape type (Point2d, Line2d, Circle, Rectangle).
+            shapeType: the shape type (Point2d, SurveyPoint, Line2d, Circle, Rectangle).
             x0, y0: the drag start position in image coordinates.
             x1, y1: the drag end position in image coordinates.
 
@@ -305,6 +317,8 @@ class ShapeViewerHelper(BaseObject):
         match shapeType:
             case "Point2d":
                 return {"x": x1, "y": y1}
+            case "SurveyPoint":
+                return {"x": x1, "y": y1, "picked2d": True}
             case "Line2d":
                 return {"a": {"x": x0, "y": y0}, "b": {"x": x1, "y": y1}}
             case "Circle":
@@ -326,7 +340,7 @@ class ShapeViewerHelper(BaseObject):
         Translate a shape observation so that its center lands on the given image position.
 
         Args:
-            shapeType: the shape type (Point2d, Line2d, Circle, Rectangle).
+            shapeType: the shape type (Point2d, SurveyPoint, Line2d, Circle, Rectangle).
             observation: the current observation, kept unchanged.
             x, y: the new center position in image coordinates.
 
@@ -336,6 +350,8 @@ class ShapeViewerHelper(BaseObject):
         match shapeType:
             case "Point2d":
                 return {"x": x, "y": y}
+            case "SurveyPoint":
+                return {"x": x, "y": y, "picked2d": True}
             case "Line2d":
                 a, b = observation["a"], observation["b"]
                 dx = x - (a["x"] + b["x"]) * 0.5
@@ -352,7 +368,7 @@ class ShapeViewerHelper(BaseObject):
         Translate a shape observation by the given offset.
 
         Args:
-            shapeType: the shape type (Point2d, Line2d, Circle, Rectangle).
+            shapeType: the shape type (Point2d, SurveyPoint, Line2d, Circle, Rectangle).
             observation: the current observation, kept unchanged.
             dx, dy: the offset in image coordinates.
 
@@ -362,6 +378,8 @@ class ShapeViewerHelper(BaseObject):
         match shapeType:
             case "Point2d":
                 return {"x": observation["x"] + dx, "y": observation["y"] + dy}
+            case "SurveyPoint":
+                return {**observation, "x": observation["x"] + dx, "y": observation["y"] + dy}
             case "Line2d":
                 a, b = observation["a"], observation["b"]
                 return {"a": {"x": a["x"] + dx, "y": a["y"] + dy},
@@ -397,7 +415,7 @@ class ShapeViewerHelper(BaseObject):
                         continue
                     observation = self.getTranslatedObservation(shape.type, shape.geometry.getObservation(viewId), dx, dy)
                     if observation is not None:
-                        self._activeProject.setObservation(shape, viewId, observation)
+                        self._setShapeObservation(shape, viewId, observation)
         self.setSelectionMoveOffset("", 0.0, 0.0)
 
     @staticmethod
@@ -406,14 +424,14 @@ class ShapeViewerHelper(BaseObject):
         Compute the bounding box of a shape observation.
 
         Args:
-            shapeType: the shape type (Point2d, Line2d, Circle, Rectangle).
+            shapeType: the shape type (Point2d, SurveyPoint, Line2d, Circle, Rectangle).
             observation: the shape observation.
 
         Returns:
             The (xMin, yMin, xMax, yMax) tuple in image coordinates, or None for an unknown shape type.
         """
         match shapeType:
-            case "Point2d":
+            case "Point2d" | "SurveyPoint":
                 return (observation["x"], observation["y"], observation["x"], observation["y"])
             case "Line2d":
                 a, b = observation["a"], observation["b"]
@@ -452,6 +470,15 @@ class ShapeViewerHelper(BaseObject):
         """Select all the editable shapes displayed in the 2d Viewer."""
         self.selectedShapeNames = [shape.fullName for shape in self._getDisplayedShapes()]
 
+    def _setShapeObservation(self, shape, key: str, observation: dict):
+        """
+        Set the given observation to the given shape (not a ShapeList) for the given key.
+        A SurveyPoint observation is merged with its current one, to keep its 3d part.
+        """
+        if shape.type == "SurveyPoint":
+            observation = mergeSurveyPointObservation(shape, key, observation)
+        self._activeProject.setObservation(shape, key, observation)
+
     def _placeSelectedShape(self, observation: dict):
         """
         Set the given observation to the selected shape for the current view.
@@ -464,10 +491,10 @@ class ShapeViewerHelper(BaseObject):
         if isinstance(shape, ShapeListAttribute):
             with self._activeProject.groupedGraphModification("Add Shape"):
                 self._activeProject.appendAttribute(shape, None)
-                self._activeProject.setObservation(shape.at(len(shape) - 1), viewId, observation)
+                self._setShapeObservation(shape.at(len(shape) - 1), viewId, observation)
         else:
             self._repositioning = False
-            self._activeProject.setObservation(shape, viewId, observation)
+            self._setShapeObservation(shape, viewId, observation)
             self.placementChanged.emit()
 
     @Slot(float, float, float, float)

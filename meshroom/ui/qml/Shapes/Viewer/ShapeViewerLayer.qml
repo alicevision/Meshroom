@@ -28,6 +28,7 @@ Loader {
         if (!properties || !observation)
             return;
         switch (type) {
+            case "SurveyPoint":   return surveyPointLayerComponent
             case "Point2d":   return pointLayerComponent
             case "Line2d":    return lineLayerComponent
             case "Circle":    return circleLayerComponent
@@ -40,6 +41,18 @@ Loader {
     Component { 
         id: pointLayerComponent
         ShapeViewerLayers.PointLayer {
+            name: layerLoader.name
+            properties: layerLoader.properties
+            observation: layerLoader.observation
+            editable: layerLoader.editable
+            scaleRatio: layerLoader.scaleRatio
+        } 
+    }
+
+    // SurveyPointLayer component
+    Component { 
+        id: surveyPointLayerComponent
+        ShapeViewerLayers.SurveyPointLayer {
             name: layerLoader.name
             properties: layerLoader.properties
             observation: layerLoader.observation

@@ -1,123 +1,114 @@
-import Qt3D.Core 2.6
-import Qt3D.Render 2.6
-import Qt3D.Input 2.6
-import Qt3D.Extras 2.15
 import QtQuick
 
+import meshViewer
+
 /**
- * BoundingBox entity for Meshing node. Used to define the area to reconstruct.
- * Simple box controlled by a gizmo to give easy and visual representation.
+ * Binds the "boundingBox" attribute of a Meshing @p node to a BoxControlLayer @p layer.
+ *
+ * Node values (computer vision convention) are converted to the viewer convention and applied to the layer,
+ * except while @p editing (the layer is then driven by the gizmo). commit() writes the layer values back to the node.
+ * The layer is visible when the node uses its bounding box and @p userVisible is set.
  */
-Entity {
+QtObject {
     id: root
-    property DefaultCameraController sceneCameraController
-    property Layer frontLayerComponent
-    property var window
-    property var currentMeshingNode: null
-    enabled: true
 
-    EntityWithGizmo {
-        id: boundingBoxEntity
-        sceneCameraController: root.sceneCameraController
-        frontLayerComponent: root.frontLayerComponent
-        window: root.window
+    property var node: null
+    property BoxControlLayer layer: null
+    /** True while the layer is being edited; node values are not applied meanwhile. */
+    property bool editing: false
+    property bool userVisible: true
 
-        // Update node meshing slider values when the gizmo has changed: translation, rotation, scale, type
-        transformGizmo.onGizmoChanged: function(translation, rotation, scale, type) {
-            
-            var rotationEuler_cv = Qt.vector3d(rotation.x, rotation.y, rotation.z)
-            var rotation_gl = Transformations3DHelper.convertRotationFromCV2GL(rotationEuler_cv)
+    function attributeValue(name, defaultValue)
+    {
+        return node ? node.attribute("boundingBox." + name).value : defaultValue
+    }
 
-            switch (type) {
-                case TransformGizmo.Type.TRANSLATION: {
-                    _currentScene.setAttribute(
-                        root.currentMeshingNode.attribute("boundingBox.bboxTranslation"),
-                        JSON.stringify([translation.x, -translation.y, -translation.z])
-                    )
-                    break
-                }
-                case TransformGizmo.Type.ROTATION: {
-                    _currentScene.setAttribute(
-                        root.currentMeshingNode.attribute("boundingBox.bboxRotation"),
-                        JSON.stringify([rotation_gl.x, rotation_gl.y, rotation_gl.z])
-                    )
-                    break
-                }
-                case TransformGizmo.Type.SCALE: {
-                    _currentScene.setAttribute(
-                        root.currentMeshingNode.attribute("boundingBox.bboxScale"),
-                        JSON.stringify([scale.x, scale.y, scale.z])
-                    )
-                    break
-                }
-                case TransformGizmo.Type.ALL: {
-                    _currentScene.setAttribute(
-                        root.currentMeshingNode.attribute("boundingBox"),
-                        JSON.stringify([
-                            [translation.x, -translation.y, -translation.z],
-                            [rotation_gl.x, rotation_gl.y, rotation_gl.z],
-                            [scale.x, scale.y, scale.z]
-                        ])
-                    )
-                    break
-                }
-            }
+    // Translation: y and z axes are flipped between computer vision and viewer conventions
+    readonly property vector3d nodeTranslation: Qt.vector3d(
+        attributeValue("bboxTranslation.x", 0),
+        -attributeValue("bboxTranslation.y", 0),
+        -attributeValue("bboxTranslation.z", 0)
+    )
+
+    readonly property vector3d nodeRotation: Transformations3DHelper.convertRotationFromCV2GL(Qt.vector3d(
+        attributeValue("bboxRotation.x", 0),
+        attributeValue("bboxRotation.y", 0),
+        attributeValue("bboxRotation.z", 0)
+    ))
+
+    readonly property vector3d nodeScale: Qt.vector3d(
+        attributeValue("bboxScale.x", 1),
+        attributeValue("bboxScale.y", 1),
+        attributeValue("bboxScale.z", 1)
+    )
+
+    readonly property bool nodeUsesBoundingBox: node !== null && node.attribute("useBoundingBox").value
+
+    /**
+     * Write the layer transform back to the node, as a single undoable command.
+     * @p type is "translation", "rotation", "scale" or "all" (see BoxControlMouseArea.editFinished).
+     */
+    function commit(type)
+    {
+        if (!node || !layer)
+        {
+            return
         }
 
-        // Translation values from node (vector3d because this is the type of QTransform.translation)
-        property var nodeTranslation : Qt.vector3d(
-            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxTranslation.x").value : 0,
-            root.currentMeshingNode ? -root.currentMeshingNode.attribute("boundingBox.bboxTranslation.y").value : 0,
-            root.currentMeshingNode ? -root.currentMeshingNode.attribute("boundingBox.bboxTranslation.z").value : 0
-        )
+        const t = layer.translation
+        const s = layer.scale
+        // The conversion between conventions is its own inverse
+        const r = Transformations3DHelper.convertRotationFromCV2GL(layer.rotation)
+        const translation = [t.x, -t.y, -t.z]
+        const rotation = [r.x, r.y, r.z]
+        const scale = [s.x, s.y, s.z]
 
-        // Rotation values from node (3 separated values because QTransform stores Euler angles like this)
-        property var nodeRotationX: {
-            var rx = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value : 0
-            var ry = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value : 0
-            var rz = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value : 0
-
-            var rotationEuler_cv = Qt.vector3d(rx, ry, rz)
-            var rotation_gl = Transformations3DHelper.convertRotationFromCV2GL(rotationEuler_cv)
-            return rotation_gl.x
+        switch (type)
+        {
+            case "translation":
+                _currentScene.setAttribute(node.attribute("boundingBox.bboxTranslation"), JSON.stringify(translation))
+                break
+            case "rotation":
+                _currentScene.setAttribute(node.attribute("boundingBox.bboxRotation"), JSON.stringify(rotation))
+                break
+            case "scale":
+                _currentScene.setAttribute(node.attribute("boundingBox.bboxScale"), JSON.stringify(scale))
+                break
+            default:
+                _currentScene.setAttribute(node.attribute("boundingBox"), JSON.stringify([translation, rotation, scale]))
+                break
         }
+    }
 
-        property var nodeRotationY: {
-            var rx = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value : 0
-            var ry = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value : 0
-            var rz = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value : 0
+    // RestoreNone: keep the edited values when a binding is released, instead of restoring older ones
+    readonly property Binding translationBinding: Binding {
+        target: root.layer
+        property: "translation"
+        value: root.nodeTranslation
+        when: root.layer !== null && !root.editing
+        restoreMode: Binding.RestoreNone
+    }
 
-            var rotationEuler_cv = Qt.vector3d(rx, ry, rz)
-            var rotation_gl = Transformations3DHelper.convertRotationFromCV2GL(rotationEuler_cv)
-            return rotation_gl.y
-        }
+    readonly property Binding rotationBinding: Binding {
+        target: root.layer
+        property: "rotation"
+        value: root.nodeRotation
+        when: root.layer !== null && !root.editing
+        restoreMode: Binding.RestoreNone
+    }
 
-        property var nodeRotationZ: {
-            var rx = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value : 0
-            var ry = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value : 0
-            var rz = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value : 0
+    readonly property Binding scaleBinding: Binding {
+        target: root.layer
+        property: "scale"
+        value: root.nodeScale
+        when: root.layer !== null && !root.editing
+        restoreMode: Binding.RestoreNone
+    }
 
-            var rotationEuler_cv = Qt.vector3d(rx, ry, rz)
-            var rotation_gl = Transformations3DHelper.convertRotationFromCV2GL(rotationEuler_cv)
-            return rotation_gl.z
-        }
-
-        // Scale values from node (vector3d because this is the type of QTransform.scale3D)
-        property var nodeScale: Qt.vector3d(
-            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxScale.x").value : 1,
-            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxScale.y").value : 1,
-            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxScale.z").value : 1
-        )
-
-        // Automatically evaluate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
-        // When the gizmo has changed (with mouse), the new values are set to the node, the priority is given back to the node and the Transform is re-evaluated once with those values.
-        transformGizmo.gizmoDisplayTransform.translation: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.translation : nodeTranslation
-        transformGizmo.gizmoDisplayTransform.rotationX: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationX : nodeRotationX
-        transformGizmo.gizmoDisplayTransform.rotationY: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationY : nodeRotationY
-        transformGizmo.gizmoDisplayTransform.rotationZ: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationZ : nodeRotationZ
-        transformGizmo.objectTransform.scale3D: transformGizmo.focusGizmoPriority ? transformGizmo.objectTransform.scale3D : nodeScale
-
-        // The entity
-        BoundingBox { transform: boundingBoxEntity.objectTransform }
+    readonly property Binding visibleBinding: Binding {
+        target: root.layer
+        property: "visible"
+        value: root.nodeUsesBoundingBox && root.userVisible
+        when: root.layer !== null
     }
 }

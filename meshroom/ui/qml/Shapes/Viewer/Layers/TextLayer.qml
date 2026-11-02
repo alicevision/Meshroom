@@ -16,11 +16,14 @@ BaseLayer {
     id: textLayer
 
     Text {
-        x: textLayer.observation.center.x - implicitWidth * 0.5   // Center text horizontally
-        y: textLayer.observation.center.y - implicitHeight * 0.5  // Center text vertically
+        width: ShapeViewerHelper.containerWidth - textLayer.observation.center.x
+        height: ShapeViewerHelper.containerHeight - textLayer.observation.center.y
+
+        x: textLayer.observation.center.x
+        y: textLayer.observation.center.y
         text: textLayer.observation.content || "Undefined"
         color: textLayer.properties.color || textLayer.defaultColor
-        wrapMode: Text.NoWrap 
+        wrapMode: Text.Wrap
         font.family: textLayer.properties.fontFamily || "Arial"
         font.pixelSize: getScaledFontSize()
     }

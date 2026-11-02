@@ -42,6 +42,13 @@ _PLUGIN_SHA256_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
 _PLUGIN_RELEASE_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[A-Za-z0-9_.+/-]+$")
 
 
+def _isRelativePluginPath(path: str) -> bool:
+    """ Return whether "path" is a relative POSIX path inside of the plugin folder, without '..'. """
+    posixPath = PurePosixPath(path)
+    return not (posixPath.is_absolute() or PureWindowsPath(path).drive or "\\" in path
+                or ".." in posixPath.parts or not posixPath.parts)
+
+
 class PluginMetadata:
     """
     Plugin metadata parsed from one of its sources:
@@ -409,6 +416,29 @@ class PluginMetadata:
         return validAssets
 
     @staticmethod
+    def _assetSourceError(url, release) -> Optional[str]:
+        """ Return why the "url" and "release" of an asset are invalid, or None if they are valid. """
+        # An asset comes either from a url, or from a GitHub release (in which case "url" may be stored as None).
+        if (url is None) == (release is None):
+            return "Exactly one of 'url' and 'release' must be set."
+        if url is not None and (not isinstance(url, str) or not url):
+            return "'url' must be a non-empty string."
+        if release is not None and (not isinstance(release, str) or not _PLUGIN_RELEASE_PATTERN.match(release)):
+            return "'release' must be formatted as '<owner>/<repository>@<tag>'."
+        return None
+
+    @staticmethod
+    def _assetChecksumError(sha256, release) -> Optional[str]:
+        """ Return why the "sha256" of an asset is invalid, or None if it is valid. """
+        if sha256 is None:
+            return None
+        if not isinstance(sha256, str) or not _PLUGIN_SHA256_PATTERN.match(sha256):
+            return "'sha256' must be a string of 64 hexadecimal characters."
+        if release is not None:
+            return "'sha256' cannot be set with 'release': the checksum published by GitHub is checked."
+        return None
+
+    @staticmethod
     def _sanitizeAsset(entry, path: Path) -> Optional[PluginAsset]:
         """
         Return the asset "entry" parsed into a PluginAsset, or None (logging a warning) if it is invalid.
@@ -423,15 +453,11 @@ class PluginMetadata:
             if not isinstance(entry.get(key), str) or not entry[key]:
                 return invalid(f"'{key}' must be a non-empty string.")
 
-        # An asset comes either from a url, or from a GitHub release (in which case "url" may be stored as None).
         url = entry.get("url")
         release = entry.get("release")
-        if (url is None) == (release is None):
-            return invalid("Exactly one of 'url' and 'release' must be set.")
-        if url is not None and (not isinstance(url, str) or not url):
-            return invalid("'url' must be a non-empty string.")
-        if release is not None and (not isinstance(release, str) or not _PLUGIN_RELEASE_PATTERN.match(release)):
-            return invalid("'release' must be formatted as '<owner>/<repository>@<tag>'.")
+        error = PluginMetadata._assetSourceError(url, release)
+        if error:
+            return invalid(error)
 
         name = entry["name"]
         if not _PLUGIN_NAME_PATTERN.match(name):
@@ -439,24 +465,20 @@ class PluginMetadata:
                            "and start/end with a letter or digit.")
 
         assetPath = entry["path"]
-        posixPath = PurePosixPath(assetPath)
-        if (posixPath.is_absolute() or PureWindowsPath(assetPath).drive or "\\" in assetPath
-                or ".." in posixPath.parts or not posixPath.parts):
+        if not _isRelativePluginPath(assetPath):
             return invalid("'path' must be a relative path inside the plugin folder, without '..'.")
 
         sha256 = entry.get("sha256")
-        if sha256 is not None:
-            if not isinstance(sha256, str) or not _PLUGIN_SHA256_PATTERN.match(sha256):
-                return invalid("'sha256' must be a string of 64 hexadecimal characters.")
-            sha256 = sha256.lower()
-            if release is not None:
-                return invalid("'sha256' cannot be set with 'release': the checksum published by GitHub is checked.")
+        error = PluginMetadata._assetChecksumError(sha256, release)
+        if error:
+            return invalid(error)
 
         executable = entry.get("executable", False)
         if not isinstance(executable, bool):
             return invalid("'executable' must be a boolean.")
 
-        return PluginAsset(name, entry["category"], url, posixPath.as_posix(), sha256, release, executable)
+        sha256 = sha256.lower() if sha256 else None
+        return PluginAsset(name, entry["category"], url, PurePosixPath(assetPath).as_posix(), sha256, release, executable)
 
     def resolveEnv(self, basePath: Path) -> dict[str, str]:
         """

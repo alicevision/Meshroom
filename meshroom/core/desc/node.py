@@ -24,6 +24,7 @@ from .attribute import Attribute, ChoiceParam, ColorParam, File, Flow, IntParam,
 
 if TYPE_CHECKING:
     from meshroom.core.attribute import Attribute as CoreAttribute
+    from meshroom.core.node import BaseNode as CoreBaseNode
     from meshroom.core.node import Node as CoreNode
 
 if getattr(sys, "frozen", False):
@@ -76,19 +77,19 @@ class StageSettings(SimpleNamespace):
     def __init__(self, cpu=Level.NORMAL, ram=Level.NORMAL, gpu=Level.NONE, **kwargs):
         super().__init__(**kwargs)
         self.cpu = cpu.value if hasattr(cpu, "value") else cpu
-        self.ram = ram.value if hasattr(cpu, "value") else cpu
-        self.gpu = gpu.value if hasattr(cpu, "value") else cpu
+        self.ram = ram.value if hasattr(cpu, "value") else ram
+        self.gpu = gpu.value if hasattr(cpu, "value") else gpu
 
     def __contains__(self, item):
         return item in self.__dict__
 
 
 class SubmissionSettings:
-    def __init__(self, node):
+    def __init__(self, node: Optional["CoreBaseNode"]):
         """Holds infos used when we submit the node for remote computing.
 
         Args:
-            node (BaseNode): the BaseNode instance being updated
+            node: the BaseNode instance being updated
         """
         # Pre/post process use the default settings
         self.preprocess = StageSettings()

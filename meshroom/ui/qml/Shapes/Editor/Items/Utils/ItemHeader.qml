@@ -475,6 +475,8 @@ Pane {
                     padding: 2
                     text: MaterialIcons.remove_circle_outline
                     onClicked: {
+                        // The selection is stored by names, which are shifted by the removal
+                        ShapeViewerHelper.clearSelection()
                         _currentScene.removeAttribute(model)
                     }
                     ToolTip.text: "Remove Element"

@@ -318,6 +318,10 @@ RowLayout {
                 property double initialX: 0.0
                 property double initialY: 0.0
 
+                onClicked: function() {
+                    root.clicked()
+                }
+
                 onPressed: function(mouse) {
                     root.pressed(mouse)
                     isPressed = true
@@ -329,10 +333,13 @@ RowLayout {
                     inputDragTarget.Drag.drop()
                     isPressed = false
                     dragTriggered = false
+                    _currentScene.edgeDraggingChanged(false)
                 }
 
-                onClicked: function() {
-                    root.clicked()
+                onCanceled: {
+                    isPressed = false
+                    dragTriggered = false
+                    _currentScene.edgeDraggingChanged(false)
                 }
 
                 onPositionChanged: function(mouse) {
@@ -340,6 +347,9 @@ RowLayout {
                     // mouse is being pressed, then we can consider being in the dragging state
                     if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
                         dragTriggered = true
+                        var windowCoords = inputConnectMA.mapToItem(null, mouse.x, mouse.y)  // null will map to window
+                        _currentScene.edgeDragMousePosChanged(windowCoords.x, windowCoords.y)
+                        _currentScene.edgeDraggingChanged(true)
                     }
                 }
             }
@@ -570,21 +580,29 @@ RowLayout {
                 initialY = mouse.y
             }
 
-            onReleased: function(mouse) {
-                outputDragTarget.Drag.drop()
-                isPressed = false
-                dragTriggered = false
-            }
-
             onClicked: function() {
                 root.clicked()
             }
 
+            onReleased: function(mouse) {
+                outputDragTarget.Drag.drop()
+                isPressed = false
+                dragTriggered = false
+                _currentScene.edgeDraggingChanged(false)
+            }
+
+            onCanceled: {
+                isPressed = false
+                dragTriggered = false
+                _currentScene.edgeDraggingChanged(false)
+            }
+
             onPositionChanged: function(mouse) {
-                // If there has been a significant move (5px along the -X or -Y axis) while the mouse is being
-                // pressed, then we can consider being in the dragging state.
                 if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
                     dragTriggered = true
+                    var windowCoords = outputConnectMA.mapToItem(null, mouse.x, mouse.y)  // null will map to window
+                    _currentScene.edgeDragMousePosChanged(windowCoords.x, windowCoords.y)
+                    _currentScene.edgeDraggingChanged(true)
                 }
             }
         }

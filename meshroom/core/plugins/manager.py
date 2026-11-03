@@ -5,6 +5,7 @@ import time
 
 from typing import Optional
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 from meshroom.common import BaseObject, Property, Slot, Variant
 from meshroom.env import EnvVar
@@ -18,9 +19,14 @@ from meshroom.core.plugins.base import (
 
 
 def _normalizeUrl(url: str) -> str:
-    """ Return "url" normalized to be compared with another url of the same source. """
-    url = url.strip().rstrip("/").lower()
-    return url[:-len(".git")] if url.endswith(".git") else url
+    """
+    Return "url" normalized to be compared with another url of the same source: the case of its scheme, of
+    its host, and of the owner and name of a GitHub repository is ignored. The rest of a url may be case sensitive.
+    """
+    parts = urlsplit(url.strip().rstrip("/").removesuffix(".git"))
+    host = parts.netloc.lower()
+    path = parts.path.lower() if host == "github.com" and parts.path.count("/") == 2 else parts.path
+    return urlunsplit((parts.scheme.lower(), host, path, parts.query, parts.fragment))
 
 
 class PluginManager(BaseObject):
@@ -406,10 +412,11 @@ class PluginManager(BaseObject):
         Returns:
             PluginRecord | None: the matching record if an update is available, None otherwise.
         """
-        record = self._getRecordByName(plugin) or self.getRenamedRecord(plugin)
-        if record is not None and not self.isInstalledVersion(plugin, record.version):
-            return record
-        return None
+        records = self._getRecordsByName(plugin)
+        if not records:
+            renamedRecord = self.getRenamedRecord(plugin)
+            records = [renamedRecord] if renamedRecord else []
+        return next((record for record in records if not self.isInstalledVersion(plugin, record.version)), None)
 
     @staticmethod
     def isInstalledVersion(plugin: Plugin, version: str) -> bool:
@@ -432,13 +439,10 @@ class PluginManager(BaseObject):
             return plugin.sourceVersion == version
         return version.removeprefix("v") == plugin.version.removeprefix("v")
 
-    def _getRecordByName(self, plugin: Plugin) -> Optional[PluginRecord]:
-        """ Return the first registered PluginRecord with "plugin"'s name and publisher, or None. """
-        for registry in self._pluginRegistries.values():
-            record = registry.getRecord(plugin.name)
-            if record is not None and record.publisher == plugin.publisher:
-                return record
-        return None
+    def _getRecordsByName(self, plugin: Plugin) -> list[PluginRecord]:
+        """ Return the registered PluginRecords with "plugin"'s name and publisher, one per registry at most. """
+        records = [registry.getRecord(plugin.name) for registry in self._pluginRegistries.values()]
+        return [record for record in records if record is not None and record.publisher == plugin.publisher]
 
     def getRenamedRecord(self, plugin: Plugin) -> Optional[PluginRecord]:
         """
@@ -487,12 +491,13 @@ class PluginManager(BaseObject):
         plugins: dict[str, Plugin | PluginRecord] = {}
         # Available plugins
         if available:
-            # A record with the url an installed plugin was installed from describes that plugin,
+            # A record with the url and the publisher of an installed plugin describes that plugin,
             # possibly renamed: it is an update of it, not another plugin.
-            installedSources = {_normalizeUrl(plugin.sourceUrl) for plugin in self._plugins.values() if plugin.sourceUrl}
+            installedSources = {(plugin.publisher, _normalizeUrl(plugin.sourceUrl))
+                                for plugin in self._plugins.values() if plugin.sourceUrl}
             for registry in self._pluginRegistries.values():
                 for record in registry.records:
-                    if record.name in self._plugins or _normalizeUrl(record.url) in installedSources:
+                    if record.name in self._plugins or (record.publisher, _normalizeUrl(record.url)) in installedSources:
                         continue
                     plugins[record.name] = record
         # Installed plugins

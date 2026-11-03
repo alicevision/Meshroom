@@ -3,6 +3,7 @@
 from meshroom.core import pluginManager
 from meshroom.core.desc.node import NodeVersionType
 from meshroom.core.plugins.base import NodeDescProviderStatus
+from meshroom.core.plugins.manager import _normalizeUrl
 from meshroom.core.plugins.registry import PluginRegistry
 from ..utils import registeredPlugin, writeFile
 
@@ -262,11 +263,11 @@ class TestSearchPlugin:
 
 
 class TestGetUpdateRecord:
-    def _withRegistry(self, tmp_path, **entryOverrides):
+    def _withRegistry(self, tmp_path, fileName="registry.json", **entryOverrides):
         """ Register a temporary PluginRegistry with a single entry for "pluginA", merging overrides. """
         entry = {"name": "pluginA", "url": "https://github.com/publisher/pluginA", "versions": ["1.0"]}
         entry.update(entryOverrides)
-        path = writeFile(tmp_path / "registry.json", json.dumps({"entries": [entry]}))
+        path = writeFile(tmp_path / fileName, json.dumps({"entries": [entry]}))
         registry = PluginRegistry(path)
         registry.updateRecords()
         assert registry.getRecord("pluginA") is not None
@@ -285,6 +286,19 @@ class TestGetUpdateRecord:
                 assert record.version == "2.0"
             finally:
                 del pluginManager._pluginRegistries[registry.name]
+
+    def test_updateInAnotherRegistry(self, tmp_path):
+        """ A registry advertising the installed version does not hide the update of another registry. """
+        folder = os.path.join(pluginsFolder, "pluginA")
+        with registeredPlugin("pluginA", folder):
+            plugin = pluginManager.getPlugin("pluginA")
+            registries = [self._withRegistry(tmp_path, publisher=plugin.publisher, versions=[plugin.version]),
+                          self._withRegistry(tmp_path, "other.json", publisher=plugin.publisher, versions=["2.0"])]
+            try:
+                assert pluginManager.getUpdateRecord(plugin).version == "2.0"
+            finally:
+                for registry in registries:
+                    del pluginManager._pluginRegistries[registry.name]
 
     def test_noUpdateWhenVersionMatches(self, tmp_path):
         """ A record with the same name/publisher and the same version is not an available update. """
@@ -376,6 +390,31 @@ class TestRenamedPlugin:
                 assert pluginManager.searchPlugin(["newName"], installed=False, available=True) == []
             finally:
                 del pluginManager._pluginRegistries[registry.name]
+
+    def test_otherPublisher(self, tmp_path):
+        """ A record with the url of the plugin but another publisher is another plugin, available as usual. """
+        folder = self._installedPlugin(tmp_path, "https://github.com/publisher/newName")
+        lock = json.loads((tmp_path / "oldName" / "plugin.lock").read_text())
+        writeFile(tmp_path / "oldName" / "plugin.lock", json.dumps({**lock, "publisher": "somebodyElse"}))
+        with registeredPlugin("oldName", folder):
+            plugin = pluginManager.getPlugin("oldName")
+            registry = self._withRegistry(tmp_path)
+            try:
+                assert pluginManager.getUpdateRecord(plugin) is None
+                assert [record.name for record in pluginManager.searchPlugin(["newName"], installed=False)] == ["newName"]
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+    @pytest.mark.parametrize("url, otherUrl, same", [
+        ("https://github.com/Publisher/Plugin.git/", "https://GitHub.com/publisher/plugin", True),
+        ("HTTPS://Example.com/plugin.zip", "https://example.com/plugin.zip", True),
+        # The case of a file is significant.
+        ("https://example.com/Plugin.zip", "https://example.com/plugin.zip", False),
+        ("file:///srv/plugins/Tool.zip", "file:///srv/plugins/tool.zip", False),
+        ("https://github.com/publisher/plugin/archive/V1.zip", "https://github.com/publisher/plugin/archive/v1.zip", False),
+    ])
+    def test_normalizeUrl(self, url, otherUrl, same):
+        assert (_normalizeUrl(url) == _normalizeUrl(otherUrl)) == same
 
     def test_otherSource(self, tmp_path):
         """ A record with another url is another plugin. """

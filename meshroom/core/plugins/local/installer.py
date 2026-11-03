@@ -304,7 +304,10 @@ class PluginInstaller(PluginService):
 
             self._reportProgress(message, start)
             url, fileName, sha256 = self._assetSource(asset)
-            destination.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                raise self._error("Assets", f"Failed to create the folder of asset '{asset.name}'.", exc)
             if asset.release is not None and isArchive(fileName):
                 # Download the archive next to its destination, then extract it in place.
                 with scratchFolder(destination.parent, prefix=f".{destination.name}.") as tmpDir:
@@ -320,6 +323,9 @@ class PluginInstaller(PluginService):
                 self._downloadAsset(asset, url, destination, sha256, onBytes)
                 if asset.executable:
                     makeExecutable(destination)
+
+        # The last asset gives no other occasion to check it (e.g. canceled during its extraction).
+        self._checkCancel()
 
     def _assetSource(self, asset: PluginAsset) -> Tuple[str, str, Optional[str]]:
         """

@@ -236,6 +236,31 @@ class TestReleaseAssets:
             installer(archive, tmp_path / "plugins").execute()
         assert not (tmp_path / "plugins" / "myPlugin").exists()
 
+    def test_cancelDuringExtraction(self, tmp_path, api, monkeypatch):
+        """ A cancellation during the extraction of the last asset cancels the installation. """
+        self.publishRelease(api, self.writeToolArchives(tmp_path / "remote"))
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset()])
+        extractArchive = installerModule.extractArchive
+        extracted = []
+
+        def extractThenCancel(archivePath, destination):
+            extractArchive(archivePath, destination)
+            extracted.append(destination)
+
+        monkeypatch.setattr(installerModule, "extractArchive", extractThenCancel)
+        with pytest.raises(PluginServiceCancelled):
+            installer(archive, tmp_path / "plugins").execute(isCancelled=lambda: bool(extracted))
+        assert extracted
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
+
+    def test_assetFolderIsAFile(self, tmp_path, api):
+        """ A folder of the asset's path that cannot be created fails the installation like any other error. """
+        self.publishRelease(api, self.writeToolArchives(tmp_path / "remote"))
+        archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset(path="bin/tool")], files={"bin": "file"})
+        with pytest.raises(PluginServiceError, match="Failed to create the folder"):
+            installer(archive, tmp_path / "plugins").execute()
+        assert not (tmp_path / "plugins" / "myPlugin").exists()
+
     def test_missingRelease(self, tmp_path):
         archive = writePluginZip(tmp_path / "plugin.zip", assets=[releaseAsset()])
         with pytest.raises(PluginServiceError):

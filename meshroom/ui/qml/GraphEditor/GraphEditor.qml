@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects 
 
 import Controls 1.0
 import MaterialIcons 2.2
@@ -21,19 +20,14 @@ Item {
     property real minZoom: 0.1
 
     // Autoscroll properties
-    readonly property int autoscrollMargin: 100  // Border thickness (width in pixels)
-    readonly property int autoscrollSpeed: 15    // Speed factor
-    readonly property real maxScrollSpeed: 3.0   // Clamp scroll speed
-    property bool isDraggingEdge: false          // Tracks whether we are dragging an AttributePin
-    property point dragMousePos: Qt.point(0, 0)  // Position of the mouse during edge dragging
+    readonly property int autoscrollMargin: 100         // Border thickness (width in pixels)
+    readonly property int autoscrollSpeed: 15           // Speed factor
+    readonly property real maxScrollSpeed: 3.0          // Clamp scroll speed
+    property Item edgeDragTarget: null                  // Connector of the edge being dragged, if any
+    property point autoscrollDirection: Qt.point(0, 0)  // Sign of the current scroll on each axis
 
-    readonly property real borderHighlightOpacity: 0.05
     readonly property color borderHighlightColor: Colors.blue
     readonly property real borderHighlightWidth: 3
-    property bool highlightedBorderLeft: false
-    property bool highlightedBorderRight: false
-    property bool highlightedBorderTop: false
-    property bool highlightedBorderBottom: false
 
     property var edgeAboutToBeRemoved: undefined
 
@@ -173,94 +167,68 @@ Item {
         }
     }
 
+    /// Signed auto-scroll step along one axis for a mouse at 'pos' in an editor of length 'size'
+    function autoscrollStep(pos, size) {
+        var factor = 0
+        if (pos < autoscrollMargin)
+            factor = (autoscrollMargin - pos) / autoscrollMargin
+        else if (pos > size - autoscrollMargin)
+            factor = -(pos - (size - autoscrollMargin)) / autoscrollMargin
+        return autoscrollSpeed * Math.max(-maxScrollSpeed, Math.min(maxScrollSpeed, factor))
+    }
+
     // Listen to the UIGraph edge drag infos
     Connections {
-        target: _currentScene 
+        target: _currentScene
         ignoreUnknownSignals: true
 
-        function onEdgeDraggingChanged(dragging) {
-            root.isDraggingEdge = dragging
-            root.highlightedBorderRight=false
-            root.highlightedBorderLeft=false
-            root.highlightedBorderTop=false
-            root.highlightedBorderBottom=false
-        }
-
-        function onEdgeDragMousePosChanged(windowX, windowY) {
-            // Translate window coordinates into the GraphEditor coordinates
-            var localPos = root.mapFromItem(null, windowX, windowY)
-            root.dragMousePos = Qt.point(localPos.x, localPos.y)
+        function onEdgeDragTargetChanged(dragTarget) {
+            root.edgeDragTarget = dragTarget
+            root.autoscrollDirection = Qt.point(0, 0)
         }
     }
 
-    // Add a timer to auto-scroll on the graph when edge dragging is active 
+    // Auto-scroll the graph when an edge is dragged near the borders
     Timer {
         id: autoscrollTimer
         interval: 20
-        running: root.isDraggingEdge
+        running: root.edgeDragTarget !== null
         repeat: true
-        
+
         onTriggered: {
-            var mouseX = root.dragMousePos.x
-            var mouseY = root.dragMousePos.y
-            var deltaX = 0
-            var deltaY = 0
+            var target = root.edgeDragTarget
+            // The drag target is centered on the mouse
+            var mousePos = target.mapToItem(root, target.width / 2, target.height / 2)
+            var deltaX = autoscrollStep(mousePos.x, root.width)
+            var deltaY = autoscrollStep(mousePos.y, root.height)
+            root.autoscrollDirection = Qt.point(Math.sign(deltaX), Math.sign(deltaY))
+            if (deltaX === 0 && deltaY === 0)
+                return
 
-            // Left
-            if (mouseX < root.autoscrollMargin) {
-                var factorX = Math.min(root.maxScrollSpeed, (root.autoscrollMargin - mouseX) / root.autoscrollMargin)
-                deltaX = root.autoscrollSpeed * factorX
-            }
-            // Right
-            else if (mouseX > root.width - root.autoscrollMargin) {
-                var factorX = Math.min(root.maxScrollSpeed, (mouseX - (root.width - root.autoscrollMargin)) / root.autoscrollMargin)
-                deltaX = -root.autoscrollSpeed * factorX
-            }
-            // Top
-            if (mouseY < root.autoscrollMargin) {
-                var factorY = Math.min(root.maxScrollSpeed, (root.autoscrollMargin - mouseY) / root.autoscrollMargin)
-                deltaY = root.autoscrollSpeed * factorY
-            }
-            // Bottom
-            else if (mouseY > root.height - root.autoscrollMargin) {
-                var factorY = Math.min(root.maxScrollSpeed, (mouseY - (root.height - root.autoscrollMargin)) / root.autoscrollMargin)
-                deltaY = -root.autoscrollSpeed * factorY
-            }
-
-            root.highlightedBorderRight=false
-            root.highlightedBorderLeft=false
-            root.highlightedBorderTop=false
-            root.highlightedBorderBottom=false
-
-            // Apply scroll on workspaxe
-            if (deltaX !== 0 || deltaY !== 0) {
-                draggable.x += deltaX
-                draggable.y += deltaY
-                workspaceMoved()
-
-                if (deltaX>0)      { root.highlightedBorderLeft=true }
-                else if (deltaX<0) { root.highlightedBorderRight=true }
-                if (deltaY>0)      { root.highlightedBorderTop=true }
-                else if (deltaY<0) { root.highlightedBorderBottom=true }
-            }
+            draggable.x += deltaX
+            draggable.y += deltaY
+            // The MouseArea only moves its drag target on mouse moves: keep it under the cursor while the view scrolls
+            target.x -= deltaX / draggable.scale
+            target.y -= deltaY / draggable.scale
+            workspaceMoved()
         }
     }
 
     // Display scroll direction
     Rectangle {
-        enabled: root.isDraggingEdge
+        visible: root.edgeDragTarget !== null
         z: 100
         color: "transparent"
         border.color: root.borderHighlightColor
         border.width: root.borderHighlightWidth
 
-        // Combine fill and margins into one anchor block
+        // Borders are hidden outside of the clipped editor area unless the view scrolls in their direction
         anchors {
             fill: parent
-            leftMargin:   root.highlightedBorderLeft   ? 0 : -root.borderHighlightWidth
-            rightMargin:  root.highlightedBorderRight  ? 0 : -root.borderHighlightWidth
-            topMargin:    root.highlightedBorderTop    ? 0 : -root.borderHighlightWidth
-            bottomMargin: root.highlightedBorderBottom ? 0 : -root.borderHighlightWidth
+            leftMargin:   root.autoscrollDirection.x > 0 ? 0 : -root.borderHighlightWidth
+            rightMargin:  root.autoscrollDirection.x < 0 ? 0 : -root.borderHighlightWidth
+            topMargin:    root.autoscrollDirection.y > 0 ? 0 : -root.borderHighlightWidth
+            bottomMargin: root.autoscrollDirection.y < 0 ? 0 : -root.borderHighlightWidth
         }
 
         Behavior on anchors.leftMargin   { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
@@ -321,8 +289,8 @@ Item {
             root.forceActiveFocus()
             workspaceClicked()
         }
-        
-        onPositionChanged: function(mouse) {
+
+        onPositionChanged: {
             if (drag.active)
                 workspaceMoved()
         }

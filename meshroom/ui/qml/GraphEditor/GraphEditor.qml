@@ -18,6 +18,13 @@ Item {
     property variant nodeTypesModel: null  /// The list of node types that can be instantiated
     property real maxZoom: 2.0
     property real minZoom: 0.1
+
+    // Autoscroll properties
+    readonly property int autoscrollMargin: 100  // Border thickness (width in pixels)
+    readonly property int autoscrollSpeed: 15    // Speed factor
+    property bool isDraggingEdge: false          // Tracks whether we are dragging an AttributePin
+    property point dragMousePos: Qt.point(0, 0)  // Position of the mouse during edge dragging
+
     property var edgeAboutToBeRemoved: undefined
 
     property var _attributeToDelegate: ({})
@@ -156,6 +163,65 @@ Item {
         }
     }
 
+    // Listen to the UIGraph edge drag infos
+    Connections {
+        target: _currentScene 
+        ignoreUnknownSignals: true
+
+        function onEdgeDraggingChanged(dragging) {
+            root.isDraggingEdge = dragging
+        }
+
+        function onEdgeDragMousePosChanged(windowX, windowY) {
+            // Translate window coordinates into the GraphEditor coordinates
+            var localPos = root.mapFromItem(null, windowX, windowY)
+            root.dragMousePos = Qt.point(localPos.x, localPos.y)
+        }
+    }
+
+    // Add a timer to auto-scroll on the graph when edge dragging is active 
+    Timer {
+        id: autoscrollTimer
+        interval: 20
+        running: root.isDraggingEdge
+        repeat: true
+        
+        onTriggered: {
+            var mouseX = root.dragMousePos.x
+            var mouseY = root.dragMousePos.y
+            var deltaX = 0
+            var deltaY = 0
+
+            // Left
+            if (mouseX < root.autoscrollMargin) {
+                var factorX = (root.autoscrollMargin - mouseX) / root.autoscrollMargin
+                deltaX = root.autoscrollSpeed * Math.pow(factorX, 2)
+            }
+            // Right
+            else if (mouseX > root.width - root.autoscrollMargin) {
+                var factorX = (mouseX - (root.width - root.autoscrollMargin)) / root.autoscrollMargin
+                deltaX = -root.autoscrollSpeed * Math.pow(factorX, 2)
+            }
+            // Top
+            if (mouseY < root.autoscrollMargin) {
+                var factorY = (root.autoscrollMargin - mouseY) / root.autoscrollMargin
+                deltaY = root.autoscrollSpeed * Math.pow(factorY, 2)
+            }
+            // Bottom
+            else if (mouseY > root.height - root.autoscrollMargin) {
+                var factorY = (mouseY - (root.height - root.autoscrollMargin)) / root.autoscrollMargin
+                deltaY = -root.autoscrollSpeed * Math.pow(factorY, 2)
+            }
+
+            // Apply scroll on workspaxe
+            if (deltaX !== 0 || deltaY !== 0) {
+                draggable.x += deltaX
+                draggable.y += deltaY
+                workspaceMoved()
+            }
+        }
+    }
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -208,8 +274,8 @@ Item {
             root.forceActiveFocus()
             workspaceClicked()
         }
-
-        onPositionChanged: {
+        
+        onPositionChanged: function(mouse) {
             if (drag.active)
                 workspaceMoved()
         }

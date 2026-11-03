@@ -76,7 +76,8 @@ def _contentLength(response) -> int:
         return -1
 
 
-def _readChunks(response, onBytes: Optional[Callable[[int, int], None]], offset: int = 0) -> Iterator[bytes]:
+def _readChunks(response, onBytes: Optional[Callable[[int, int], None]], offset: int = 0,
+                size: int = -1) -> Iterator[bytes]:
     """
     Read "response" fully in fixed-size chunks, yielding each chunk.
 
@@ -85,15 +86,17 @@ def _readChunks(response, onBytes: Optional[Callable[[int, int], None]], offset:
         onBytes: if provided, called after each chunk has been consumed with "(bytesRead, totalBytes)",
                  "totalBytes" being -1 if unknown.
         offset: the number of bytes of the content received before "response" (resumed download).
+        size: the size (in bytes) of the whole content when "response" only holds a part of it, or -1
+              to rely on "Content-Length".
 
     Yields:
         bytes: the next chunk of the response's body.
 
     Raises:
-        RequestError: if the connection is closed before the whole body announced by "Content-Length" is read.
+        RequestError: if the connection is closed before the whole content is read.
     """
     contentLength = _contentLength(response)
-    total = offset + contentLength if contentLength >= 0 else -1
+    total = size if size >= 0 else (offset + contentLength if contentLength >= 0 else -1)
     bytesRead = offset
     while True:
         chunk = response.read(_HTTP_CHUNK_SIZE)
@@ -193,20 +196,34 @@ def fetchWithProgress(url: str, onBytes: Optional[Callable[[int, int], None]] = 
         return b"".join(_readChunks(response, onBytes))
 
 
-def _resumeOffset(response, offset: int) -> int:
+def _resumedRange(response, offset: int) -> Tuple[int, int]:
     """
-    Return the offset at which "response" (to a request for the bytes from "offset") resumes the content:
-    "offset" if the server sent the requested range, 0 if it sent the whole content.
+    Return where "response" (to a request for the bytes from "offset") resumes the content.
+
+    Returns:
+        Tuple[int, int]: "offset" and the size of the whole content (-1 if unknown) if the server sent
+                         the requested range, (0, -1) if it sent the whole content.
 
     Raises:
         RequestError: if the server sent another range.
     """
     if offset == 0 or response.status != 206:
-        return 0
-    match = re.match(r"bytes (\d+)-", response.headers.get("Content-Range", ""))
+        return 0, -1
+    match = re.match(r"bytes (\d+)-\d*/(\d+|\*)", response.headers.get("Content-Range", ""))
     if not match or int(match.group(1)) != offset:
         raise RequestError(f"Unexpected range in the response: '{response.headers.get('Content-Range')}'.")
-    return offset
+    return offset, -1 if match.group(2) == "*" else int(match.group(2))
+
+
+def _contentValidator(response) -> Optional[str]:
+    """
+    Return the "If-Range" value identifying the content of "response", or None if there is none.
+    A weak "ETag" is not enough: it does not guarantee that two contents have the same bytes.
+    """
+    etag = response.headers.get("ETag")
+    if etag and not etag.startswith("W/"):
+        return etag
+    return response.headers.get("Last-Modified")
 
 
 def fetchToFile(url: str, destination: Path, onBytes: Optional[Callable[[int, int], None]] = None,
@@ -216,7 +233,7 @@ def fetchToFile(url: str, destination: Path, onBytes: Optional[Callable[[int, in
     The content is written to a temporary file next to "destination" first, then moved into place,
     so "destination" is never left partially written.
     A download interrupted by a network error is attempted again, resumed where it stopped when the
-    server supports ranges.
+    server supports ranges and identifies its content. It starts over if the content has changed.
 
     Args:
         url: the url to download.
@@ -235,18 +252,25 @@ def fetchToFile(url: str, destination: Path, onBytes: Optional[Callable[[int, in
     with atomicOpen(destination, "wb", prefix=f".{destination.name}.") as tmpFile:
         sha256 = hashlib.sha256()
         received = 0
+        validator = None
         for attempt in range(1, _HTTP_DOWNLOAD_ATTEMPTS + 1):
             try:
-                headers = {"Range": f"bytes={received}-"} if received else None
+                # Without "If-Range", the rest of another version of the content could be appended.
+                headers = {"Range": f"bytes={received}-", "If-Range": validator} if received and validator else None
                 with _open(url, timeout, headers) as response:
-                    offset = _resumeOffset(response, received)
-                    if offset != received:
-                        # The server sent the whole content again: start over.
+                    offset, size = _resumedRange(response, received if headers else 0)
+                    if offset and _contentValidator(response) != validator:
+                        # Some servers ignore "If-Range" (e.g. the storage of GitHub release assets).
+                        validator = None
+                        raise RequestError("The content has changed since the download started.")
+                    if offset == 0:
+                        # The server sent the whole content: start over.
                         tmpFile.seek(0)
                         tmpFile.truncate()
                         sha256 = hashlib.sha256()
                         received = 0
-                    for chunk in _readChunks(response, onBytes, offset):
+                        validator = _contentValidator(response)
+                    for chunk in _readChunks(response, onBytes, offset, size):
                         tmpFile.write(chunk)
                         sha256.update(chunk)
                         received += len(chunk)

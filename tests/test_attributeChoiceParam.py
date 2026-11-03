@@ -359,3 +359,32 @@ class TestChoiceParamScalarLinks:
             loadedNodeB = loadedGraph.node(nodeB.name)
 
             assert loadedNodeB.intChoice.inputLink == loadedNodeA.intOut
+
+
+class TestDescriptionClone:
+
+    def test_choiceParamCloneKeepsItsChoices(self):
+        choice = desc.ChoiceParam(name="formats", label="Formats", description="", value=["a"], values=["a", "b"],
+                                  exclusive=False, joinChar=",")
+        clone = choice.clone()
+        assert clone is not choice
+        assert clone.values == ["a", "b"]
+        assert clone.exclusive is False
+        assert clone.joinChar == ","
+        assert clone.value == ["a"]
+
+    def test_numericParamCloneKeepsItsRange(self):
+        for param in (desc.IntParam(name="step", label="Step", description="", value=1, range=(1, 10, 1)),
+                      desc.FloatParam(name="gain", label="Gain", description="", value=1.0, range=(0.0, 4.0, 0.1))):
+            assert param.clone().range == param.range
+
+    def test_duplicatedChoiceKeepsItsChoices(self):
+        """ An attribute duplicated in an AnySet (e.g. an exposed port) keeps the choices of the original. """
+        from meshroom.core.attribute import attributeFactory
+        anySet = desc.AnySet(name="ports", label="Ports", description="")
+        with registeredNodeTypes([NodeWithChoiceParams]):
+            graph = Graph("")
+            node = graph.addNewNode(NodeWithChoiceParams.__name__)
+            ports = attributeFactory(anySet, value=None, isOutput=False, node=node)
+            duplicated = ports.duplicateAttribute(node.choice)
+            assert list(duplicated.desc.values) == ["A", "B", "C"]

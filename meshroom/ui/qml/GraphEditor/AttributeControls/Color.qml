@@ -34,6 +34,12 @@ RowLayout {
         onEditingFinished: root.editingFinished( text)
         onAccepted: root.accepted(text)
         Component.onDestruction: root.destruction(activeFocus, text)
+        background: Rectangle {
+            radius: 2
+            border.width: colorText.activeFocus ? 2 : 0
+            border.color: colorText.activeFocus ? palette.highlight : palette.mid
+            color: Qt.darker(palette.window, 1.2)
+        }
     }
     Rectangle {
         height: colorText.height

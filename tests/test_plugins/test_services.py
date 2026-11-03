@@ -367,6 +367,21 @@ class TestReleaseAssets:
         assert (toolFolder / "bin" / "tool").read_text() == "linux 2.0"
         assert not (toolFolder / "generated.txt").exists()
 
+    def test_updateWithAssetInsideOfArchive(self, tmp_path, api):
+        """ An archive holding another asset is installed again, as the assets are installed on their own. """
+        self.publishRelease(api, self.writeToolArchives(tmp_path / "remote"))
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        assets = [releaseAsset(), asset(weights.as_uri(), path="tool/weights.pt", sha256=sha256Of(weights))]
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=assets), tmp_path / "plugins").execute()
+
+        # The asset inside of the archive is still reused.
+        weights.unlink()
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=assets), tmp_path / "plugins").execute()
+        toolFolder = tmp_path / "plugins" / "myPlugin" / "tool"
+        assert lockVersion(tmp_path / "plugins" / "myPlugin") == "2.0"
+        assert (toolFolder / "bin" / "tool").read_text() == "linux"
+        assert (toolFolder / "weights.pt").read_text() == "weights"
+
     def test_executableFile(self, tmp_path, api):
         """ A release file that is not an archive is downloaded as is in the asset's path, and made executable. """
         linuxTool = writeFile(tmp_path / "remote" / "tool-linux-x86_64", "linux")

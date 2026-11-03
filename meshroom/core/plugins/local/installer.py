@@ -336,6 +336,10 @@ class PluginInstaller(PluginService):
             assets: the assets to download.
         """
         resolvedPluginFolder = pluginFolder.resolve()
+        # The assets inside of another asset are installed on their own: that one cannot be moved with them.
+        for asset in assets:
+            if any(other.path.startswith(asset.path + "/") for other in assets):
+                self._reusableAssets.pop(asset.path, None)
         # Spread the assets evenly over the assets part of the overall progress.
         step = (1.0 - _INSTALL_PROGRESS_DEPENDENCIES) / max(len(assets), 1)
 

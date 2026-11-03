@@ -1139,6 +1139,47 @@ class UIGraph(QObject):
                 x = startX + i * (nodeWidth + nodePadding)
                 self.moveNode(selectedNode, Position(x, meanY))
 
+    @staticmethod
+    def _mainOutput(node):
+        """ The output used when connecting a node: its first output, else its flow output. """
+        outputs = [attr for attr in node.attributes if attr.isOutput]
+        if outputs:
+            return outputs[0]
+        return node.internalAttribute("flowOutput") if node.hasInternalAttribute("flowOutput") else None
+
+    @staticmethod
+    def _inputToConnect(node, source):
+        """ The input of `node` to connect `source` to: the first compatible free input, else the first compatible one. """
+        candidates = [attr for attr in node.attributes
+                      if not attr.isOutput and attr.desc.visible and attr.validateIncomingConnection(source)]
+        for attr in candidates:
+            if not attr.isLink:
+                return attr
+        return candidates[0] if candidates else None
+
+    @Slot(str, QObject, result=QObject)
+    def addNewNodeAfter(self, nodeType, previous):
+        """
+        Create a node after `previous` (Tab while a single node is selected): placed on its right, below
+        the nodes already there, with its first compatible input connected to the main output of `previous`
+        (not connected if none is compatible). One undoable change.
+        """
+        output = self._mainOutput(previous) if previous is not None else None
+        width = self._layout._nodeWidth
+        x = previous.x + width + self._layout._gridSpacing * 2
+        y = previous.y
+        # Shifted down below the nodes already there
+        occupied = [(node.x, node.y) for node in self._graph.nodes if node is not previous]
+        while any(abs(nx - x) < width and abs(ny - y) < 60 for nx, ny in occupied):
+            y += 90
+        with self.groupedGraphModification(f"Add Node {nodeType}"):
+            node = self.addNewNode(nodeType, Position(x, y))
+            if node is not None and output is not None:
+                dst = self._inputToConnect(node, output)
+                if dst is not None:
+                    self.addEdge(output, dst)
+        return node
+
     @Slot()
     def alignVertically(self):
         """ All nodes are moved vertically to the same position, on an average position of selected nodes. """

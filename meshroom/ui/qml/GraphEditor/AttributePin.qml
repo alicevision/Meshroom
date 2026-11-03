@@ -166,12 +166,16 @@ RowLayout {
     }
 
     ToolTip {
+        // While dragging an edge, follow its tip so that the attribute name stays next to the cursor
+        readonly property Item dragTarget: inputConnectMA.dragTriggered ? inputDragTarget : outputConnectMA.dragTriggered ? outputDragTarget : null
+
         text: attribute.fullName + ": " + attribute.type
         visible: nameLabel.hovered
         delay: 500
 
-        x: nameLabel.x
-        y: nameLabel.y + nameLabel.height
+        // Reading dragTarget.x/y re-evaluates the bindings whenever the edge tip moves
+        x: dragTarget ? root.mapFromItem(dragTarget.parent, dragTarget.x + dragTarget.width, 0).x + 10 : nameLabel.x
+        y: dragTarget ? root.mapFromItem(dragTarget.parent, 0, dragTarget.y + dragTarget.height).y + 10 : nameLabel.y + nameLabel.height
     }
 
     // Instantiate empty Items for each child attribute

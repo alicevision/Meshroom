@@ -69,6 +69,8 @@ Item {
     signal doubleClicked(var mouse)
     signal moved(var position)
     signal shaked()
+    // A click on a pin (e.g. to pull an edge from an output)
+    signal pinClicked(var attribute)
     signal entered()
     signal exited()
 
@@ -783,6 +785,7 @@ Item {
                                         }
 
                                         onClicked: function() {
+                                            root.pinClicked(modelData)
                                             if (outputs.parentPins.has(modelData.fullName)) {
                                                 modelData.expanded = !modelData.expanded
                                                 outputs.parentPins.set(modelData.fullName, modelData.expanded)
@@ -871,6 +874,7 @@ Item {
                                         }
 
                                         onClicked: function() {
+                                            root.pinClicked(modelData)
                                             if (inputs.parentPins.has(modelData.fullName)) {
                                                 modelData.expanded = !modelData.expanded
                                                 inputs.parentPins.set(modelData.fullName, modelData.expanded)
@@ -991,6 +995,7 @@ Item {
                                             }
 
                                             onClicked: function() {
+                                                root.pinClicked(modelData)
                                                 if (inputParams.parentPins.has(modelData.fullName)) {
                                                     modelData.expanded = !modelData.expanded
                                                     inputParams.parentPins.set(modelData.fullName, modelData.expanded)

@@ -1139,6 +1139,44 @@ class UIGraph(QObject):
                 x = startX + i * (nodeWidth + nodePadding)
                 self.moveNode(selectedNode, Position(x, meanY))
 
+    @staticmethod
+    def _inputToConnect(node, source):
+        """ The input of `node` to connect `source` to: the first compatible free input, else the first compatible one. """
+        candidates = [attr for attr in node.attributes
+                      if not attr.isOutput and attr.desc.visible and attr.validateIncomingConnection(source)]
+        for attr in candidates:
+            if not attr.isLink:
+                return attr
+        return candidates[0] if candidates else None
+
+    def _createsCycle(self, source: Node, target: Node) -> bool:
+        """ Whether connecting `source` into `target` would create a cycle. """
+        if source is target:
+            return True
+        return target in self._graph.getInputNodes(source, recursive=True, dependenciesOnly=False)
+
+    @Slot(Attribute, Attribute, result=bool)
+    def connectAttributes(self, src, dst):
+        """ Connect an output to an input (an edge pulled from an output, then a click on an input), if allowed. """
+        if src is None or dst is None or dst.isOutput or not src.isOutput or src.node is dst.node:
+            return False
+        if dst.isReadOnly or dst.node.locked or not dst.validateIncomingConnection(src) or \
+                self._createsCycle(src.node, dst.node):
+            return False
+        self.addEdge(src, dst)
+        return True
+
+    @Slot(str, QPoint, Attribute, result=QObject)
+    def addNewNodeConnectedTo(self, nodeType, position, src):
+        """ Create a node (Tab while pulling an edge from an output) with `src` connected to its first compatible input. """
+        with self.groupedGraphModification(f"Add Node {nodeType}"):
+            node = self.addNewNode(nodeType, position)
+            if node is not None and src is not None:
+                dst = self._inputToConnect(node, src)
+                if dst is not None:
+                    self.addEdge(src, dst)
+        return node
+
     @Slot()
     def alignVertically(self):
         """ All nodes are moved vertically to the same position, on an average position of selected nodes. """

@@ -22,6 +22,65 @@ Item {
 
     property var _attributeToDelegate: ({})
 
+    // Edge pulled from an output pin (a click on it): it follows the cursor; a click on an input connects
+    // it, Tab creates a node connected to it, Escape or a click on an empty area cancels it
+    property var pendingSource: null
+    function cancelPendingEdge() { pendingSource = null }
+    function handlePinClick(attribute) {
+        if (root.pendingSource) {
+            if (!attribute.isOutput) {
+                uigraph.connectAttributes(root.pendingSource, attribute)
+                root.pendingSource = null
+            } else {
+                // Another output: it becomes the pulled one (the same one: cancel)
+                root.pendingSource = attribute === root.pendingSource ? null : attribute
+            }
+            return
+        }
+        if (attribute.isOutput && attribute.type !== "ListAttribute" && attribute.type !== "GroupAttribute") {
+            root.pendingSource = attribute
+            // Tab (create a connected node) and Escape go to the graph editor
+            root.forceActiveFocus()
+        }
+    }
+    onGraphChanged: cancelPendingEdge()
+    // The pulled edge is dropped when its node is removed
+    Connections {
+        target: root.graph
+        function onUpdated() {
+            if (root.pendingSource) {
+                var node = root.pendingSource.node
+                if (!node || !node.alive)
+                    root.cancelPendingEdge()
+            }
+        }
+    }
+    HoverHandler {
+        id: graphHover
+    }
+    // Cursor position in the graph ('draggable' coordinates)
+    readonly property point cursorInGraph: {
+        var p = graphHover.point.position
+        draggable.x; draggable.y; draggable.scale  // Re-evaluated when the view moves
+        return root.mapToItem(draggable, p.x, p.y)
+    }
+    /// The visible pin of an attribute: its own, or that of its first visible parent group
+    function pinOf(attribute) {
+        if (!attribute)
+            return null
+        let pin = root._attributeToDelegate[attribute.uuid]
+        if (pin && pin.visible)
+            return pin
+        let group = attribute.root
+        while (group) {
+            let groupPin = root._attributeToDelegate[group.uuid]
+            if (groupPin && groupPin.visible)
+                return groupPin
+            group = group.root
+        }
+        return pin || null
+    }
+
     // Signals
     signal workspaceMoved()
     signal workspaceClicked()
@@ -118,6 +177,8 @@ Item {
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             fit()
+        } else if (event.key === Qt.Key_Escape && root.pendingSource) {
+            root.cancelPendingEdge()
         } else if (event.key === Qt.Key_Delete) {
             if (event.modifiers === Qt.AltModifier) {
                 uigraph.removeNodesFrom(uigraph.getSelectedNodes())
@@ -185,6 +246,10 @@ Item {
         }
 
         onPressed: function(mouse) {
+            if (root.pendingSource && mouse.button == Qt.LeftButton) {
+                // A click on an empty area cancels the edge pulled from an output
+                root.cancelPendingEdge()
+            }
             if (mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier) {
                 uigraph.clearNodeSelection()
             }
@@ -234,8 +299,10 @@ Item {
                 // "nodeType" might be a pipeline (artificially added in the "Pipelines" category) instead of a node
                 // If it is not a pipeline to import, then it must be a node
                 if (!importPipeline(nodeType)) {
-                    // Add node via the proper command in uigraph
-                    var node = uigraph.addNewNode(nodeType, spawnPosition)
+                    // Add node via the proper command in uigraph (connected to the pulled edge, if any)
+                    var node = root.pendingSource ? uigraph.addNewNodeConnectedTo(nodeType, spawnPosition, root.pendingSource)
+                                                  : uigraph.addNewNode(nodeType, spawnPosition)
+                    root.cancelPendingEdge()
                     uigraph.selectedNode = node
                     uigraph.selectNodes([node])
                 }
@@ -678,6 +745,21 @@ Item {
                 }
             }
 
+            // Edge pulled from an output (click on an output pin), to the cursor
+            Edge {
+                id: pendingEdge
+                readonly property var pin: { root._attributeToDelegate; return root.pendingSource ? root.pinOf(root.pendingSource) : null }
+                visible: !!pin && pin.visible
+                enabled: false  // No mouse interaction: clicks go to the pins and the graph
+                z: 50
+                point1x: pin ? pin.globalX + pin.outputAnchorPos.x : 0
+                point1y: pin ? pin.globalY + pin.outputAnchorPos.y : 0
+                point2x: root.cursorInGraph.x
+                point2y: root.cursorInGraph.y
+                color: activePalette.highlight
+                thickness: 2
+            }
+
             Loader {
                 id: nodeMenuLoader
                 property var currentNode: null
@@ -1052,6 +1134,7 @@ Item {
 
                             onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
                             onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
+                            onPinClicked: function(attribute) { root.handlePinClick(attribute) }
 
                             onShaked: {
                                 uigraph.disconnectSelectedNodes()

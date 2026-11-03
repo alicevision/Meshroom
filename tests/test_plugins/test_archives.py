@@ -108,6 +108,19 @@ class TestZip:
         assert not (tmp_path / "out" / "up").is_symlink()
         assert not (tmp_path / "out" / "abs").is_symlink()
 
+    @requiresLinks
+    def test_linkOutsideOfUnwrappedRoot(self, tmp_path):
+        """ A skipped link can leave a single root folder: the links are checked against what is kept. """
+        archive = writeZipArchive(tmp_path / "tool.zip", {
+            "root/data": "data",
+            "root/up": ("..", stat.S_IFLNK | 0o777),
+            "root/inside": ("data", stat.S_IFLNK | 0o777),
+            "abs": ("/usr/bin/python", stat.S_IFLNK | 0o777),
+        })
+        extractArchive(archive, tmp_path / "out")
+        assert sorted(path.name for path in (tmp_path / "out").iterdir()) == ["data", "inside"]
+        assert (tmp_path / "out" / "inside").read_text() == "data"
+
     def test_unsafePath(self, tmp_path):
         archive = writeZipArchive(tmp_path / "tool.zip", {"root/a.txt": "a", "../evil.txt": "evil"})
         with pytest.raises(ValueError):
@@ -173,6 +186,17 @@ class TestTar:
             extractArchive(archive, tmp_path / "out")
         assert not (tmp_path / "out").exists()
         assert not (tmp_path / "evil.txt").exists()
+
+    @requiresLinks
+    def test_linkOutsideOfUnwrappedRoot(self, tmp_path):
+        """ A skipped link can leave a single root folder: the links are checked against what is kept. """
+        archive = writeTarArchive(tmp_path / "tool.tar.gz", [
+            ({"name": "root/data"}, "data"),
+            ({"name": "root/up", "type": tarfile.SYMTYPE, "linkname": ".."}, None),
+            ({"name": "abs", "type": tarfile.SYMTYPE, "linkname": "/usr/bin/python"}, None),
+        ])
+        extractArchive(archive, tmp_path / "out")
+        assert [path.name for path in (tmp_path / "out").iterdir()] == ["data"]
 
     def test_unsafePath(self, tmp_path):
         archive = writeTarArchive(tmp_path / "tool.tar.gz", [({"name": "../evil.txt"}, "evil")])

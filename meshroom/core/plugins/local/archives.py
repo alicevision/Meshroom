@@ -57,6 +57,7 @@ def extractArchive(archivePath: Path, destination: Path) -> None:
         entries = list(content.iterdir())
         if len(entries) == 1 and entries[0].is_dir() and not entries[0].is_symlink():
             content = entries[0]
+        _removeOutsideLinks(content)
         os.rename(content, destination)
 
 
@@ -105,6 +106,19 @@ def _isLinkInside(folder: Path, target: str, keptRoot: Path) -> bool:
 
 def _skipLink(name: str, target: str) -> None:
     logging.warning(f"Skipping link '{name}' -> '{target}' of archive: it points outside of the extracted content.")
+
+
+def _removeOutsideLinks(root: Path) -> None:
+    """
+    Remove the links of the folder "root" pointing outside of it. The links of an archive are checked when they
+    are extracted, but its single root folder may only be known afterwards, once the skipped links are left out.
+    """
+    for folder, folderNames, fileNames in os.walk(root):
+        for name in folderNames + fileNames:
+            path = Path(folder) / name
+            if path.is_symlink() and not _isInside(path, root):
+                _skipLink(path.relative_to(root).as_posix(), os.readlink(path))
+                path.unlink()
 
 
 def _extractZip(archivePath: Path, root: Path) -> None:

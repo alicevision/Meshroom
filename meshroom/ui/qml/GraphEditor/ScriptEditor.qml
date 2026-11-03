@@ -8,7 +8,7 @@ import Controls 1.0
 import MaterialIcons 2.2
 import Utils 1.0
 
-import Qt.labs.platform as Platform
+import Meshroom.Helpers as Helpers
 
 import ScriptEditor 1.0
 
@@ -111,7 +111,7 @@ Item {
     implicitWidth: 500
     implicitHeight: 500
 
-    Platform.FileDialog {
+    Helpers.FileDialog {
         id: loadScriptDialog
         title: "Load Script"
         nameFilters: ["Python Script (*.py)"]
@@ -121,11 +121,11 @@ Item {
         }
     }
 
-    Platform.FileDialog {
+    Helpers.FileDialog {
         id: saveScriptDialog
         title: "Save script"
         nameFilters: ["Python Script (*.py)"]
-        fileMode: Platform.FileDialog.SaveFile
+        fileMode: Helpers.FileDialog.SaveFile
 
         signal closed(var result)
 
@@ -134,12 +134,12 @@ Item {
                 currentFile = currentFile + ".py"
             var ret = saveScript(currentFile, input.text)
             if (ret)
-                closed(Platform.Dialog.Accepted)
+                closed(Helpers.FileDialog.Accepted)
             else
-                closed(Platform.Dialog.Rejected)
+                closed(Helpers.FileDialog.Rejected)
         }
 
-        onRejected: closed(Platform.Dialog.Rejected)
+        onRejected: closed(Helpers.FileDialog.Rejected)
     }
 
     ColumnLayout {

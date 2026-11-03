@@ -55,6 +55,10 @@ class EnvVar(Enum):
     MESHROOM_QML_DEBUG_PARAMS = VarDefinition(
         str, "port:3768", "QML debugging params as expected by -qmljsdebugger"
     )
+    MESHROOM_NATIVE_FILE_DIALOGS = VarDefinition(
+        bool, str(not sys.platform.startswith("linux")),
+        "Use the native file dialogs of the platform instead of Qt ones (default on Windows and macOS)"
+    )
 
     # Core
     MESHROOM_PLUGINS_PATH = VarDefinition(str, "", "Paths to plugins folders containing nodes, submitters and pipeline templates.")

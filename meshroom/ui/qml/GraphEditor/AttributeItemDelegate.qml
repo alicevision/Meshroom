@@ -27,6 +27,9 @@ RowLayout {
     readonly property bool editable: !attribute.isOutput && !attribute.isLink &&
                                      !readOnly && !(attribute.keyable && _currentScene.selectedViewId === "-1")
     readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
+    // A group of 4 floats r, g, b, a edited as a color (see RgbaColorField)
+    readonly property bool isRgbaColor: !!attribute && attribute.type === "GroupAttribute" && !attribute.keyable &&
+                                        (attribute.desc.semantic === "rgbaColor" || attribute.desc.semantic === "linkedColor")
     property var errorMessages: attribute.errorMessages
 
     signal doubleClicked(var mouse, var attr)
@@ -151,7 +154,7 @@ RowLayout {
     spacing: 2
 
     Pane {
-        visible: attribute.type !== "GroupAttribute"
+        visible: attribute.type !== "GroupAttribute" || root.isRgbaColor
         background: Rectangle {
             id: background
             color: Qt.darker(parent.palette.window, 1.1)
@@ -460,7 +463,7 @@ RowLayout {
                 case "ListAttribute":
                     return listAttributeComponent
                 case "GroupAttribute":
-                    return groupAttributeComponent
+                    return root.isRgbaColor ? rgbaColorComponent : groupAttributeComponent
                 case "AnySet":
                     return groupAttributeComponent
                 case "StringParam":
@@ -656,6 +659,14 @@ RowLayout {
                             _currentScene.setAttribute(root.attribute, formattedValue)
                     }
                 }
+            }
+        }
+
+        Component {
+            id: rgbaColorComponent
+            AttributeControls.RgbaColorField {
+                attribute: root.attribute
+                editable: root.editable
             }
         }
 

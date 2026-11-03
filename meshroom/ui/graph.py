@@ -1335,6 +1335,21 @@ class UIGraph(QObject):
                 return
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
+    def _edgesTo(self, dstNames):
+        """ The edges whose destination attribute full name is in `dstNames`. """
+        names = set(dstNames)
+        return [edge for edge in self._graph.edges if edge.dst.fullName in names]
+
+    @Slot("QVariantList")
+    def removeEdgesTo(self, dstNames):
+        """ Remove the edges going to the given destination attributes (full names), as one undoable step. """
+        edges = [edge for edge in self._edgesTo(dstNames) if not edge.dst.node.locked]
+        if not edges:
+            return
+        with self.groupedGraphModification("Remove Edges"):
+            for edge in edges:
+                self.removeEdge(edge)
+
     @Slot(list)
     def deleteEdgesByIndices(self, indices):
         with self.groupedGraphModification("Remove Edges"):

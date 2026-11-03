@@ -166,12 +166,16 @@ RowLayout {
     }
 
     ToolTip {
+        // While dragging an edge, follow its tip so that the attribute name stays next to the cursor
+        readonly property Item dragTarget: inputConnectMA.dragTriggered ? inputDragTarget : outputConnectMA.dragTriggered ? outputDragTarget : null
+
         text: attribute.fullName + ": " + attribute.type
         visible: nameLabel.hovered
         delay: 500
 
-        x: nameLabel.x
-        y: nameLabel.y + nameLabel.height
+        // Reading dragTarget.x/y re-evaluates the bindings whenever the edge tip moves
+        x: dragTarget ? root.mapFromItem(dragTarget.parent, dragTarget.x + dragTarget.width, 0).x + 10 : nameLabel.x
+        y: dragTarget ? root.mapFromItem(dragTarget.parent, 0, dragTarget.y + dragTarget.height).y + 10 : nameLabel.y + nameLabel.height
     }
 
     // Instantiate empty Items for each child attribute
@@ -327,6 +331,15 @@ RowLayout {
 
                 onReleased: {
                     inputDragTarget.Drag.drop()
+                    if (dragTriggered)
+                        _currentScene.edgeDragTargetChanged(null)
+                    isPressed = false
+                    dragTriggered = false
+                }
+
+                onCanceled: {
+                    if (dragTriggered)
+                        _currentScene.edgeDragTargetChanged(null)
                     isPressed = false
                     dragTriggered = false
                 }
@@ -338,8 +351,10 @@ RowLayout {
                 onPositionChanged: function(mouse) {
                     // If there has been a significant move (5px along the -X or -Y axis) while the
                     // mouse is being pressed, then we can consider being in the dragging state
-                    if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
+                    if (isPressed && !dragTriggered && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
                         dragTriggered = true
+                        if (drag.target)  // No edge is dragged from read-only attributes
+                            _currentScene.edgeDragTargetChanged(inputDragTarget)
                     }
                 }
             }
@@ -572,6 +587,15 @@ RowLayout {
 
             onReleased: function(mouse) {
                 outputDragTarget.Drag.drop()
+                if (dragTriggered)
+                    _currentScene.edgeDragTargetChanged(null)
+                isPressed = false
+                dragTriggered = false
+            }
+
+            onCanceled: {
+                if (dragTriggered)
+                    _currentScene.edgeDragTargetChanged(null)
                 isPressed = false
                 dragTriggered = false
             }
@@ -583,8 +607,9 @@ RowLayout {
             onPositionChanged: function(mouse) {
                 // If there has been a significant move (5px along the -X or -Y axis) while the mouse is being
                 // pressed, then we can consider being in the dragging state.
-                if (isPressed && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
+                if (isPressed && !dragTriggered && (Math.abs(mouse.x - initialX) >= 5.0 || Math.abs(mouse.y - initialY) >= 5.0)) {
                     dragTriggered = true
+                    _currentScene.edgeDragTargetChanged(outputDragTarget)
                 }
             }
         }

@@ -249,6 +249,7 @@ Item {
     // Display scroll direction
     Rectangle {
         enabled: root.isDraggingEdge
+        z: 100
         color: "transparent"
         border.color: root.borderHighlightColor
         border.width: root.borderHighlightWidth

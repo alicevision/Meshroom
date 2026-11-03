@@ -77,14 +77,20 @@ class StageSettings(SimpleNamespace):
     def __init__(self, cpu=Level.NORMAL, ram=Level.NORMAL, gpu=Level.NONE, **kwargs):
         super().__init__(**kwargs)
         self.cpu = cpu.value if hasattr(cpu, "value") else cpu
-        self.ram = ram.value if hasattr(cpu, "value") else ram
-        self.gpu = gpu.value if hasattr(cpu, "value") else gpu
+        self.ram = ram.value if hasattr(ram, "value") else ram
+        self.gpu = gpu.value if hasattr(gpu, "value") else gpu
 
     def __contains__(self, item):
         return item in self.__dict__
 
 
 class SubmissionSettings:
+    STAGES = [
+        "preprocess",
+        "process",
+        "postprocess"
+    ]
+
     def __init__(self, node: Optional["CoreBaseNode"]):
         """Holds infos used when we submit the node for remote computing.
 
@@ -107,11 +113,12 @@ class SubmissionSettings:
 
     def getStageSettings(self, stageName="process"):
         stage = getattr(self, stageName, None)
-        if stage:
+        if stage and stageName in self.STAGES:
             return stage
         raise ValueError(
              f"Unknown stageName: {stageName!r}. Expected one of: "
-             "'preprocess', 'process', 'postprocess'."
+             + ", ".join([f"'{n}'" for n in self.STAGES])
+             + "."
          )
 
 

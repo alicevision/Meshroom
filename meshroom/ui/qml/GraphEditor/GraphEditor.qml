@@ -147,6 +147,9 @@ Item {
             uigraph.alignVertically()
         } else if (event.key === Qt.Key_H && event.modifiers === Qt.ShiftModifier) {
             uigraph.alignHorizontally()
+        } else if (event.text === "&") {
+            // Connect the output of the first selected node to the inputs of the other selected nodes
+            uigraph.connectSelectedNodes()
         } else if (event.key === Qt.Key_Tab) {
             event.accepted = true
             if (mouseArea.containsMouse) {

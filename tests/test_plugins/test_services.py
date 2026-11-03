@@ -7,6 +7,8 @@ import os
 import stat
 import tarfile
 
+from pathlib import Path
+
 import pytest
 
 from meshroom.core.plugins.metadata import PluginInstalledAsset
@@ -494,6 +496,23 @@ class TestUpdater:
         assert (pluginFolder / "notes.txt").read_text() == "v2"
         assert (pluginFolder / "notes.txt.previous").read_text() == "user"
 
+    @pytest.mark.parametrize("userFile, files", [
+        ("notes.txt", {"notes.txt": "v2", "notes.txt.previous": "v2"}),
+        ("data/notes.txt", {"data": "v2"}),
+    ])
+    def test_addedFileWithoutPath(self, tmp_path, userFile, files):
+        """ An added file the new version leaves no path for fails the update, rather than being lost. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        assets = [asset(weights.as_uri(), sha256=sha256Of(weights))]
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=assets), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        writeFile(pluginFolder / userFile, "user")
+        with pytest.raises(PluginServiceError, match="carry over"):
+            updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=assets, files=files), tmp_path / "plugins").execute()
+        assert lockVersion(pluginFolder) == "1.0"
+        assert (pluginFolder / userFile).read_text() == "user"
+        assert (pluginFolder / "weights.pt").read_text() == "weights"
+
     def test_addedFileInNewAssetPath(self, tmp_path):
         """ An added file in the path of an asset of the new version is not carried over. """
         installer(writePluginZip(tmp_path / "v1.zip", "1.0"), tmp_path / "plugins").execute()
@@ -563,6 +582,69 @@ class TestUpdater:
 
         assert lockVersion(pluginFolder) == "1.0"
         assert sorted(p.name for p in pluginFolder.iterdir()) == ["a.txt", "b.txt", "meshroom", "plugin.lock", "weights.pt"]
+        assert [p.name for p in (tmp_path / "plugins").iterdir()] == ["myPlugin"]
+
+    def test_failedMoveBackKeepsFiles(self, tmp_path, monkeypatch):
+        """ What cannot be moved back after a failed carry over is not deleted with the new version. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        assets = [asset(weights.as_uri(), sha256=sha256Of(weights))]
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=assets), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        writeFile(pluginFolder / "a.txt", "a")
+        writeFile(pluginFolder / "b.txt", "b")
+
+        rename = os.rename
+
+        def failingRename(source, destination):
+            # Carrying over "b.txt" fails, and so does moving "a.txt" and the asset back.
+            if str(source).endswith("b.txt") or (Path(source).parent == pluginFolder and Path(source).name != "myPlugin"):
+                raise OSError("Cannot move")
+            rename(source, destination)
+
+        monkeypatch.setattr(os, "rename", failingRename)
+        with pytest.raises(PluginServiceError, match="carry over"):
+            updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=assets), tmp_path / "plugins").execute()
+        monkeypatch.undo()
+
+        assert (pluginFolder / "a.txt").read_text() == "a"
+        assert (pluginFolder / "weights.pt").read_text() == "weights"
+        # The previous version is still there, for the user to get it back.
+        backup = next(path for path in (tmp_path / "plugins").iterdir() if path.name != "myPlugin")
+        assert (backup / "b.txt").read_text() == "b"
+
+    def test_failedInstallationKeepsReusedAssets(self, tmp_path, monkeypatch):
+        """ A reused asset that cannot be moved back after a failed installation is not deleted with it. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        assets = [asset(weights.as_uri(), sha256=sha256Of(weights))]
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=assets), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+
+        rename = os.rename
+
+        def failingRename(source, destination):
+            if Path(source) == pluginFolder / "weights.pt":
+                raise OSError("Cannot move")
+            rename(source, destination)
+
+        monkeypatch.setattr(os, "rename", failingRename)
+        missing = asset((tmp_path / "missing.pt").as_uri(), name="missing", path="missing.pt")
+        with pytest.raises(PluginServiceError):
+            updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=assets + [missing]), tmp_path / "plugins").execute()
+        monkeypatch.undo()
+        assert (pluginFolder / "weights.pt").read_text() == "weights"
+
+    def test_failedAssetListingRestoresPlugin(self, tmp_path, monkeypatch):
+        """ An update failing before the installation of the new version puts the plugin back. """
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0"), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+
+        def failingReusableAssets(*args):
+            raise RuntimeError("Symlink loop")
+
+        monkeypatch.setattr(PluginUpdater, "_reusableAssets", failingReusableAssets)
+        with pytest.raises(RuntimeError):
+            updater(writePluginZip(tmp_path / "v2.zip", "2.0"), tmp_path / "plugins").execute()
+        assert lockVersion(pluginFolder) == "1.0"
         assert [p.name for p in (tmp_path / "plugins").iterdir()] == ["myPlugin"]
 
     def test_renamedPlugin(self, tmp_path):

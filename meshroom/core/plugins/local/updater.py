@@ -90,9 +90,9 @@ class PluginUpdater(PluginService):
         except OSError as exc:
             raise self._error("Backup", f"Failed to move '{pluginFolder}' to '{backupFolder}'.", exc)
 
-        installer = PluginInstaller(self._provider, self._record, self._version, self._pluginsPath,
-                                    self._reusableAssets(installed, backupFolder))
         try:
+            installer = PluginInstaller(self._provider, self._record, self._version, self._pluginsPath,
+                                        self._reusableAssets(installed, backupFolder))
             # The removal of the backup is fast, the progress is the one of the installer.
             installer.execute(self._reportProgress, self._isCancelled)
         except BaseException:
@@ -106,10 +106,9 @@ class PluginUpdater(PluginService):
         try:
             self._carryOverAddedFiles(installed, backupFolder, installer, carriedFiles)
         except OSError as exc:
-            # Put the previous version back as it was.
-            self._moveBack(carriedFiles)
-            installer.restoreReusedAssets()
-            shutil.rmtree(installer.pluginFolder, ignore_errors=True)
+            # Put the previous version back as it was. The new version may hold the only copy of what cannot be moved back.
+            if all([self._moveBack(carriedFiles), installer.restoreReusedAssets()]):
+                shutil.rmtree(installer.pluginFolder, ignore_errors=True)
             self._restoreBackup(pluginFolder, backupFolder)
             raise self._error("Files", "Failed to carry over the files added to the plugin.", exc)
 
@@ -155,7 +154,7 @@ class PluginUpdater(PluginService):
 
         A file whose path is taken by a file of the new version is moved next to it, with the suffix
         "_PREVIOUS_SUFFIX". A file in the path of an asset of the new version is not carried over: the
-        asset owns its path.
+        asset owns its path. Any other file must not be lost: if it cannot be carried over, this fails.
 
         Args:
             installed: the metadata from the "plugin.lock" of the installed plugin.
@@ -164,7 +163,7 @@ class PluginUpdater(PluginService):
             carriedFiles: filled with the moved files, as (new location, previous location).
 
         Raises:
-            OSError: if a file cannot be moved.
+            OSError: if a file cannot be moved, or if the new version leaves no path for it.
         """
         if installed.files is None:
             logging.warning(f"Plugin '{self._pluginName}' was installed without the list of its files: "
@@ -188,9 +187,8 @@ class PluginUpdater(PluginService):
             if not _isFreePath(destination, installer.pluginFolder):
                 destination = destination.with_name(destination.name + _PREVIOUS_SUFFIX)
                 if not _isFreePath(destination, installer.pluginFolder):
-                    logging.warning(f"File '{relativePath}' added to plugin '{self._pluginName}' conflicts with "
-                                    f"the files of the new version, it is not carried over.")
-                    continue
+                    raise FileExistsError(f"File '{relativePath}' conflicts with the files of the new version: "
+                                          f"move it out of the plugin folder before updating.")
                 logging.warning(f"File '{relativePath}' added to plugin '{self._pluginName}' is replaced by the "
                                 f"new version, carried over as '{destination.name}'.")
 
@@ -203,13 +201,21 @@ class PluginUpdater(PluginService):
             logging.info(f"{len(carriedFiles)} file(s) added to plugin '{self._pluginName}' carried over to the new version.")
 
     @staticmethod
-    def _moveBack(movedFiles: List[Tuple[Path, Path]]) -> None:
-        """ Move the files moved by _carryOverAddedFiles back to their previous location. """
+    def _moveBack(movedFiles: List[Tuple[Path, Path]]) -> bool:
+        """
+        Move the files moved by _carryOverAddedFiles back to their previous location.
+
+        Returns:
+            bool: whether all the files were moved back.
+        """
+        restored = True
         for destination, source in reversed(movedFiles):
             try:
                 os.rename(destination, source)
             except OSError as exc:
                 logging.error(f"Failed to move '{destination}' back to '{source}': {exc}")
+                restored = False
+        return restored
 
     def _removeBackup(self) -> None:
         """ Remove the backup folder of the plugin, with a PluginUninstaller. """

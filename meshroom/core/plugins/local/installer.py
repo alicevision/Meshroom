@@ -150,8 +150,8 @@ class PluginInstaller(PluginService):
             metadata.writeLockfile(pluginFolder / "plugin.lock")
         except BaseException:
             # Do not leave a half-installed plugin behind, nor lose the assets it reused.
-            self.restoreReusedAssets()
-            shutil.rmtree(pluginFolder, ignore_errors=True)
+            if self.restoreReusedAssets():
+                shutil.rmtree(pluginFolder, ignore_errors=True)
             raise
 
         self._pluginFolder = pluginFolder
@@ -419,14 +419,23 @@ class PluginInstaller(PluginService):
         logging.info(f"Asset '{asset.name}' of plugin '{self._record.name}' is unchanged, reused from '{location}'.")
         return True
 
-    def restoreReusedAssets(self) -> None:
-        """ Move the reused assets back to their previous location. """
+    def restoreReusedAssets(self) -> bool:
+        """
+        Move the reused assets back to their previous location.
+
+        Returns:
+            bool: whether all the assets were moved back. If not, the plugin folder holds the only copy
+                  of the others: it must not be removed.
+        """
+        restored = True
         for destination, location in reversed(self._reusedAssets):
             try:
                 os.rename(destination, location)
             except OSError as exc:
                 logging.error(f"Failed to move asset '{destination}' back to '{location}': {exc}")
+                restored = False
         self._reusedAssets.clear()
+        return restored
 
     def _assetSource(self, asset: PluginAsset) -> Tuple[str, str, Optional[str]]:
         """

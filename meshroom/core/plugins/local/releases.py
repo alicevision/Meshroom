@@ -21,6 +21,8 @@ _ARCH_KEYWORDS = {
     "x86_64": ("x86_64", "x86-64", "amd64", "x64"),
     "arm64": ("arm64", "aarch64"),
 }
+# The words naming an operating system that also identify a processor architecture, when no other is named.
+_IMPLICIT_ARCH_KEYWORDS = {"x86_64": ("win64",)}
 # The extensions (lowercase) of release files that describe another file (checksums, signatures).
 _IGNORED_EXTENSIONS = (".sha256", ".sha256sum", ".sha512", ".md5", ".sig", ".asc")
 
@@ -103,6 +105,13 @@ def _keywordsIn(name: str, keywords: Dict[str, Tuple[str, ...]]) -> Set[str]:
             if any(re.search(rf"(?<![a-z0-9]){re.escape(word)}(?![a-z0-9])", name) for word in words)}
 
 
+def _archsIn(name: str) -> Set[str]:
+    """ Return the processor architectures named by "name". """
+    archs = _keywordsIn(name, _ARCH_KEYWORDS)
+    # "win32" is also the generic name of Windows, whatever its architecture: it does not name any.
+    return archs or _keywordsIn(name, _IMPLICIT_ARCH_KEYWORDS)
+
+
 def selectReleaseFile(files: List[ReleaseFile], system: Optional[str], arch: Optional[str]) -> ReleaseFile:
     """
     Return the file of a release to install on the operating system "system" with the architecture "arch".
@@ -129,7 +138,7 @@ def selectReleaseFile(files: List[ReleaseFile], system: Optional[str], arch: Opt
         matches = candidates
     else:
         matches = [file for file in candidates if systems[file.name] == {system}]
-        archs = {file.name: _keywordsIn(file.name, _ARCH_KEYWORDS) for file in matches}
+        archs = {file.name: _archsIn(file.name) for file in matches}
         matches = ([file for file in matches if archs[file.name] == {arch}]
                    or [file for file in matches if not archs[file.name]])
 

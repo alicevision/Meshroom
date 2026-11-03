@@ -43,6 +43,18 @@ class TestSelectReleaseFile:
         assert selectedName(names, "macos", "arm64") == "tool-macOS-arm64.zip"
         assert selectedName(names, "windows", "x86_64") == "tool-win64.zip"
 
+    def test_windowsArch(self):
+        names = ("tool-win32.zip", "tool-win64.zip")
+        assert selectedName(names, "windows", "x86_64") == "tool-win64.zip"
+        # A file for 32-bit Windows runs on any architecture, unlike a file for x86_64.
+        assert selectedName(names, "windows", "arm64") == "tool-win32.zip"
+        assert selectedName(("tool-win32.zip",), "windows", "x86_64") == "tool-win32.zip"
+        with pytest.raises(ReleaseError, match="No file"):
+            selectReleaseFile(releaseFiles("tool-win64.zip"), "windows", "arm64")
+        # The architecture named by the file prevails.
+        assert selectedName(("tool-win64-x64.zip", "tool-win64-arm64.zip"), "windows", "arm64") == "tool-win64-arm64.zip"
+        assert selectedName(("tool-win32-x64.zip", "tool-win32-arm64.zip"), "windows", "x86_64") == "tool-win32-x64.zip"
+
     def test_archSynonyms(self):
         names = ("tool-windows-amd64.zip", "tool-darwin-x64.tar.gz", "tool-osx-arm64.tar.gz")
         assert selectedName(names, "windows", "x86_64") == "tool-windows-amd64.zip"

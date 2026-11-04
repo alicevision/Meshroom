@@ -49,6 +49,8 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 ├── plugins/                    # Runtime local plugins folder (git-ignored): registries + installed plugins; seeded
 │                               # from meshroom/core/plugins/registries/ on first run. Created next to the executables in release.
 ├── tests/                      # Comprehensive suite of unit tests and pipeline validation tests
+├── tests_ui/                   # Tests of the UI layer (meshroom/ui/*.py: UIGraph, undo commands) without QML,
+│                               # run in their own pytest session as they need the PySide backend
 ├── CHANGES.md                  # Changelog tracking features, optimizations, and API breaks
 ├── CMakeLists.txt              # Build system file for compiling external modules/packaging
 ├── CONTRIBUTING.md             # Guidelines for developer onboarding and codebase contributions
@@ -73,6 +75,7 @@ A few distinctions are easy to confuse. Keep them straight before changing engin
 * **Supported Python versions:** Target 3.9–3.11. The full test suite runs on **3.11** (Linux + Windows) in CI; `meshroom_compute` (`bin/meshroom_compute`) additionally gets a `-h` smoke test on **3.9**, the minimum supported version. Avoid syntax/features newer than 3.9 in any code reachable from it (`meshroom/core/`, CLI entry points).
 * **Lint:** Run `flake8 . --max-line-length=127` locally. CI ([.github/workflows/run-tests.yml](.github/workflows/run-tests.yml)) runs two passes: a **hard-failing** one for real errors (`--select=E9,F63,F7,F82` — syntax/undefined names) and a **non-blocking** style pass (`--exit-zero --max-complexity=10 --max-line-length=127`). Keep both clean; the [Code Style](#code-style) section lists the specific style warnings to avoid.
 * **Tests:** `pytest tests/` from the repo root. Add/run targeted tests with `pytest tests/path/to/test_file.py::test_name`.
+* **UI tests:** `QT_QPA_PLATFORM=offscreen pytest tests_ui/`, in a separate session: they select the PySide backend before importing `meshroom.core` (see [tests_ui/conftest.py](tests_ui/conftest.py)), and are skipped when collected after `tests/`. Use the `uiGraph` and `undoStack` fixtures to drive the UI layer and check undo/redo.
 * **Run the app:** There is no `bin/` script for the GUI. Launch it with `./start.sh` (or `start.bat` on Windows) (sets `MESHROOM_ROOT`/`PYTHONPATH`, then runs `python3 meshroom/ui`), or run `python3 meshroom/ui` directly. For headless pipeline runs use `bin/meshroom_batch`. Manually verify UI/pipeline changes this way before reporting them done.
 
 ## Code Style
@@ -102,7 +105,7 @@ A few distinctions are easy to confuse. Keep them straight before changing engin
 
 3. **Documentation & Comments:** Same principle as Python — add comments for non-obvious or intricate logic, keep them concise, skip them where the code is self-explanatory.
 
-4. **Testing:** Changes purely to the UI/QML layer do not require unit tests.
+4. **Testing:** Changes purely to the QML layer do not require unit tests. Changes to the Python UI layer (`meshroom/ui/*.py`, e.g. undo commands) are tested in `tests_ui/`.
 
 5. **Structure:** Split overly complex components into dedicated `.qml` files. For data models, avoid complex JavaScript implementations; instead, construct models on the Python UI side and utilize them via context properties.
 

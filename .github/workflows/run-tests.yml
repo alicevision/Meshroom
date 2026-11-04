@@ -60,6 +60,12 @@ jobs:
       - name: Test with pytest
         run: pytest tests/
 
+      # The UI tests need the PySide backend: they run in their own session
+      - name: Test the UI layer with pytest
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: pytest tests_ui/
+
       # Coverage is generated and uploaded only on Linux to avoid double-counting
       - name: Test with pytest (coverage)
         if: runner.os == 'Linux'

@@ -1292,9 +1292,10 @@ class UIGraph(QObject):
 
     @Slot(list)
     def clearData(self, nodes: list[Node]):
-        """ Clear data from 'nodes'. """
+        """ Clear data from 'nodes' and remove them from the Task Manager. """
         for n in nodes:
             n.clearData()
+            self._taskManager.removeNode(n, displayList=True, processList=True, externList=True)
 
     @Slot(list)
     def clearDataFrom(self, nodes: list[Node]):

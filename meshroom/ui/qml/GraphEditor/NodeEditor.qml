@@ -6,6 +6,7 @@ import Controls 1.0
 import MaterialIcons 2.2
 import Utils 1.0
 import Shapes 1.0
+import "AttributeControls" as AttributeControls
 
 /**
  * NodeEditor allows to visualize and edit the parameters of a Node.
@@ -69,6 +70,37 @@ Panel {
             }
             else {
                 computationInfo.text =  ""
+            }
+        }
+    }
+
+    // Tables opened from the attribute editors: they are owned here, as the delegates that open them
+    // can be destroyed at any time (scrolling, filtering, attribute hidden after an edit...)
+    property var tableWindows: []
+
+    function openListAttributeTable(attribute) {
+        let window = tableWindows.find(w => w.attribute === attribute)
+        if (!window) {
+            window = tableWindowComponent.createObject(root, { "attribute": attribute })
+            tableWindows.push(window)
+        }
+        window.requestActivate()
+    }
+
+    Component {
+        id: tableWindowComponent
+        AttributeControls.ListAttributeTableWindow {
+            id: tableWindow
+            palette: root.palette
+            // Closed by the user or after the removal of its attribute.
+            // Destroying the window from its own handlers is unsafe: forget and destroy it afterwards.
+            onVisibleChanged: {
+                if (!visible) {
+                    Qt.callLater(() => {
+                        root.tableWindows.splice(root.tableWindows.indexOf(tableWindow), 1)
+                        tableWindow.destroy()
+                    })
+                }
             }
         }
     }
@@ -504,6 +536,7 @@ Panel {
                                 onAttributeDoubleClicked: function(mouse, attribute) { root.attributeDoubleClicked(mouse, attribute) }
                                 onUpgradeRequest: root.upgradeRequest()
                                 onShowInViewer: function (attribute) {root.showAttributeInViewer(attribute)}
+                                onTableRequested: function(attribute) { root.openListAttributeTable(attribute) }
                                 filterText: searchBar.text
 
                                 onInAttributeClicked: function(srcItem, mouse, inAttributes) {
@@ -592,6 +625,7 @@ Panel {
                             readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: function(mouse, attribute) { root.attributeDoubleClicked(mouse, attribute) }
                             onUpgradeRequest: root.upgradeRequest()
+                            onTableRequested: function(attribute) { root.openListAttributeTable(attribute) }
                             filterText: searchBar.text
 
                             onInAttributeClicked: function(srcItem, mouse, inAttributes) {

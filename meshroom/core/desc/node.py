@@ -102,7 +102,8 @@ class SubmissionSettings:
         self.postprocess = StageSettings()
         # Process use the values we set on the node description
         self.process = StageSettings(cpu=node.cpu, ram=node.ram, gpu=node.gpu)
-        self.process.licenses = node.nodeDesc._licenses
+        # Copy the list as it is shared by all the node types that do not declare their own licenses
+        self.process.licenses = list(node.nodeDesc._licenses)
         # Retrocompatibility behaviour
         if hasattr(node.nodeDesc, "_cuda_tag"):
             logging.warning(f"DeprecationWarning : Node of type {node.nodeDesc} uses '_cuda_tag'. Please use SubmissionSettings instead.")

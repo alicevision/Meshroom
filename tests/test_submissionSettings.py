@@ -114,6 +114,18 @@ class TestSubmissionSettings:
         assert "service_key" not in settings.process
         assert "DeprecationWarning" not in caplog.text
 
+    def test_licensesAreNotShared(self, graph):
+        """ Editing the licenses of a node's settings does not impact its node type or the other node types. """
+        settings = getSettings(graph, ResourcesNode)
+        settings.process.licenses.append("licenseB")
+        assert ResourcesNode._licenses == ["licenseA"]
+        assert getSettings(graph, ResourcesNode).process.licenses == ["licenseA"]
+
+        settings = getSettings(graph, DefaultSettingsNode)
+        settings.process.licenses.append("licenseB")
+        assert desc.BaseNode._licenses == []
+        assert getSettings(graph, DefaultSettingsNode).process.licenses == []
+
     def test_callableResourcesAreResolved(self, graph):
         settings = getSettings(graph, DynamicResourcesNode)
         assert settings.process.cpu == desc.Level.EXTREME.value

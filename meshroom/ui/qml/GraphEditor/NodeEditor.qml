@@ -83,7 +83,7 @@ Panel {
 
     // Function to validate and apply node name change
     function validateNodeNameChange(name) {
-        if (root.node && name.trim() !== "") {
+        if (root.node) {
             const newNodeName = _currentScene.renameNode(_currentScene.selectedNode, name.trim())
             if (newNodeName === "") {
                 root.displayNodeName = root.nodeName
@@ -137,7 +137,7 @@ Panel {
                 visible: root.node !== null
                 text: root.displayNodeName
                 // For some reason the validator does not always work
-                validator: RegularExpressionValidator { regularExpression: /^[0-9A-Za-z]+$/ }
+                validator: RegularExpressionValidator { regularExpression: /^[0-9A-Za-z_]+$/ }
                 font.bold: true
                 readOnly: true
                 selectByMouse: false

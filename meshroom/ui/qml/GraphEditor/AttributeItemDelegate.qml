@@ -823,7 +823,8 @@ RowLayout {
                                                {
                                                    'model': Qt.binding(function() { return attribute.value }),
                                                    'readOnly': Qt.binding(function() { return root.readOnly }),
-                                                   'labelWidth': Qt.binding(function() { return root.labelWidth }),
+                                                   // Leave room for the values of the children in a narrow panel
+                                                   'labelWidth': Qt.binding(function() { return Math.min(root.labelWidth, Math.max(80, groupItem.width / 2)) }),
                                                    'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
                                                    'filterText': Qt.binding(function() { return root.filterText }),
                                                    'visible': Qt.binding(function() { return groupItem.expanded }),

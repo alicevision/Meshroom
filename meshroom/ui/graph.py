@@ -1310,7 +1310,7 @@ class UIGraph(QObject):
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(src, AnySet):
-            self.push(commands.ConnectAnySetCommand(self._graph, src=dst, anySetAttribute=src))
+            self.push(commands.ConnectAnySetCommand(self._graph, src=dst, anySetAttribute=src, isSource=True))
         elif isinstance(dst, AnySet):
             self.push(commands.ConnectAnySetCommand(self._graph, src=src, anySetAttribute=dst))
         elif isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):

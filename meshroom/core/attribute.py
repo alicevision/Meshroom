@@ -2026,8 +2026,7 @@ class AnySet(GroupAttribute):
             newAttribute._isOutput = True
             newAttribute._desc._isDynamicValue = True
 
-        lastIndex = self._value.count - 1
-        self._value.insert(lastIndex, newAttribute)
+        self._value.insert(self._value.count, newAttribute)
         self.flatStaticChildrenChanged.emit()
 
         return newAttribute

@@ -2010,16 +2010,26 @@ class AnySet(GroupAttribute):
 
     _attributeNameRegex = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
-    # Description parameters of the attributes that can be created from the UI, by description type
+    # Attributes that can be created from the UI, by kind: base name and description parameters
     _newAttributeParameters = {
-        "StringParam": {"value": ""},
-        "IntParam": {"value": 0, "range": [0, 10, 1]},
-        "FloatParam": {"value": 0.5, "range": [0.0, 1.0, 0.01]},
-        "BoolParam": {"value": False},
-        "ChoiceParam": {"value": "optionA", "values": ["optionA", "optionB"]},
-        "File": {"value": ""},
-        "ColorParam": {"value": "#2a82da"},
+        "StringParam": {"name": "string", "type": "StringParam", "value": ""},
+        "TextParam": {"name": "text", "type": "StringParam", "semantic": "multiline", "value": ""},
+        "IntParam": {"name": "int", "type": "IntParam", "value": 0, "range": [0, 10, 1]},
+        "FloatParam": {"name": "float", "type": "FloatParam", "value": 0.5, "range": [0.0, 1.0, 0.01]},
+        "HueParam": {"name": "hue", "type": "FloatParam", "semantic": "color/hue", "value": 0.0, "range": [0.0, 1.0, 0.01]},
+        "BoolParam": {"name": "bool", "type": "BoolParam", "value": False},
+        "ChoiceParam": {"name": "choice", "type": "ChoiceParam", "value": "optionA", "values": ["optionA", "optionB"]},
+        "MultiChoiceParam": {"name": "choices", "type": "ChoiceParam", "value": ["optionA"], "values": ["optionA", "optionB"],
+                             "exclusive": False},
+        "File": {"name": "file", "type": "File", "value": ""},
+        "ColorParam": {"name": "color", "type": "ColorParam", "value": "#2a82da"},
+        "ListAttribute": {"name": "list", "type": "ListAttribute", "value": []},
+        "Size2d": {"name": "size", "type": "Size2d"},
+        "Vec2d": {"name": "vector", "type": "Vec2d"},
+        "Flow": {"name": "flow", "type": "Flow"},
     }
+    # Kinds of attributes that can be the elements of a ListAttribute
+    _listElementKinds = ("StringParam", "IntParam", "FloatParam", "BoolParam", "File", "ColorParam")
 
     def _onChildrenChanged(self):
         """ Notify that the children changed, and update the graph as they are part of the UID of the node. """
@@ -2101,31 +2111,38 @@ class AnySet(GroupAttribute):
         if (attribute is None or name != attribute.name) and name in self._value.keys():
             raise ValueError(f"Attribute name '{name}' already exists in '{self.fullName}'.")
 
-    def getNewAttributeData(self, attributeType: str) -> dict:
+    def getNewAttributeData(self, attributeKind: str, elementKind: str | None = None) -> dict:
         """ Return the serialized data of a new child attribute
 
         Args:
-            attributeType: the description type of the attribute (e.g. "FloatParam").
+            attributeKind: the kind of attribute, among the keys of _newAttributeParameters:
+                           a description type (e.g. "FloatParam") or a variant of it (e.g. "HueParam").
+            elementKind: for a "ListAttribute", the kind of its elements, among _listElementKinds.
 
         Returns:
-            The serialized attribute, with a unique name derived from its type and default parameters.
+            The serialized attribute, with a unique name derived from its kind and default parameters.
         """
-        if attributeType not in self._newAttributeParameters:
-            raise ValueError(f"Unsupported attribute type: '{attributeType}'.")
+        if attributeKind not in self._newAttributeParameters:
+            raise ValueError(f"Unsupported attribute type: '{attributeKind}'.")
 
-        baseName = attributeType.replace("Param", "").lower()
+        data = copy.deepcopy(self._newAttributeParameters[attributeKind])
+        baseName = data["name"]
         name = baseName
         index = -1
         while name in self._value.keys():
             index += 1
             name = f"{baseName}_{index}"
+        data["name"] = name
+        data["label"] = convertToLabel(name)
 
-        return {
-            "name": name,
-            "label": convertToLabel(name),
-            "type": attributeType,
-            **copy.deepcopy(self._newAttributeParameters[attributeType])
-        }
+        if attributeKind == "ListAttribute":
+            elementKind = elementKind or "StringParam"
+            if elementKind not in self._listElementKinds:
+                raise ValueError(f"Unsupported list element type: '{elementKind}'.")
+            elementDesc = copy.deepcopy(self._newAttributeParameters[elementKind])
+            elementDesc["label"] = convertToLabel(elementDesc["name"])
+            data["elementDesc"] = elementDesc
+        return data
 
     def getEditedAttributeData(self, attribute: Attribute, parameters: dict) -> dict:
         """ Return the serialized data of a child attribute with its description parameters edited.

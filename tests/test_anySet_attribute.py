@@ -710,6 +710,86 @@ def test_duplicated_attributes_are_added_at_the_end():
     for attribute in (srcNode.xyz.x, srcNode.xyz.y, srcNode.xyz.z):
         dynamicNode.ins.duplicateAttribute(attribute)
     assert [attribute.name for attribute in dynamicNode.ins.value] == ["x", "y", "z"]
+def test_new_anyset_attribute_kinds():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+
+    textAttr = anySet.insertAttribute(anySet.getNewAttributeData("TextParam"), 0)
+    assert textAttr.type == "StringParam"
+    assert textAttr.desc.semantic == "multiline"
+
+    hueAttr = anySet.insertAttribute(anySet.getNewAttributeData("HueParam"), 1)
+    assert hueAttr.type == "FloatParam"
+    assert hueAttr.desc.semantic == "color/hue"
+
+    choicesAttr = anySet.insertAttribute(anySet.getNewAttributeData("MultiChoiceParam"), 2)
+    assert not choicesAttr.desc.exclusive
+    assert choicesAttr.value == ["optionA"]
+
+    listAttr = anySet.insertAttribute(anySet.getNewAttributeData("ListAttribute", "IntParam"), 3)
+    assert listAttr.type == "ListAttribute"
+    assert listAttr.desc.elementDesc.type == "IntParam"
+    assert len(listAttr.value) == 0
+
+    sizeAttr = anySet.insertAttribute(anySet.getNewAttributeData("Size2d"), 4)
+    assert [item.name for item in sizeAttr.value] == ["width", "height"]
+    vectorAttr = anySet.insertAttribute(anySet.getNewAttributeData("Vec2d"), 5)
+    assert [item.name for item in vectorAttr.value] == ["x", "y"]
+
+    flowAttr = anySet.insertAttribute(anySet.getNewAttributeData("Flow"), 6)
+    assert flowAttr.type == "Flow"
+
+    try:
+        anySet.getNewAttributeData("ListAttribute", "ChoiceParam")
+    except ValueError:
+        pass
+    else:
+        # The values of a choice are not serialized with the element description of a list
+        raise AssertionError("Lists of choices cannot be created.")
+
+
+def test_new_anyset_attribute_kinds_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    for kind in ("TextParam", "HueParam", "MultiChoiceParam", "Vec2d", "Flow"):
+        anySet.insertAttribute(anySet.getNewAttributeData(kind), anySet.value.count)
+    anySet.insertAttribute(anySet.getNewAttributeData("ListAttribute", "FloatParam"), anySet.value.count)
+    anySet.text.value = "first line\nsecond line"
+    anySet.hue.value = 0.25
+    anySet.choices.value = ["optionA", "optionB"]
+    anySet.vector.y.value = 2.0
+    anySet.list.append(0.5)
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedAnySet = loadGraph(graphFile).node(dynamicNode.name).ins
+
+    assert [attribute.name for attribute in loadedAnySet.value] == ["text", "hue", "choices", "vector", "flow", "list"]
+    assert loadedAnySet.text.desc.semantic == "multiline"
+    assert loadedAnySet.text.value == "first line\nsecond line"
+    assert loadedAnySet.hue.desc.semantic == "color/hue"
+    assert loadedAnySet.hue.value == 0.25
+    assert not loadedAnySet.choices.desc.exclusive
+    assert loadedAnySet.choices.value == ["optionA", "optionB"]
+    assert loadedAnySet.vector.y.value == 2.0
+    assert loadedAnySet.flow.type == "Flow"
+    assert [element.value for element in loadedAnySet.list.value] == [0.5]
+
+
+def test_anyset_lists_of_every_element_kind_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    for elementKind in AnySet._listElementKinds:
+        anySet.insertAttribute(anySet.getNewAttributeData("ListAttribute", elementKind), anySet.value.count)
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedAnySet = loadGraph(graphFile).node(dynamicNode.name).ins
+    assert [attribute.desc.elementDesc.type for attribute in loadedAnySet.value] == list(AnySet._listElementKinds)
 
 
 def test_duplicated_choice_keeps_values():

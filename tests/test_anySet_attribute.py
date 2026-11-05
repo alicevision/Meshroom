@@ -712,6 +712,28 @@ def test_duplicated_attributes_are_added_at_the_end():
     assert [attribute.name for attribute in dynamicNode.ins.value] == ["x", "y", "z"]
 
 
+def test_duplicated_choice_keeps_values():
+    from meshroom.core import desc
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    anySet = srcNode.ins
+    single = anySet.insertAttribute({"name": "single", "label": "Single", "type": "ChoiceParam", "value": 2, "values": [1, 2, 4]}, 0)
+    multi = anySet.insertAttribute({"name": "multi", "label": "Multi", "type": "ChoiceParam", "value": ["a"], "values": ["a", "b"], "exclusive": False}, 1)
+
+    newSingle = dynamicNode.ins.duplicateAttribute(single)
+    assert newSingle.desc.values == [1, 2, 4]
+    assert newSingle.value == 2
+    newMulti = dynamicNode.ins.duplicateAttribute(multi)
+    assert newMulti.desc.values == ["a", "b"]
+    assert not newMulti.desc.exclusive
+    assert newMulti.value == ["a"]
+
+    override = desc.ChoiceParam(name="c", label="C", description="", value="a", values=["a"], saveValuesOverride=True, joinChar=",")
+    assert override.clone()._saveValuesOverride
+    assert override.clone().joinChar == ","
+
+
 def test_dynamic_inputs_serialized_in_todict():
     """Dynamic inputs are included in the node's serialized form."""
 

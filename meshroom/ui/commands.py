@@ -164,7 +164,8 @@ class RenameNodeCommand(GraphCommand):
     def redoImpl(self):
         self.setText(f"Rename Node {self.oldName} to {self.name}")
         node = self.graph.node(self.oldName)
-        self.graph.renameNode(node, self.name)
+        if not self.graph.renameNode(node, self.name):
+            return False
         return node._name
 
     def undoImpl(self):

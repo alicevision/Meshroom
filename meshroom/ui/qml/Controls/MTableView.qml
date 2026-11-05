@@ -149,6 +149,23 @@ GridLayout {
             Qt.callLater(updateColumnWidths)
         }
 
+        // Row heights are cached by index: they no longer match their rows once rows are inserted, removed or moved.
+        // They are measured again once the table has been rebuilt, which emits layoutChanged: until then,
+        // the loaded cells are still the former rows'.
+        function resetRowHeights() {
+            clearRowHeights()
+            contentRowHeights = []
+        }
+
+        Connections {
+            target: tableView.model
+            ignoreUnknownSignals: true
+            function onRowsInserted() { tableView.resetRowHeights() }
+            function onRowsRemoved() { tableView.resetRowHeights() }
+            function onRowsMoved() { tableView.resetRowHeights() }
+            function onModelReset() { tableView.resetRowHeights() }
+        }
+
         ScrollBar.horizontal: MScrollBar { id: horizontalScrollBar }
         ScrollBar.vertical: MScrollBar { id: verticalScrollBar }
 

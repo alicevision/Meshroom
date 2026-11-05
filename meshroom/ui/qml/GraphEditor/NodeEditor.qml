@@ -33,7 +33,7 @@ Panel {
             root.validatedNodeName = nodeName
             // Set the display node type only if it is not contained in the node name
             const nodeType = _currentScene.selectedNode.nodeType
-            root.displayNodeType = nodeName.startsWith(nodeType + "_") ? "" : nodeType
+            root.displayNodeType = (nodeName == nodeType || nodeName.startsWith(nodeType + "_")) ? "" : nodeType
         }
     }
 

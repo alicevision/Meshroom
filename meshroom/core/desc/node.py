@@ -76,9 +76,9 @@ class MrNodeType(enum.Enum):
 class StageSettings(SimpleNamespace):
     def __init__(self, cpu=Level.NORMAL, ram=Level.NORMAL, gpu=Level.NONE, **kwargs):
         super().__init__(**kwargs)
-        self.cpu = cpu.value if hasattr(cpu, "value") else cpu
-        self.ram = ram.value if hasattr(ram, "value") else ram
-        self.gpu = gpu.value if hasattr(gpu, "value") else gpu
+        self.cpu = cpu
+        self.ram = ram
+        self.gpu = gpu
 
     def __contains__(self, item):
         return item in self.__dict__

@@ -42,7 +42,7 @@ class CustomSettingsNode(desc.Node):
 
     def getSubmissionSettings(self, node):
         settings = super().getSubmissionSettings(node)
-        settings.preprocess.cpu = desc.Level.EXTREME.value
+        settings.preprocess.cpu = desc.Level.EXTREME
         settings.process.target_os = "windows"
         return settings
 
@@ -75,13 +75,13 @@ def getSettings(graph, nodeDesc):
 class TestStageSettings:
     def test_defaultValues(self):
         stage = desc.StageSettings()
-        assert (stage.cpu, stage.ram, stage.gpu) == (desc.Level.NORMAL.value, desc.Level.NORMAL.value, desc.Level.NONE.value)
+        assert (stage.cpu, stage.ram, stage.gpu) == (desc.Level.NORMAL, desc.Level.NORMAL, desc.Level.NONE)
 
-    def test_levelsAreConvertedToValues(self):
-        """ The submitters expect plain values, and the levels can be given either way. """
-        stage = desc.StageSettings(cpu=desc.Level.EXTREME, ram=2, gpu=desc.Level.NORMAL)
-        assert (stage.cpu, stage.ram, stage.gpu) == (3, 2, 1)
-        assert type(stage.cpu) is int
+    def test_levelsAreKept(self):
+        stage = desc.StageSettings(cpu=desc.Level.EXTREME, ram=desc.Level.INTENSIVE, gpu=desc.Level.NORMAL)
+        assert stage.cpu is desc.Level.EXTREME
+        assert stage.ram is desc.Level.INTENSIVE
+        assert stage.gpu is desc.Level.NORMAL
 
     def test_customSettings(self):
         stage = desc.StageSettings(target_os="windows")
@@ -98,9 +98,9 @@ class TestSubmissionSettings:
         """ The resources of the node description only apply to the process stage. """
         settings = getSettings(graph, ResourcesNode)
         process = settings.process
-        assert process.cpu == desc.Level.INTENSIVE.value
-        assert process.ram == desc.Level.EXTREME.value
-        assert process.gpu == desc.Level.NORMAL.value
+        assert process.cpu == desc.Level.INTENSIVE
+        assert process.ram == desc.Level.EXTREME
+        assert process.gpu == desc.Level.NORMAL
         assert process.licenses == ["licenseA"]
         for stage in (settings.preprocess, settings.postprocess):
             assert stage == desc.StageSettings()
@@ -128,7 +128,7 @@ class TestSubmissionSettings:
 
     def test_callableResourcesAreResolved(self, graph):
         settings = getSettings(graph, DynamicResourcesNode)
-        assert settings.process.cpu == desc.Level.EXTREME.value
+        assert settings.process.cpu == desc.Level.EXTREME
 
     def test_deprecatedTags(self, graph, caplog):
         """ Node types still declaring '_cuda_tag' or '_service_key' keep working, with a warning. """
@@ -141,8 +141,8 @@ class TestSubmissionSettings:
 
     def test_nodeTypeOverride(self, graph):
         settings = getSettings(graph, CustomSettingsNode)
-        assert settings.preprocess.cpu == desc.Level.EXTREME.value
-        assert settings.process.cpu == desc.Level.INTENSIVE.value
+        assert settings.preprocess.cpu == desc.Level.EXTREME
+        assert settings.process.cpu == desc.Level.INTENSIVE
         assert settings.process.target_os == "windows"
         assert "target_os" not in settings.postprocess
 

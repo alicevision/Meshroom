@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 import meshroom.core
 from meshroom.core import Version, desc
 from meshroom.core.desc.anySet import AnySet
-from meshroom.core.node import BackdropNode, CompatibilityIssue, CompatibilityNode, Node, Position
+from meshroom.core.node import BackdropNode, CompatibilityIssue, CompatibilityNode, ConversionNode, Node, Position
 
 
 def nodeFactory(
@@ -31,11 +31,17 @@ def nodeFactory(
     return _NodeCreator(nodeData, name, inTemplate, expectedUid).create()
 
 
+def isConversionNodeType(nodeType: str) -> bool:
+    """ Return whether `nodeType` is a registered conversion node type (see desc.ConversionNode). """
+    nodeDescProvider = meshroom.core.pluginManager.getNodeDescProvider(nodeType)
+    return nodeDescProvider is not None and issubclass(nodeDescProvider.nodeDescClass, desc.ConversionNode)
+
+
 def getNodeConstructor(nodeType: str, position: Optional[Position]=None, **kwargs) -> Union[BackdropNode, Node]:
     constructors = {
         "Backdrop": BackdropNode,
     }
-    constructor = constructors.get(nodeType, Node)
+    constructor = constructors.get(nodeType, ConversionNode if isConversionNodeType(nodeType) else Node)
     return constructor(nodeType, position=position, **kwargs)
 
 
@@ -273,6 +279,12 @@ class _NodeCreator:
         """Handle possible upgrades of CompatibilityNodes, when no computed data is associated to the Node."""
         if node.issue == CompatibilityIssue.UnknownNodeType:
             return node
+
+        # Conversion nodes are never computed, so they never hold computation data.
+        # Upgrading them also restores their dynamic output, which is required to restore their output edges.
+        if self.nodeDesc is not None and issubclass(self.nodeDesc, desc.ConversionNode):
+            logging.warning(f"Compatibility issue on conversion node: performing automatic upgrade on '{self.name}'")
+            return node.upgrade()
 
         # Nodes in templates are not meant to hold computation data.
         if self.inTemplate:

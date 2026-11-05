@@ -1378,7 +1378,7 @@ class BaseNode(BaseObject):
         """
         # Ambiguous case for NONE, which could be used for compatibility nodes if we do not have
         # any information about the node descriptor.
-        return self.getMrNodeType() != MrNodeType.INIT and self.getMrNodeType() != MrNodeType.BACKDROP
+        return self.getMrNodeType() not in (MrNodeType.INIT, MrNodeType.BACKDROP, MrNodeType.CONVERSION)
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -2050,6 +2050,9 @@ class BaseNode(BaseObject):
     def _isBackdropNode(self) -> bool:
         return False
 
+    def _isConversionNode(self) -> bool:
+        return False
+
     @property
     def globalExecMode(self):
         if not self._chunksCreated:
@@ -2164,7 +2167,8 @@ class BaseNode(BaseObject):
 
     def updateDuplicates(self, nodesPerUid):
         """ Update the list of duplicate nodes (sharing the same UID). """
-        if not nodesPerUid or not self._uid:
+        # Conversion nodes have no data on disk: identical conversions are not duplicates
+        if not nodesPerUid or not self._uid or self._isConversionNode():
             if len(self._duplicates) > 0:
                 self._duplicates.clear()
                 self._hasDuplicates = False
@@ -2369,6 +2373,7 @@ class BaseNode(BaseObject):
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
     isIONode = Property(bool, lambda self: self._isIONode(), constant=True)
     isBackdropNode = Property(bool, lambda self: self._isBackdropNode(), constant=True)
+    isConversionNode = Property(bool, lambda self: self._isConversionNode(), constant=True)
 
     globalExecMode = Property(str, globalExecMode.fget, notify=globalStatusChanged)
     jobName = Property(str, lambda self: self._getJobName(), notify=globalStatusChanged)
@@ -2672,6 +2677,56 @@ class BackdropNode(BaseNode):
         }
 
 
+class ConversionNode(Node):
+    """
+    A Node converting the value of its "input" attribute into the type of its "output" attribute.
+
+    The output value is evaluated on-the-fly from the input value (see desc.ConversionNode.convert),
+    so the node is never computed and its output is always up-to-date.
+    """
+    def __init__(self, nodeType, position=None, parent=None, uid=None, **kwargs):
+        super().__init__(nodeType, position, parent=parent, uid=uid, **kwargs)
+        self.outputAttribute._valueEvaluator = ConversionNode._evaluateOutputValue
+
+    def _isConversionNode(self) -> bool:
+        return True
+
+    @staticmethod
+    def _evaluateOutputValue(attribute: Attribute):
+        return attribute.node.getConvertedValue()
+
+    def getConvertedValue(self):
+        """
+        Return the converted value of the "input" attribute, or None if it cannot be evaluated
+        (dynamic upstream value not computed yet, or conversion error).
+        """
+        value = self.inputAttribute.value
+        if value is None:
+            return None
+        try:
+            return self.nodeDesc.convert(self, value)
+        except Exception as exc:
+            logging.warning(f"Failed to convert the value '{value}' on node '{self.name}': {exc}")
+            return None
+
+    def _onAttributeChanged(self, attr: Attribute):
+        super()._onAttributeChanged(attr)
+        if not attr.isInput or (self.graph and self.graph.isLoading):
+            return
+        # Any change on the inputs (connection, upstream value or conversion parameter) may change
+        # the converted value: notify the output attribute and the attributes connected to it.
+        output = self.outputAttribute
+        output.valueChanged.emit()
+        if self.graph:
+            for edge in self.graph.outEdges(output):
+                edge.dst.valueChanged.emit()
+
+    # The attribute holding the value to convert.
+    inputAttribute = Property(Attribute, lambda self: self.attribute(self.nodeDesc.inputAttributeName), constant=True)
+    # The attribute holding the converted value.
+    outputAttribute = Property(Attribute, lambda self: self.attribute(self.nodeDesc.outputAttributeName), constant=True)
+
+
 class CompatibilityIssue(Enum):
     """
     Enum describing compatibility issues when deserializing a Node.
@@ -2936,7 +2991,8 @@ class CompatibilityNode(BaseNode):
                 # store internal attributes that could be used during node upgrade
                 commonInternalAttributes.append(attrName)
 
-        node = Node(self.nodeType, position=self.position)
+        nodeClass = ConversionNode if isinstance(self.nodeDesc, desc.ConversionNode) else Node
+        node = nodeClass(self.nodeType, position=self.position)
         # convert attributes from a list of tuples into a dict
         attrValues = {key: value for (key, value) in self.inputs.items()}
         intAttrValues = {key: value for (key, value) in self.internalInputs.items()}

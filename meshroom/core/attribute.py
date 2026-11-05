@@ -20,7 +20,7 @@ from meshroom.core.desc import Attribute as AttributeDescription
 from meshroom.core.keyValues import KeyValues
 from meshroom.core.exception import InvalidEdgeError
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 from meshroom.core.mixins import Expandable
 import uuid
@@ -144,6 +144,9 @@ class Attribute(BaseObject):
         # When set, this overrides the descriptor's expression for this node instance,
         # so that description changes on the node type only affect new nodes.
         self._expressionTemplate: Optional[str] = None
+        # Function evaluating the value of this attribute on-the-fly, used instead of the stored value
+        # (e.g. the output of a conversion node, computed from its input).
+        self._valueEvaluator: Optional[Callable[[Attribute], object]] = None
         self._initValue()
         self._uuid = f'{self._desc._name}-{uuid.uuid4()}'
 
@@ -242,6 +245,8 @@ class Attribute(BaseObject):
             raise RuntimeError(f"Cannot get value of {self._getFullName()}, the attribute is keyable.")
         if self.isLink:
             return self._getInputLink().value
+        if self._valueEvaluator is not None:
+            return self._valueEvaluator(self)
         self._resolveValue()
         return self._value
 

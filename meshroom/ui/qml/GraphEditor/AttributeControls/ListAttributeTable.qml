@@ -19,15 +19,19 @@ MTableView {
 
     model: ObjectTableModel {
         id: tableModel
-        source: root.attribute.value
+        source: root.attribute ? root.attribute.value : null
     }
     // Editors commit their value when destroyed, which must not happen once reused for another attribute
     reuseItems: false
 
     delegate: Rectangle {
         id: cell
+        // Can become null while the cell is released, after the deletion of a removed element's attributes
         required property var object
-        readonly property bool isCheckBox: object.type === "BoolParam"
+        readonly property bool isCheckBox: !!object && object.type === "BoolParam"
+        // Nested containers can't be edited in a table: only summarize them (unless their value is not computed)
+        readonly property bool isContainer: !!object && object.value !== undefined &&
+                                            ["ListAttribute", "GroupAttribute", "AnySet"].includes(object.type)
         implicitWidth: valueEditor.implicitWidth + 4
         implicitHeight: valueEditor.implicitHeight + 2
         color: palette.window
@@ -43,14 +47,13 @@ MTableView {
             // Same rules as AttributeItemDelegate, for each child attribute (which can be linked on its own)
             editable: root.editable && !!cell.object && !cell.object.isLink &&
                       !(cell.object.keyable && _currentScene.selectedViewId === "-1")
-            // Nested containers can't be edited in a table: only summarize them
-            sourceComponent: ["ListAttribute", "GroupAttribute", "AnySet"].includes(cell.object.type) ? containerComponent : valueComponent
+            sourceComponent: cell.isContainer ? containerComponent : valueComponent
         }
 
         Component {
             id: containerComponent
             Label {
-                text: cell.object.value.count + (cell.object.type === "ListAttribute" ? " elements" : " attributes")
+                text: cell.isContainer ? cell.object.value.count + (cell.object.type === "ListAttribute" ? " elements" : " attributes") : ""
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
                 padding: 4

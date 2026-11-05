@@ -33,6 +33,8 @@ RowLayout {
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
     signal showInViewer(var attr)
+    // Request to open a ListAttribute of GroupAttributes as a table
+    signal tableRequested(var attr)
 
     Connections {
         target: attribute
@@ -468,35 +470,7 @@ RowLayout {
                         padding: 2
                         ToolTip.text: "Open as Table"
                         ToolTip.visible: hovered
-                        onClicked: {
-                            if (tableWindowLoader.active)
-                                tableWindowLoader.item.requestActivate()
-                            else
-                                tableWindowLoader.active = true
-                        }
-
-                        // The table's window only exists while it is open
-                        Loader {
-                            id: tableWindowLoader
-                            active: false
-                            sourceComponent: Window {
-                                title: attribute.node.label + " - " + attribute.label
-                                width: 800
-                                height: 400
-                                visible: true
-                                palette: root.palette
-                                color: palette.window
-                                // Destroying the window from its own handler is unsafe: unload it afterwards
-                                onClosing: Qt.callLater(() => tableWindowLoader.active = false)
-
-                                AttributeControls.ListAttributeTable {
-                                    anchors.fill: parent
-                                    anchors.margins: 4
-                                    attribute: root.attribute
-                                    editable: root.editable
-                                }
-                            }
-                        }
+                        onClicked: root.tableRequested(root.attribute)
                     }
                 }
                 ListView {
@@ -535,6 +509,7 @@ RowLayout {
                                 obj.doubleClicked.connect(function(attr) { root.doubleClicked(attr) })
                                 obj.inAttributeClicked.connect(function(srcItem, mouse, inAttributes) { root.inAttributeClicked(srcItem, mouse, inAttributes) })
                                 obj.outAttributeClicked.connect(function(srcItem, mouse, outAttributes) { root.outAttributeClicked(srcItem, mouse, outAttributes) })
+                                obj.tableRequested.connect(function(attr) { root.tableRequested(attr) })
                             }
                             ToolButton {
                                 enabled: root.editable
@@ -643,6 +618,11 @@ RowLayout {
                     obj.showInViewer.connect(
                         function(attr) {
                             root.showInViewer(attr)
+                        }
+                    )
+                    obj.tableRequested.connect(
+                        function(attr) {
+                            root.tableRequested(attr)
                         }
                     )
                 }

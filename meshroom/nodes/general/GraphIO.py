@@ -121,3 +121,47 @@ class GraphOutput(desc.Node):
             json.dump(serializedOutputs, f, indent=4)
 
         logging.info(f"Saved outputs inside {outputFile}")
+
+
+class Input(desc.InitNode):
+    """
+    Hold values driving the attributes of other nodes.
+
+    Connect the "Exposed attributes" pin to the input attributes of other nodes to create one input per connection.
+    Unlike the GraphInput node, its attributes are not exposed outside of the graph and can be connected as destination,
+    for instance to the graph inputs. GraphInput nodes added to a graph that already has one become Input nodes.
+    """
+
+    size = desc.StaticNodeSize(0)
+    category = "Utils"
+
+    inputs = [
+        desc.AnySet(
+            name="exposeds",
+            label="Exposed attributes",
+            description="Inputs, connected to the attributes they drive.",
+            exposed=True
+        )
+    ]
+
+
+class Output(desc.InitNode):
+    """
+    Gather values read from the attributes of other nodes.
+
+    Connect attributes of other nodes to the "Exposed attributes" pin to create one output per connection.
+    Unlike the GraphOutput node, its attributes are not exposed outside of the graph and are not exported.
+    GraphOutput nodes added to a graph that already has one become Output nodes.
+    """
+
+    size = desc.StaticNodeSize(0)
+    category = "Utils"
+
+    inputs = [
+        desc.AnySet(
+            name="exposeds",
+            label="Exposed attributes",
+            description="Outputs, connected to the attributes providing their values.",
+            exposed=True
+        )
+    ]

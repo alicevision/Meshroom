@@ -85,11 +85,11 @@ class OrderedTaskType(IntFlag):
 class OrderedTask:
     _lastUid = 0
 
-    def __init__(self, taskType: OrderedTaskType, node: BaseNode = None, iteration : int = -1):
+    def __init__(self, taskType: OrderedTaskType, node: Optional[BaseNode] = None, iteration: int = -1):
         self.taskType: OrderedTaskType = taskType
-        self.node: BaseNode = node
+        self.node: Optional[BaseNode] = node
         self.iteration: int = iteration
-        self.dependencies : list["OrderedTask"] = []
+        self.dependencies: list[OrderedTask] = []
         # Generate UID
         self.uid: int = self._generateUid()
 

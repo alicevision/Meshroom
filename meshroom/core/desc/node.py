@@ -103,7 +103,7 @@ class SubmissionSettings:
         "postprocess"
     ]
 
-    def __init__(self, node: Optional["CoreBaseNode"]):
+    def __init__(self, node: "CoreBaseNode"):
         """Holds infos used when we submit the node for remote computing.
 
         Args:

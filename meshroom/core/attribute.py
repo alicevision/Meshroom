@@ -2169,7 +2169,7 @@ class AnySet(GroupAttribute):
             "label": stripped,
             "description": stripped,
             "advanced": bool,
-            "values": list,
+            "values": lambda values: [attributeDesc.conformValue(value) for value in values],
             "defaultValue": attributeDesc.validateValue,
             "range": lambda valueRange: cls._validatedRange(attributeDesc, valueRange),
         }

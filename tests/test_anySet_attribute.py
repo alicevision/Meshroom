@@ -734,6 +734,19 @@ def test_duplicated_choice_keeps_values():
     assert override.clone().joinChar == ","
 
 
+def test_edit_anyset_choice_keeps_type_of_values():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    choiceAttr = anySet.insertAttribute({"name": "choice", "label": "Choice", "type": "ChoiceParam", "value": 2, "values": [1, 2, 4]}, 0)
+
+    # The edition form sends the values as text
+    data = anySet.getEditedAttributeData(choiceAttr, {"defaultValue": 2, "values": ["1", "2", "4"]})
+    assert data == choiceAttr.asDict()
+
+    data = anySet.getEditedAttributeData(choiceAttr, {"defaultValue": 2, "values": ["1", "2", "8"]})
+    assert anySet.replaceAttribute(choiceAttr, data).desc.values == [1, 2, 8]
+
+
 def test_dynamic_inputs_serialized_in_todict():
     """Dynamic inputs are included in the node's serialized form."""
 

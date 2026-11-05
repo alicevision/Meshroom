@@ -1313,7 +1313,11 @@ class UIGraph(QObject):
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(src, AnySet):
-            self.push(commands.ConnectAnySetCommand(self._graph, src=dst, anySetAttribute=src, anySetIsSource=True))
+            with self.groupedGraphModification(f"Connect AnySet '{src.fullName}'->'{dst.fullName}'"):
+                # Remove the existing edge with its own command, to restore it on undo
+                if dst in self._graph.edges.keys():
+                    self.removeEdge(self._graph.edge(dst))
+                self.push(commands.ConnectAnySetCommand(self._graph, src=dst, anySetAttribute=src, anySetIsSource=True))
         elif isinstance(dst, AnySet):
             self.push(commands.ConnectAnySetCommand(self._graph, src=src, anySetAttribute=dst))
         elif isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):

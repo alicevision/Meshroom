@@ -498,7 +498,8 @@ RowLayout {
 
             keys: [outputDragTarget.objectName]
             onEntered: function(drag) {
-                var validIncomingConnection = outputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
+                // The edge goes from this output pin to the dragged input pin
+                var validIncomingConnection = drag.source.attribute.validateIncomingConnection(outputDragTarget.attribute)
                 // Check if attributes are compatible to create a valid connection
                 if (drag.source.objectName != outputDragTarget.objectName   // Not an edge connector
                     || !validIncomingConnection                             // Connection is not allowed

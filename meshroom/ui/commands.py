@@ -863,7 +863,8 @@ class ConnectAnySetCommand(GraphCommand):
         srcAttr = self.graph.attribute(self.srcAttrName)
         anySetAttribute = self.graph.attribute(self.anySetAttribute)
         # Check the connection before creating the attribute, to not leave it unconnected
-        if not self.anySetIsSource and not anySetAttribute.validateIncomingConnection(srcAttr):
+        dstAttr, connectingAttr = (srcAttr, anySetAttribute) if self.anySetIsSource else (anySetAttribute, srcAttr)
+        if not dstAttr.validateIncomingConnection(connectingAttr):
             return False
 
         # Create the new attribute on the node

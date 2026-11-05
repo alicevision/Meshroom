@@ -13,6 +13,7 @@ from meshroom.core import desc
 from meshroom.core.exception import InvalidEdgeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.nodes.general.GraphIO import GraphInput, GraphOutput, Input, Output
+from meshroom.ui.commands import ConnectAnySetCommand
 
 from .utils import registeredNodeTypes
 
@@ -222,3 +223,27 @@ def test_meshroomBatchSetsGraphInputAndExportsGraphOutput(tmp_path):
     result = subprocess.run(batch + ["-gi", "unknown=value"], capture_output=True, text=True, env=env)
     assert result.returncode != 0
     assert "unknown" in result.stderr
+
+
+@pytest.mark.parametrize("nodeType", ["GraphInput", "Input"])
+def test_connectFromAnySetOutputPinCreatesChildDrivingTheAttribute(nodeType):
+    graph = Graph("")
+    anySet = graph.addNewNode(nodeType).exposeds
+    worker = graph.addNewNode("Worker")
+    # This is the check done by the Graph Editor when dropping an edge from the pin of the AnySet
+    assert worker.path.validateIncomingConnection(anySet)
+
+    command = ConnectAnySetCommand(graph, worker.path, anySet, anySetIsSource=True)
+    assert command.redoImpl()
+    assert worker.path.inputLink == anySet.path
+    anySet.path.value = "/value"
+    assert worker.path.value == "/value"
+
+    assert command.undoImpl()
+    assert not worker.path.isLink
+    assert list(anySet.value) == []
+
+
+def test_anySetCannotDriveAnotherAnySet():
+    graph = Graph("")
+    assert not graph.addNewNode("Output").exposeds.validateIncomingConnection(graph.addNewNode("Input").exposeds)

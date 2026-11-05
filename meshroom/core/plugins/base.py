@@ -323,6 +323,13 @@ class NodeDescProvider(BaseObject):
                 errorMessages.append(f" - 'value': Unsupported dynamic output for parameter '{errMsg}'.")
             else:
                 errorMessages.append(f" - Unknown error for parameter '{errMsg}'.")
+        if issubclass(nodeDescClass, desc.ConversionNode):
+            if nodeDescClass.getInputDesc() is None:
+                errorMessages.append(f" - Missing '{nodeDescClass.inputAttributeName}' input attribute.")
+            outputDesc = nodeDescClass.getOutputDesc()
+            if outputDesc is None or not outputDesc.isDynamicValue:
+                errorMessages.append(f" - Missing '{nodeDescClass.outputAttributeName}' dynamic output attribute "
+                                     "(with value=None).")
         if errorMessages:
             return f"NodeDescProvider of '{nodeDescClass.__name__}' could not be validated:\n" + "\n".join(errorMessages)
         return None

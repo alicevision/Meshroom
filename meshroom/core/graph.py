@@ -19,7 +19,7 @@ from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttri
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
-from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
+from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode, GRAPH_INPUT_NODE_TYPE, GRAPH_OUTPUT_NODE_TYPE
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
 from meshroom.core.submitter import BaseSubmittedJob, jobManager
@@ -988,6 +988,35 @@ class Graph(BaseObject):
         """
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InputNode)]
         return nodes
+
+    def findGraphIONode(self, nodeType: str) -> Optional[Node]:
+        """
+        Args:
+            nodeType: the type of the node to find
+
+        Returns:
+            Node: the GraphInput or GraphOutput node of the graph if `nodeType` is one of these types and the graph
+            has one, None otherwise
+        """
+        if nodeType not in (GRAPH_INPUT_NODE_TYPE, GRAPH_OUTPUT_NODE_TYPE):
+            return None
+        return next((n for n in self._nodes.values() if n.nodeType == nodeType), None)
+
+    def findGraphInputNode(self) -> Optional[Node]:
+        return self.findGraphIONode(GRAPH_INPUT_NODE_TYPE)
+
+    def findGraphOutputNode(self) -> Optional[Node]:
+        return self.findGraphIONode(GRAPH_OUTPUT_NODE_TYPE)
+
+    def findGraphInputAttributes(self) -> Dict[str, Attribute]:
+        """
+        Returns:
+            dict[str, Attribute]: the graph inputs of the GraphInput node, by name
+        """
+        graphInputNode = self.findGraphInputNode()
+        if graphInputNode is None:
+            return {}
+        return {attr.name: attr for attr in graphInputNode.exposeds.value}
 
     def findOutputNodes(self) -> List[Node]:
         """

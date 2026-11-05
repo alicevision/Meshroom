@@ -247,7 +247,9 @@ RowLayout {
 
                 keys: [inputDragTarget.objectName]
                 onEntered: function(drag) {
+                    // Attributes of different types can be connected through a conversion node
                     var validIncomingConnection = inputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
+                                                  || _currentScene.canConvert(drag.source.attribute, inputDragTarget.attribute)
                     // Check if attributes are compatible to create a valid connection
                     if (root.readOnly                                            // Cannot connect on a read-only attribute
                         || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
@@ -497,7 +499,9 @@ RowLayout {
 
             keys: [outputDragTarget.objectName]
             onEntered: function(drag) {
+                // Attributes of different types can be connected through a conversion node
                 var validIncomingConnection = outputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
+                                              || _currentScene.canConvert(outputDragTarget.attribute, drag.source.attribute)
                 // Check if attributes are compatible to create a valid connection
                 if (drag.source.objectName != outputDragTarget.objectName   // Not an edge connector
                     || !validIncomingConnection                             // Connection is not allowed

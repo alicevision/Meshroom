@@ -540,46 +540,11 @@ Item {
                 model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
 
                 delegate: Edge {
-                    function getAttributePin(attribute, attributeToDelegate) {
-                        if (!attribute) {
-                            return null
-                        }
-
-                        // Get the first visible parent of "attribute"
-                        let dstAttributeDelegate = attributeToDelegate[attribute.uuid]                        
-
-                        if (dstAttributeDelegate && dstAttributeDelegate.visible) {
-                            return dstAttributeDelegate
-                        }
-
-                        if (!attribute || !attribute.root) {
-                            return null
-                        }
-
-                        let groupAttributeDelegate = null
-                        let groupAttribute = attribute
-
-                        while (groupAttribute && (!groupAttributeDelegate ||
-                               (groupAttributeDelegate && !groupAttributeDelegate.visible && groupAttribute && groupAttribute.root))) {
-                            groupAttribute = groupAttribute ? groupAttribute.root : null
-
-                            if (groupAttribute) {
-                                groupAttributeDelegate = attributeToDelegate[groupAttribute.uuid]
-                            }
-                        }
-
-                        if (groupAttributeDelegate && groupAttributeDelegate.visible) {
-                            return groupAttributeDelegate
-                        }
-
-                        return dstAttributeDelegate
-                    }
-
                     property var src: {
-                        return getAttributePin(edge.src, root._attributeToDelegate)
+                        return root.getAttributePin(edge.src, root._attributeToDelegate)
                         }
                     property var dst: {
-                        return getAttributePin(edge.dst, root._attributeToDelegate)
+                        return root.getAttributePin(edge.dst, root._attributeToDelegate)
                         }
                     property bool isValidEdge: src != null && dst != null
                     visible: isValidEdge && src.visible && dst.visible
@@ -594,6 +559,13 @@ Item {
 
                     edge: object
                     isForLoop: forLoop
+                    dashed: {
+                        let srcAttribute = edge.src
+                        // The edge leaving a conversion node continues the edge entering it
+                        if (srcAttribute && srcAttribute.node.isConversionNode && srcAttribute.node.inputAttribute.inputLink)
+                            srcAttribute = srcAttribute.node.inputAttribute.inputLink
+                        return !(srcAttribute && srcAttribute.isOutput)
+                    }
                     loopSize: forLoop ? loopSource.value.count : 0
 
                     iteration: forLoop ? loopSource.value.indexOf(edge.src) : 0
@@ -1110,6 +1082,9 @@ Item {
                                 uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
                                     if (idx != index) {
                                         const delegate = nodeRepeater.getItemAt(idx.row)
+                                        // Conversion nodes stay on their edge
+                                        if (delegate.isConversionNode)
+                                            return
                                         delegate.x = delegate.node.x + offset.x
                                         delegate.y = delegate.node.y + offset.y
                                     }
@@ -1242,6 +1217,9 @@ Item {
                                 uigraph.nodeSelection.selectedIndexes.forEach(function(idx) {
                                     if (idx != index) {
                                         const delegate = nodeRepeater.getItemAt(idx.row)
+                                        // Conversion nodes stay on their edge
+                                        if (delegate.isConversionNode)
+                                            return
                                         delegate.x = delegate.node.x + offset.x
                                         delegate.y = delegate.node.y + offset.y
                                     }
@@ -1265,7 +1243,79 @@ Item {
                         }
                     }
 
-                    sourceComponent: object.isBackdropNode ? backdropComponent : nodeComponent
+                    Component {
+                        id: conversionComponent
+                        ConversionNode {
+                            id: conversionDelegate
+                            node: object
+
+                            // Placed in the middle of the edge between the converted attributes
+                            srcPin: root.getAttributePin(node.inputAttribute.inputLink, root._attributeToDelegate)
+                            dstPin: {
+                                const outputLinks = node.outputAttribute.outputLinks
+                                return root.getAttributePin(outputLinks.length > 0 ? outputLinks[0] : null, root._attributeToDelegate)
+                            }
+
+                            mainSelected: uigraph.selectedNode === node
+                            hovered: uigraph.hoveredNode === node
+                            selected: uigraph.nodeSelection.hasSelection ? uigraph.nodeSelection.isRowSelected(index) : false
+
+                            onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
+                            onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
+
+                            onPressed: function(mouse) {
+                                let selectionMode = ItemSelectionModel.ClearAndSelect
+                                if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ShiftModifier)) {
+                                    selectionMode = ItemSelectionModel.Select
+                                } else if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ControlModifier)) {
+                                    selectionMode = ItemSelectionModel.Toggle
+                                } else if (mouse.button === Qt.RightButton && selected) {
+                                    // Keep the selection when right-clicking on a selected conversion
+                                    selectionMode = ItemSelectionModel.NoUpdate
+                                }
+                                if (selectionMode != ItemSelectionModel.NoUpdate) {
+                                    uigraph.selectNodeByIndex(index, selectionMode)
+                                }
+                                if (selected) {
+                                    uigraph.selectedNode = node
+                                }
+                                if (mouse.button === Qt.RightButton) {
+                                    conversionMenu.popup()
+                                }
+                            }
+
+                            onEntered: uigraph.hoveredNode = node
+                            onExited: uigraph.hoveredNode = null
+
+                            // Switch between the available conversion types, or remove the conversion
+                            Menu {
+                                id: conversionMenu
+                                property var conversionNodeTypes: []
+                                onAboutToShow: conversionNodeTypes = uigraph.getConversionNodeTypes(conversionDelegate.node)
+
+                                Instantiator {
+                                    model: conversionMenu.conversionNodeTypes
+                                    onObjectAdded: function(index, object) { conversionMenu.insertItem(index, object) }
+                                    onObjectRemoved: function(index, object) { conversionMenu.removeItem(object) }
+                                    delegate: MenuItem {
+                                        text: modelData
+                                        checkable: true
+                                        checked: modelData === conversionDelegate.node.nodeType
+                                        enabled: !conversionDelegate.readOnly
+                                        onTriggered: uigraph.replaceConversionNode(conversionDelegate.node, modelData)
+                                    }
+                                }
+                                MenuSeparator {}
+                                MenuItem {
+                                    text: "Remove Conversion"
+                                    enabled: !conversionDelegate.readOnly
+                                    onTriggered: uigraph.removeNodes([conversionDelegate.node])
+                                }
+                            }
+                        }
+                    }
+
+                    sourceComponent: object.isBackdropNode ? backdropComponent : object.isConversionNode ? conversionComponent : nodeComponent
 
                     onLoaded: {
                         nodeLoader.z = Qt.binding(function() { return nodeLoader.item ? nodeLoader.item.z : 0 })
@@ -1617,6 +1667,42 @@ Item {
                 draggable.y = bbox.y * draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
             }
         }
+    }
+
+    /// Get the pin delegate of "attribute", or of its first visible parent if it is hidden in a collapsed group
+    function getAttributePin(attribute, attributeToDelegate) {
+        if (!attribute) {
+            return null
+        }
+
+        // Get the first visible parent of "attribute"
+        let dstAttributeDelegate = attributeToDelegate[attribute.uuid]
+
+        if (dstAttributeDelegate && dstAttributeDelegate.visible) {
+            return dstAttributeDelegate
+        }
+
+        if (!attribute || !attribute.root) {
+            return null
+        }
+
+        let groupAttributeDelegate = null
+        let groupAttribute = attribute
+
+        while (groupAttribute && (!groupAttributeDelegate ||
+               (groupAttributeDelegate && !groupAttributeDelegate.visible && groupAttribute && groupAttribute.root))) {
+            groupAttribute = groupAttribute ? groupAttribute.root : null
+
+            if (groupAttribute) {
+                groupAttributeDelegate = attributeToDelegate[groupAttribute.uuid]
+            }
+        }
+
+        if (groupAttributeDelegate && groupAttributeDelegate.visible) {
+            return groupAttributeDelegate
+        }
+
+        return dstAttributeDelegate
     }
 
     function registerAttributePin(attribute, pin) {

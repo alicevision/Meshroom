@@ -1493,7 +1493,7 @@ class GroupAttribute(Attribute, Expandable):
             "name": self.name,
             "label": self.label,
             "type": self.desc.__class__.__name__,
-            "items": [ item.asDict() for item in self.flatStaticChildren ]
+            "items": [ item.asDict() for item in self._value ]
         }
         if self.desc.description:
             serializedData["description"] = self.desc.description

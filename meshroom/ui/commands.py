@@ -832,8 +832,8 @@ class ConnectAnySetCommand(GraphCommand):
     Create a new dynamic input attribute on a node by connecting a source attribute
     to a AnySet.
 
-    When executed, a new attribute of the same type as the source is created on the
-    node (inserted before the AnySet) and the edge is established.
+    When executed, a new attribute of the same type as the source is appended to the
+    AnySet and the edge is established.
     On undo, the edge is removed and the created attribute is deleted.
     """
 

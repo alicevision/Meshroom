@@ -92,6 +92,17 @@ def test_add_dynamic_input_creates_sibling_attribute():
     assert(dstNode.ins.input_1 is not None)
     assert(isinstance(dstNode.ins.input_1, Attribute))
 
+def test_add_dynamic_inputs_follows_creation_order():
+    """Dynamic inputs are appended to the AnySet in their creation order."""
+    graph, dstNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
+
+    for _ in range(3):
+        dstNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
+
+    assert [attribute.name for attribute in dstNode.ins.value] == ["input", "input_0", "input_1"]
+
+
 def test_remove_dynamic_input():
     """Removing a dynamic input deletes the attribute from the node."""
 

@@ -43,7 +43,7 @@ RowLayout {
         }
         states: [
             State {
-                when: readOnly
+                when: textField.readOnly
                 PropertyChanges {
                     target: textField
                     color: disabledPalette.text
@@ -112,7 +112,7 @@ RowLayout {
                 }
                 MenuItem {
                     text: "Paste"
-                    enabled: !readOnly
+                    enabled: !textField.readOnly
                     onTriggered: {
                         const clipboardText = Clipboard.getText()
                         if (clipboardText.length === 0) {

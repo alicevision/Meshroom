@@ -74,11 +74,23 @@ class MrNodeType(enum.Enum):
 
 
 class StageSettings(SimpleNamespace):
+    RESOURCES = ("cpu", "ram", "gpu")
+
     def __init__(self, cpu=Level.NORMAL, ram=Level.NORMAL, gpu=Level.NONE, **kwargs):
         super().__init__(**kwargs)
         self.cpu = cpu
         self.ram = ram
         self.gpu = gpu
+
+    def __setattr__(self, name, value):
+        """ Ensure the resources are valid levels, which can be given as a Level or its value.
+
+        Raises:
+            ValueError: if the value of a resource does not match any Level.
+        """
+        if name in self.RESOURCES:
+            value = Level(value)
+        super().__setattr__(name, value)
 
     def __contains__(self, item):
         return item in self.__dict__

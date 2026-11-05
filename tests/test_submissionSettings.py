@@ -83,6 +83,21 @@ class TestStageSettings:
         assert stage.ram is desc.Level.INTENSIVE
         assert stage.gpu is desc.Level.NORMAL
 
+    def test_levelValuesAreConverted(self):
+        stage = desc.StageSettings(ram=2)
+        assert stage.ram is desc.Level.INTENSIVE
+        stage.gpu = 3
+        assert stage.gpu is desc.Level.EXTREME
+
+    @pytest.mark.parametrize("resource", desc.StageSettings.RESOURCES)
+    @pytest.mark.parametrize("value", ["high", 42, None])
+    def test_invalidResourcesAreRejected(self, resource, value):
+        with pytest.raises(ValueError):
+            desc.StageSettings(**{resource: value})
+        stage = desc.StageSettings()
+        with pytest.raises(ValueError):
+            setattr(stage, resource, value)
+
     def test_customSettings(self):
         stage = desc.StageSettings(target_os="windows")
         stage.setup_command = "mount"

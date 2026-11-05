@@ -24,7 +24,8 @@ LayerListGroup {
                 Layout.fillWidth: true
                 label: "Shading"
                 labelWidth: 70
-                model: ["Shaded", "Normal", "Material"]
+                // Index order must match meshViewer's MeshLayer.ShadingMode enum.
+                model: ["Shaded", "Normal", "Material", "PBR"]
                 target: advanced.entryLayer
                 propertyName: "shadingMode"
             }

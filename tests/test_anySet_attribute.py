@@ -483,6 +483,27 @@ def test_edit_anyset_list_keeps_edges_of_elements(tmp_path):
     assert edgeNames(loadGraph(graphFile)) == expected
 
 
+def test_edit_anyset_nested_group_keeps_values(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    groupAttr = anySet.duplicateAttribute(graph.addNewNode("NestedTest").xyz)
+    groupAttr.x.value = 0.3
+    groupAttr.test.y.value = 0.4
+
+    newGroup = anySet.replaceAttribute(groupAttr, anySet.getEditedAttributeData(groupAttr, {"label": "New"}))
+    assert newGroup.label == "New"
+    assert newGroup.x.value == 0.3
+    assert newGroup.test.y.value == 0.4
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedAttr = loadGraph(graphFile).node(dynamicNode.name).ins.xyz
+    assert loadedAttr.x.value == 0.3
+    assert loadedAttr.test.y.value == 0.4
+
+
 def test_edit_anyset_attribute_rejects_invalid_ranges():
     graph, dynamicNode = initGraphAndNode()
     anySet = dynamicNode.ins

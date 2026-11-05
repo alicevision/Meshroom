@@ -314,6 +314,17 @@ class TestOutputNode:
         assert firstNode.exportLabel.value == "final"
         assert secondNode.exportLabel.value == "final"
 
+    def test_configureOutputNodes_colon_separator_falls_back_to_node_name(self):
+        graph = Graph("")
+        node = graph.addNewNode("OutputNodeTest")
+        otherNode = graph.addNewNode("OutputNodeTest")
+        graph.renameNode(node, "myExport")
+
+        graph.configureOutputNodes(["myExport:exportLabel=custom"])
+
+        assert node.exportLabel.value == "custom"
+        assert otherNode.exportLabel.value == "default"
+
     def test_configureOutputNodes_sets_output_folder_attribute_by_node_type(self):
         graph = Graph("")
         firstNode = graph.addNewNode("OutputNodeTest")

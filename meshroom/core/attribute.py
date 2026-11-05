@@ -2043,12 +2043,9 @@ class AnySet(GroupAttribute):
 
         name = name.strip()
         label = label.strip()
-        if not self._attributeNameRegex.match(name):
-            raise ValueError(f"Invalid attribute name: '{name}'.")
+        self._validateAttributeName(name, attribute)
         if not label:
             raise ValueError("Attribute label cannot be empty.")
-        if name != attribute.name and name in self._value.keys():
-            raise ValueError(f"Attribute name '{name}' already exists in '{self.fullName}'.")
 
         oldName = attribute.name
         if name != oldName:

@@ -778,6 +778,12 @@ class Attribute(BaseObject):
         Return True if this Attribute can receive a connection from
         "connectingAttribute", False otherwise.
         """
+        # GraphInput nodes are the entry points of the graph: their attributes cannot be driven by other nodes
+        if self.node is not None and self.node.isGraphInputNode:
+            return False
+        # The edge from an AnySet starts from a new child created with the type of this Attribute
+        if isinstance(connectingAttribute, AnySet):
+            return not isinstance(self, AnySet)
         return self._validateIncomingConnection(connectingAttribute)
 
     # Properties and signals

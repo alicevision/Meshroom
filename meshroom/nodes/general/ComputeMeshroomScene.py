@@ -417,4 +417,4 @@ class ComputeMeshroomScene(desc.CommandLineNode, desc.InputNode):
         # Only GraphOutput nodes are exposed: the output nodes are removed from the scene computed by meshroom_batch
         # (without -o), and their attributes are export settings rather than results
         for outputNode in graph.nodesOfType('GraphOutput'):
-            self._exposeAttributes(node.outputs, flattenAttributes(outputNode.getAttributes()))
+            self._exposeAttributes(node.outputs, flattenAttributes([outputNode.exposeds]))

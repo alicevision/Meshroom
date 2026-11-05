@@ -843,13 +843,17 @@ class ConnectAnySetCommand(GraphCommand):
 
     When executed, a new attribute of the same type as the source is created on the
     node (inserted before the AnySet) and the edge is established.
+    The edge goes from the new attribute to the other one when the AnySet is the source
+    of the connection (output AnySets, or input AnySets feeding other nodes like GraphInput),
+    and from the other attribute to the new one otherwise.
     On undo, the edge is removed and the created attribute is deleted.
     """
 
-    def __init__(self, graph, src, anySetAttribute, parent=None):
+    def __init__(self, graph, src, anySetAttribute, anySetIsSource=False, parent=None):
         super().__init__(graph, parent)
         self.srcAttrName = src.fullName
         self.anySetAttribute = anySetAttribute.fullName
+        self.anySetIsSource = anySetIsSource or anySetAttribute.isOutput
         self.newAttrFullName = None
         self.setText(f"Connect '{src.fullName}' to AnySet '{anySetAttribute.fullName}'")
         self.newAttribute = None
@@ -858,6 +862,10 @@ class ConnectAnySetCommand(GraphCommand):
 
         srcAttr = self.graph.attribute(self.srcAttrName)
         anySetAttribute = self.graph.attribute(self.anySetAttribute)
+        # Check the connection before creating the attribute, to not leave it unconnected
+        dstAttr, connectingAttr = (srcAttr, anySetAttribute) if self.anySetIsSource else (anySetAttribute, srcAttr)
+        if not dstAttr.validateIncomingConnection(connectingAttr):
+            return False
 
         # Create the new attribute on the node
         newAttr = anySetAttribute.duplicateAttribute(srcAttr, isOutput=anySetAttribute.isOutput)
@@ -869,7 +877,7 @@ class ConnectAnySetCommand(GraphCommand):
 
         # Connect newly created attribute to the other one
         try:
-            if anySetAttribute.isOutput:
+            if self.anySetIsSource:
                 self.graph.addEdge(newAttr, srcAttr)
             else:
                 self.graph.addEdge(srcAttr, newAttr)
@@ -883,10 +891,12 @@ class ConnectAnySetCommand(GraphCommand):
             return True
 
         newAttr = self.graph.attribute(self.newAttrFullName)
-        node = newAttr.node
 
-        # Disconnect the edge
-        newAttr.disconnectEdge()
+        # Disconnect the edge, which is identified by its destination attribute
+        if self.anySetIsSource:
+            self.graph.attribute(self.srcAttrName).disconnectEdge()
+        else:
+            newAttr.disconnectEdge()
 
         anySetAttribute = self.graph.attribute(self.anySetAttribute)
         anySetAttribute.removeAttribute(newAttr)

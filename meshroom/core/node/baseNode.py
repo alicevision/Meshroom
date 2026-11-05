@@ -26,6 +26,10 @@ def hasADynamicValue(attribute: AttributeDescription) -> bool:
     return attribute.isDynamicValue or isinstance(attribute, AnySetDescription)
 
 
+# Standard node types defining the inputs and outputs of a graph
+GRAPH_INPUT_NODE_TYPE = "GraphInput"
+GRAPH_OUTPUT_NODE_TYPE = "GraphOutput"
+
 # Simple structure for storing node position
 Position = namedtuple("Position", ["x", "y"])
 # Initialize default coordinates values to 0
@@ -1247,6 +1251,12 @@ class BaseNode(BaseObject):
     def _isIONode(self) -> bool:
         return isinstance(self.nodeDesc, desc.IONode)
 
+    def _isGraphInputNode(self) -> bool:
+        return self.nodeType == GRAPH_INPUT_NODE_TYPE
+
+    def _isGraphOutputNode(self) -> bool:
+        return self.nodeType == GRAPH_OUTPUT_NODE_TYPE
+
     def _isBackdropNode(self) -> bool:
         return False
 
@@ -1581,6 +1591,9 @@ class BaseNode(BaseObject):
     isInitNode = Property(bool, lambda self: self._isInitNode(), constant=True)
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
     isIONode = Property(bool, lambda self: self._isIONode(), constant=True)
+    # Whether the node is an input/output pin of the graph (GraphInput/GraphOutput standard nodes).
+    isGraphInputNode = Property(bool, lambda self: self._isGraphInputNode(), constant=True)
+    isGraphOutputNode = Property(bool, lambda self: self._isGraphOutputNode(), constant=True)
     isBackdropNode = Property(bool, lambda self: self._isBackdropNode(), constant=True)
 
     globalExecMode = Property(str, globalExecMode.fget, notify=globalStatusChanged)

@@ -19,10 +19,13 @@ from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttri
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
-from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
+from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode, GRAPH_INPUT_NODE_TYPE, GRAPH_OUTPUT_NODE_TYPE
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
 from meshroom.core.submitter import BaseSubmittedJob, jobManager
+
+# General-purpose node types replacing the GraphInput and GraphOutput nodes added to a graph that already has one
+GRAPH_IO_REPLACEMENT_NODE_TYPES = {GRAPH_INPUT_NODE_TYPE: "Input", GRAPH_OUTPUT_NODE_TYPE: "Output"}
 
 # Replace default encoder to support Enums
 
@@ -411,6 +414,10 @@ class Graph(BaseObject):
         if "version" not in nodeData:
             version = fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"])
             nodeData["version"] = version if version is not None else "0.0"
+        if self.findGraphIONode(nodeData["nodeType"]) is not None:
+            replacementNodeType = GRAPH_IO_REPLACEMENT_NODE_TYPES[nodeData["nodeType"]]
+            logging.warning(f'The graph already has a {nodeData["nodeType"]} node: "{nodeName}" is added as an {replacementNodeType} node.')
+            self._replaceGraphIONodeData(nodeData)
         inTemplate = fromGraph.header.get(GraphIO.Keys.Template, False)
         nodeDescDict = {}
         if fromGraph.nodeDescriptions:
@@ -420,6 +427,28 @@ class Graph(BaseObject):
         node = nodeFactory(nodeData, nodeName, inTemplate=inTemplate, nodeDescDict=nodeDescDict)
         self._addNode(node, nodeName)
         return node
+
+    @staticmethod
+    def _replaceGraphIONodeData(nodeData: dict) -> dict:
+        """
+        Convert in place the serialized data of a GraphInput or GraphOutput node into the data of its replacement
+        node (Input or Output), keeping its exposed attributes.
+        As a graph has at most one node of these types, this is used for the other ones added to it.
+
+        Args:
+            nodeData: The serialized GraphInput or GraphOutput node.
+
+        Returns:
+            The serialized Input or Output node.
+        """
+        nodeData["nodeType"] = GRAPH_IO_REPLACEMENT_NODE_TYPES[nodeData["nodeType"]]
+        # Created from the current version of the node type, with a new UID
+        nodeData["version"] = None
+        nodeData.pop("uid", None)
+        # The other attributes, like the export settings of GraphOutput, do not exist on the replacement node
+        nodeData["inputs"] = {name: value for name, value in nodeData.get("inputs", {}).items() if name == "exposeds"}
+        nodeData.get("internalInputs", {}).pop("invalidation", None)
+        return nodeData
 
     def _getNodeTypeVersionFromHeader(self, nodeType: str, default: Optional[str] = None) -> Optional[str]:
         nodeVersions = self.header.get(GraphIO.Keys.NodesVersions, {})
@@ -492,6 +521,7 @@ class Graph(BaseObject):
 
         Nodes are imported with their original names if possible, otherwise a new unique name is generated
         from their node type.
+        If this graph already has a GraphInput or GraphOutput node, the imported ones become Input or Output nodes.
 
         Args:
             graph: The graph to import.
@@ -504,8 +534,11 @@ class Graph(BaseObject):
             if not self.nodes:
                 return
             unavailableNames = set(self.nodes.keys())
+            existingGraphIONodeTypes = {nodeType for nodeType in GRAPH_IO_REPLACEMENT_NODE_TYPES if self.findGraphIONode(nodeType)}
             for node in graph.nodes:
-                if node._name in unavailableNames:
+                if node.nodeType in existingGraphIONodeTypes:
+                    node._name = self._createUniqueNodeName(GRAPH_IO_REPLACEMENT_NODE_TYPES[node.nodeType], unavailableNames)
+                elif node._name in unavailableNames:
                     node._name = self._createUniqueNodeName(node.nodeType, unavailableNames)
                 unavailableNames.add(node._name)
 
@@ -549,6 +582,10 @@ class Graph(BaseObject):
                     node.nodeType, self.name, node.graph.name))
 
         assert uniqueName not in self._nodes.keys()
+        existingNode = self.findGraphIONode(node.nodeType)
+        if existingNode is not None and existingNode != node:
+            raise RuntimeError(f'Cannot add the {node.nodeType} node "{uniqueName}" to the Graph "{self.name}", '
+                               f'which already has the {node.nodeType} node "{existingNode.name}".')
         node._name = uniqueName
         node.graph = self
         self._nodes.add(node)
@@ -599,7 +636,8 @@ class Graph(BaseObject):
 
         Returns:
             The created node instance and the mapping of skipped edges per attribute
-            (always empty if `withEdges` is True)
+            (always empty if `withEdges` is True).
+            The copy of the GraphInput or GraphOutput node of this graph is an Input or Output node.
         """
         def _removeLinkExpressions(attribute: Attribute, removed: Dict[Attribute, str]):
             """ Recursively remove link expressions from the given root `attribute`. """
@@ -615,7 +653,10 @@ class Graph(BaseObject):
                     _removeLinkExpressions(child, removed)
 
         with GraphModification(self):
-            node = nodeFactory(srcNode.toDict(), name=srcNode.nodeType)
+            nodeData = srcNode.toDict()
+            if self.findGraphIONode(srcNode.nodeType) is not None:
+                self._replaceGraphIONodeData(nodeData)
+            node = nodeFactory(nodeData, name=nodeData["nodeType"])
 
             skippedEdges = {}
             if not withEdges:
@@ -989,6 +1030,35 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InputNode)]
         return nodes
 
+    def findGraphIONode(self, nodeType: str) -> Optional[Node]:
+        """
+        Args:
+            nodeType: the type of the node to find
+
+        Returns:
+            Node: the GraphInput or GraphOutput node of the graph if `nodeType` is one of these types and the graph
+            has one, None otherwise
+        """
+        if nodeType not in (GRAPH_INPUT_NODE_TYPE, GRAPH_OUTPUT_NODE_TYPE):
+            return None
+        return next((n for n in self._nodes.values() if n.nodeType == nodeType), None)
+
+    def findGraphInputNode(self) -> Optional[Node]:
+        return self.findGraphIONode(GRAPH_INPUT_NODE_TYPE)
+
+    def findGraphOutputNode(self) -> Optional[Node]:
+        return self.findGraphIONode(GRAPH_OUTPUT_NODE_TYPE)
+
+    def findGraphInputAttributes(self) -> Dict[str, Attribute]:
+        """
+        Returns:
+            dict[str, Attribute]: the graph inputs of the GraphInput node, by name
+        """
+        graphInputNode = self.findGraphInputNode()
+        if graphInputNode is None:
+            return {}
+        return {attr.name: attr for attr in graphInputNode.exposeds.value}
+
     def findOutputNodes(self) -> List[Node]:
         """
         Returns:
@@ -1090,6 +1160,10 @@ class Graph(BaseObject):
         if not srcAttr.node.graph == dstAttr.node.graph == self:
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    "Attributes do not belong to this graph.")
+
+        if dstAttr.node.isGraphInputNode:
+            raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
+                                   "GraphInput attributes cannot be connected as destination.")
 
         if not isinstance(srcAttr, AnySet) and not dstAttr.validateIncomingConnection(srcAttr):
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,

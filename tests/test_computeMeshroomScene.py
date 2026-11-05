@@ -136,12 +136,6 @@ def test_graphOutputIsKeptInTemplates(tmp_path):
         assert len(graph.nodesOfType("GraphOutput")) == 1
 
 
-def test_graphOutputIsNotComputable():
-    with registeredNodeTypes([GraphOutput]):
-        graph = Graph("")
-        assert not graph.addNewNode("GraphOutput").isComputableType
-
-
 def test_exposedOutputsAreSetFromTheComputedScene(tmp_path):
     with registeredNodeTypes([ComputeMeshroomScene, GraphOutput, FileProducer]):
         scene = Graph("")

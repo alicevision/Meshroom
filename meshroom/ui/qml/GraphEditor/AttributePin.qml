@@ -194,7 +194,8 @@ RowLayout {
 
         Rectangle {
             id: inputAnchor
-            visible: !root.attribute.isOutput
+            // GraphInput attributes are the entry points of the graph and cannot be connected as destination
+            visible: !root.attribute.isOutput && !(root.attribute.node && root.attribute.node.isGraphInputNode)
 
             width: 8
             height: width
@@ -497,7 +498,8 @@ RowLayout {
 
             keys: [outputDragTarget.objectName]
             onEntered: function(drag) {
-                var validIncomingConnection = outputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
+                // The edge goes from this output pin to the dragged input pin
+                var validIncomingConnection = drag.source.attribute.validateIncomingConnection(outputDragTarget.attribute)
                 // Check if attributes are compatible to create a valid connection
                 if (drag.source.objectName != outputDragTarget.objectName   // Not an edge connector
                     || !validIncomingConnection                             // Connection is not allowed

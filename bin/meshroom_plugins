@@ -79,7 +79,12 @@ def confirmAction(prompt: str, force: bool) -> bool:
     """
     if force:
         return True
-    answer = input(f"{prompt} [y/n] ").strip().lower()
+    try:
+        answer = input(f"{prompt} [y/n] ").strip().lower()
+    except EOFError:
+        # No terminal to answer from (e.g. a script): use "--force" to skip the prompt.
+        print("\nNo answer to the confirmation prompt, use -f/--force to skip it.")
+        return False
     return answer in ("y", "yes")
 
 
@@ -101,6 +106,21 @@ def requireLocalPlugin(name: str) -> Optional[Plugin]:
     return plugin
 
 
+def findRecord(name: str) -> Optional[PluginRecord]:
+    """
+    Return the first PluginRecord named "name" in the registered plugin registries, whether a plugin
+    of that name is installed or not, or None.
+
+    Args:
+        name: the name of the plugin to look up.
+    """
+    for registry in pluginManager.getPluginRegistries().values():
+        record = registry.getRecord(name)
+        if record is not None:
+            return record
+    return None
+
+
 def resolveInstallSource(name: str, version: Optional[str]) -> Optional[tuple[PluginProvider, PluginRecord]]:
     """
     Resolve the PluginProvider and PluginRecord to install/update plugin "name" from (optionally at
@@ -110,11 +130,10 @@ def resolveInstallSource(name: str, version: Optional[str]) -> Optional[tuple[Pl
         name: the name of the plugin to resolve.
         version: the version to check the availability of, or None to skip that check.
     """
-    records = pluginManager.searchPlugin([name], strict=True, installed=False, available=True)
-    if not records:
+    record = findRecord(name)
+    if not record:
         print(f"No available plugin found for: {name}.")
         return None
-    record = records[0]
     provider = getPluginProviderFromUrl(record.url)
     if not provider:
         print(f"Plugin {name}: unsupported source '{record.url}'.")
@@ -136,16 +155,30 @@ def handleSearch(args):
     plugins = pluginManager.searchPlugin(names, strict=False, installed=showInstalled, available=showAvailable)
     if not plugins:
         print("No plugin found.")
-        return
+        return True
     printPluginList(plugins)
+    return True
 
 
 def handleInfo(args):
     """ Display detailed information for one or more plugins. """
+    success = True
     for name in args.name:
         plugin = pluginManager.getPlugin(name)
         if not plugin:
-            print(f"No plugin found for: {name}.")
+            # Not installed: describe the plugin available from the registries, if any.
+            record = findRecord(name)
+            if not record:
+                print(f"No plugin found for: {name}.")
+                success = False
+                continue
+            print(f" - Name: {name}\n"
+                  f" - Latest version: {record.version}\n"
+                  f" - Versions: {', '.join(record.versions)}\n"
+                  f" - Publisher: {record.publisher}\n"
+                  f" - Description: {record.description}\n"
+                  f" - URL: {record.url}\n"
+                  f" - Installed: no\n")
             continue
         print(f" - Name: {name}\n"
               f" - Version: {plugin.version}\n"
@@ -160,16 +193,18 @@ def handleInfo(args):
               f" - # Node descriptions: {len(plugin.nodeDescProviders)}\n"
               f" - # Submitters: {len(plugin.submitterProviders)}\n")
         printProviderList(plugin)
+    return success
 
 
 def handleInstall(args):
     """ Install one or more Meshroom local plugins, optionally at a specific "name=version". """
     if not pluginManager.localPluginsEnabled:
         print("This command cannot be performed because local plugin management is disabled.")
-        return
+        return False
     if not confirmAction("Install plugin(s)?", args.force):
         print("Aborted.")
-        return
+        return False
+    success = True
     for arg in args.name:
         # Get name and version
         name, version = parseNameVersion(arg)
@@ -180,6 +215,7 @@ def handleInstall(args):
         # Resolve the provider and record to install from
         resolved = resolveInstallSource(name, version)
         if not resolved:
+            success = False
             continue
         provider, record = resolved
         # Install plugin
@@ -187,114 +223,140 @@ def handleInstall(args):
             PluginInstaller(provider, record, version).execute()
         except PluginServiceError as exc:
             print(exc)
+            success = False
             continue
         print(f"Plugin {name} installed.")
+    return success
 
 
 def handleUninstall(args):
     """ Uninstall one or more Meshroom local plugins. """
     if not pluginManager.localPluginsEnabled:
         print("This command cannot be performed because local plugin management is disabled.")
-        return
+        return False
     if not confirmAction("Uninstall plugin(s)?", args.force):
         print("Aborted.")
-        return
+        return False
+    success = True
     for name in args.name:
         plugin = requireLocalPlugin(name)
         if not plugin:
+            success = False
             continue
         # Uninstall plugin
         try:
             PluginUninstaller(Path(plugin.rootPath).name).execute()
         except PluginServiceError as exc:
             print(exc)
+            success = False
             continue
         print(f"Plugin {name} uninstalled.")
+    return success
 
 
 def handleUpdate(args):
     """ Update one or more Meshroom local plugins, optionally at a specific "name=version". """
     if not pluginManager.localPluginsEnabled:
         print("This command cannot be performed because local plugin management is disabled.")
-        return
+        return False
     if not confirmAction("Update plugin(s)?", args.force):
         print("Aborted.")
-        return
+        return False
+    success = True
     for arg in args.name:
         # Get name and version
         name, version = parseNameVersion(arg)
         plugin = requireLocalPlugin(name)
         if not plugin:
+            success = False
             continue
-        # Resolve the provider and record to update from
-        resolved = resolveInstallSource(name, version)
+        # Resolve the provider and record to update from: the record may describe the plugin under a new name
+        renamedRecord = pluginManager.getRenamedRecord(plugin) if not findRecord(name) else None
+        resolved = resolveInstallSource(renamedRecord.name if renamedRecord else name, version)
         if not resolved:
+            success = False
             continue
         provider, record = resolved
-        # Update plugin
+        # Only update from the publisher of the installed plugin, as the user interface does.
+        if record.publisher != plugin.publisher:
+            print(f"Plugin {name}: the available plugin is published by '{record.publisher}', "
+                  f"not by '{plugin.publisher}'.")
+            success = False
+            continue
+        if pluginManager.isInstalledVersion(plugin, version or record.version):
+            print(f"Plugin {name} is already at version {plugin.version}.")
+            continue
+        # Update plugin, in place of its installed folder
         try:
-            PluginUpdater(provider, record, version).execute()
+            PluginUpdater(provider, record, version, installedName=Path(plugin.rootPath).name).execute()
         except PluginServiceError as exc:
             print(exc)
+            success = False
             continue
         print(f"Plugin {name} updated.")
+    return success
 
 
 def handleRegistryList(args):
     """ List all registered plugin registries. """
     if not pluginManager.localPluginsEnabled:
         print("This command cannot be performed because local plugin management is disabled.")
-        return
+        return False
     registries = pluginManager.getPluginRegistries()
     if not registries:
         print("No plugin registry registered.")
-        return
+        return True
     printRegistryList(registries.values())
+    return True
 
 
 def handleRegistryAdd(args):
     """ Register a plugin registry. """
     if not pluginManager.localPluginsEnabled:
         print("This command cannot be performed because local plugin management is disabled.")
-        return
+        return False
     if not confirmAction("Add plugin registry?", args.force):
         print("Aborted.")
-        return
+        return False
     # Check url ends with '.json'
     fileName = Path(urlparse(args.url).path).name
     if not fileName.endswith(".json") or fileName == ".json":
         print(f"Plugin registry '{args.url}' is not a JSON file.")
-        return
+        return False
     # Check registry file already exists
     registryPath = Path(meshroomPluginsFolder) / fileName
     if registryPath.exists():
         print(f"Plugin registry '{registryPath.stem}' already exists.")
-        return
+        return False
     # Download and write the registry file (and its ETag)
     if PluginRegistry(registryPath).fetch(args.url) is None:
         print(f"Failed to add plugin registry '{args.url}'.")
-        return
+        return False
     print(f"Plugin registry '{registryPath.stem}' added.")
+    return True
 
 
 def handleRegistryRemove(args):
     """ Unregister one or more plugin registries. """
     if not pluginManager.localPluginsEnabled:
         print("This command cannot be performed because local plugin management is disabled.")
-        return
+        return False
     if not confirmAction("Remove plugin registry(s)?", args.force):
         print("Aborted.")
-        return
+        return False
     registries = pluginManager.getPluginRegistries()
+    success = True
     for name in args.name:
         # Get the registry file path from the plugin manager
         registry = registries.get(name)
         if not registry:
             print(f"Plugin registry '{name}' is not registered.")
+            success = False
             continue
         registryPath = Path(registry.path)
         if not registryPath.is_file():
             print(f"Plugin registry file '{registryPath}' does not exist.")
+            success = False
             continue
         # Remove the registry file, and the ETag file stored alongside it
         try:
@@ -302,8 +364,10 @@ def handleRegistryRemove(args):
             registryPath.with_name(f"{registryPath.name}.etag").unlink(missing_ok=True)
         except OSError as exc:
             print(f"Cannot remove plugin registry file '{registryPath}': {exc}")
+            success = False
             continue
         print(f"Plugin registry '{name}' removed.")
+    return success
 
 
 parser = argparse.ArgumentParser(
@@ -423,5 +487,5 @@ meshroom.core.initPlugins()
 if pluginManager.localPluginsEnabled:
     pluginManager.refreshPluginRegistries(updateRecords=True, useTTL=False)
 
-# Handle commands
-args.func(args)
+# Handle commands: exit with an error code if any of them failed
+sys.exit(0 if args.func(args) else 1)

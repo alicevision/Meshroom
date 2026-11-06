@@ -3,12 +3,16 @@
 from meshroom.core import pluginManager
 from meshroom.core.desc.node import NodeVersionType
 from meshroom.core.plugins.base import NodeDescProviderStatus
+from meshroom.core.plugins.manager import _normalizeUrl
 from meshroom.core.plugins.registry import PluginRegistry
 from ..utils import registeredPlugin, writeFile
 
 import json
 import os
+import shutil
 import time
+
+import pytest
 
 # The folder of the test plugins.
 pluginsFolder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "plugins")
@@ -259,11 +263,11 @@ class TestSearchPlugin:
 
 
 class TestGetUpdateRecord:
-    def _withRegistry(self, tmp_path, **entryOverrides):
+    def _withRegistry(self, tmp_path, fileName="registry.json", **entryOverrides):
         """ Register a temporary PluginRegistry with a single entry for "pluginA", merging overrides. """
         entry = {"name": "pluginA", "url": "https://github.com/publisher/pluginA", "versions": ["1.0"]}
         entry.update(entryOverrides)
-        path = writeFile(tmp_path / "registry.json", json.dumps({"entries": [entry]}))
+        path = writeFile(tmp_path / fileName, json.dumps({"entries": [entry]}))
         registry = PluginRegistry(path)
         registry.updateRecords()
         assert registry.getRecord("pluginA") is not None
@@ -283,6 +287,19 @@ class TestGetUpdateRecord:
             finally:
                 del pluginManager._pluginRegistries[registry.name]
 
+    def test_updateInAnotherRegistry(self, tmp_path):
+        """ A registry advertising the installed version does not hide the update of another registry. """
+        folder = os.path.join(pluginsFolder, "pluginA")
+        with registeredPlugin("pluginA", folder):
+            plugin = pluginManager.getPlugin("pluginA")
+            registries = [self._withRegistry(tmp_path, publisher=plugin.publisher, versions=[plugin.version]),
+                          self._withRegistry(tmp_path, "other.json", publisher=plugin.publisher, versions=["2.0"])]
+            try:
+                assert pluginManager.getUpdateRecord(plugin).version == "2.0"
+            finally:
+                for registry in registries:
+                    del pluginManager._pluginRegistries[registry.name]
+
     def test_noUpdateWhenVersionMatches(self, tmp_path):
         """ A record with the same name/publisher and the same version is not an available update. """
         folder = os.path.join(pluginsFolder, "pluginA")
@@ -294,6 +311,39 @@ class TestGetUpdateRecord:
             finally:
                 del pluginManager._pluginRegistries[registry.name]
 
+    def _installedPlugin(self, tmp_path, version, sourceVersion=None):
+        """ Return the folder of a copy of "pluginA" at "version", installed from "sourceVersion" of its source. """
+        folder = tmp_path / "pluginA"
+        shutil.copytree(os.path.join(pluginsFolder, "pluginA"), folder, ignore=shutil.ignore_patterns("__pycache__"))
+        lock = {"name": "pluginA", "version": version, "publisher": "publisher"}
+        if sourceVersion:
+            lock["source"] = {"url": "https://github.com/publisher/pluginA", "version": sourceVersion}
+        writeFile(folder / "plugin.lock", json.dumps(lock))
+        return str(folder)
+
+    @pytest.mark.parametrize("version,sourceVersion,recordVersion,expected", [
+        # The tag of a release, without its "v" in the plugin's own version.
+        ("1.0.3", "v1.0.3", "v1.0.3", None),
+        # A commit of a branch, which the plugin's own version does not mention.
+        ("1.0.3", "main+02d976e", "main+02d976e", None),
+        ("1.0.3", "main+02d976e", "main+1475613", "main+1475613"),
+        # An older tag, even if it did not bump the plugin's own version.
+        ("1.0.3", "v1.0.2", "v1.0.3", "v1.0.3"),
+        # Installed before the source was recorded: only the "v" of a tag can be told apart.
+        ("1.0.3", None, "v1.0.3", None),
+        ("1.0.2", None, "v1.0.3", "v1.0.3"),
+    ])
+    def test_comparesTheVersionInstalledFromTheSource(self, tmp_path, version, sourceVersion, recordVersion, expected):
+        """ A record is compared to the version of the source the plugin was installed from, if known. """
+        with registeredPlugin("pluginA", self._installedPlugin(tmp_path, version, sourceVersion)):
+            plugin = pluginManager.getPlugin("pluginA")
+            registry = self._withRegistry(tmp_path, publisher="publisher", versions=[recordVersion])
+            try:
+                record = pluginManager.getUpdateRecord(plugin)
+                assert (record.version if record else None) == expected
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
     def test_noUpdateWhenPublisherDiffers(self, tmp_path):
         """ A record with a different publisher is not considered an available update. """
         folder = os.path.join(pluginsFolder, "pluginA")
@@ -302,5 +352,77 @@ class TestGetUpdateRecord:
             registry = self._withRegistry(tmp_path, publisher=f"not-{plugin.publisher}", versions=["2.0"])
             try:
                 assert pluginManager.getUpdateRecord(plugin) is None
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+
+class TestRenamedPlugin:
+    """ A plugin renamed by its source is found from the url it was installed from. """
+
+    def _installedPlugin(self, tmp_path, sourceUrl):
+        """ Return the folder of a copy of "pluginA" named "oldName", installed from "sourceUrl". """
+        folder = tmp_path / "oldName"
+        shutil.copytree(os.path.join(pluginsFolder, "pluginA"), folder, ignore=shutil.ignore_patterns("__pycache__"))
+        lock = {"name": "oldName", "version": "1.0", "publisher": "publisher",
+                "source": {"url": sourceUrl, "version": "1.0"}}
+        writeFile(folder / "plugin.lock", json.dumps(lock))
+        return str(folder)
+
+    def _withRegistry(self, tmp_path):
+        """ Register a temporary PluginRegistry describing the plugin under the name "newName". """
+        entry = {"name": "newName", "url": "https://github.com/publisher/newName", "versions": ["2.0"]}
+        path = writeFile(tmp_path / "registry.json", json.dumps({"entries": [entry]}))
+        registry = PluginRegistry(path)
+        registry.updateRecords()
+        pluginManager._pluginRegistries[registry.name] = registry
+        return registry
+
+    def test_updateRecord(self, tmp_path):
+        """ The record with the url the plugin was installed from is an update of the plugin, not another plugin. """
+        with registeredPlugin("oldName", self._installedPlugin(tmp_path, "https://github.com/publisher/newName.git/")):
+            plugin = pluginManager.getPlugin("oldName")
+            assert plugin.sourceUrl == "https://github.com/publisher/newName.git/"
+            registry = self._withRegistry(tmp_path)
+            try:
+                record = pluginManager.getUpdateRecord(plugin)
+                assert record is not None
+                assert record.name == "newName"
+                assert pluginManager.searchPlugin(["newName"], installed=False, available=True) == []
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+    def test_otherPublisher(self, tmp_path):
+        """ A record with the url of the plugin but another publisher is another plugin, available as usual. """
+        folder = self._installedPlugin(tmp_path, "https://github.com/publisher/newName")
+        lock = json.loads((tmp_path / "oldName" / "plugin.lock").read_text())
+        writeFile(tmp_path / "oldName" / "plugin.lock", json.dumps({**lock, "publisher": "somebodyElse"}))
+        with registeredPlugin("oldName", folder):
+            plugin = pluginManager.getPlugin("oldName")
+            registry = self._withRegistry(tmp_path)
+            try:
+                assert pluginManager.getUpdateRecord(plugin) is None
+                assert [record.name for record in pluginManager.searchPlugin(["newName"], installed=False)] == ["newName"]
+            finally:
+                del pluginManager._pluginRegistries[registry.name]
+
+    @pytest.mark.parametrize("url, otherUrl, same", [
+        ("https://github.com/Publisher/Plugin.git/", "https://GitHub.com/publisher/plugin", True),
+        ("HTTPS://Example.com/plugin.zip", "https://example.com/plugin.zip", True),
+        # The case of a file is significant.
+        ("https://example.com/Plugin.zip", "https://example.com/plugin.zip", False),
+        ("file:///srv/plugins/Tool.zip", "file:///srv/plugins/tool.zip", False),
+        ("https://github.com/publisher/plugin/archive/V1.zip", "https://github.com/publisher/plugin/archive/v1.zip", False),
+    ])
+    def test_normalizeUrl(self, url, otherUrl, same):
+        assert (_normalizeUrl(url) == _normalizeUrl(otherUrl)) == same
+
+    def test_otherSource(self, tmp_path):
+        """ A record with another url is another plugin. """
+        with registeredPlugin("oldName", self._installedPlugin(tmp_path, "https://github.com/publisher/oldName")):
+            plugin = pluginManager.getPlugin("oldName")
+            registry = self._withRegistry(tmp_path)
+            try:
+                assert pluginManager.getUpdateRecord(plugin) is None
+                assert [record.name for record in pluginManager.searchPlugin(["newName"], installed=False)] == ["newName"]
             finally:
                 del pluginManager._pluginRegistries[registry.name]

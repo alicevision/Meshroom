@@ -734,6 +734,33 @@ def test_duplicated_choice_keeps_values():
     assert override.clone().joinChar == ","
 
 
+def test_clone_keeps_description_parameters():
+    from meshroom.core import desc
+    from meshroom.core.desc.validators import NotEmptyValidator
+
+    validators = [NotEmptyValidator()]
+    assert desc.IntParam(name="i", value=1, range=(0, 10, 1)).clone().range == (0, 10, 1)
+    assert desc.FloatParam(name="f", value=0.5, range=(0.0, 1.0, 0.1)).clone().range == (0.0, 1.0, 0.1)
+    assert desc.StringParam(name="s", value="", uidIgnoreValue="").clone().checkUidIgnoreValue("")
+    elementDesc = desc.IntParam(name="e", value=1)
+    listAttribute = desc.ListAttribute(elementDesc=elementDesc, name="l", value=[], uidIgnoreValueIfEmpty=True, validators=validators).clone()
+    assert listAttribute.checkUidIgnoreValue([])
+    assert listAttribute.validators == validators
+    assert desc.GroupAttribute(items=[elementDesc], name="g", validators=validators).clone().validators == validators
+
+
+def test_duplicated_number_keeps_range_after_edit():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    source = srcNode.ins.insertAttribute({"name": "number", "label": "Number", "type": "IntParam", "value": 2, "range": [0, 8, 2]}, 0)
+
+    duplicated = dynamicNode.ins.duplicateAttribute(source)
+    assert list(duplicated.desc.range) == [0, 8, 2]
+    edited = dynamicNode.ins.replaceAttribute(duplicated, dynamicNode.ins.getEditedAttributeData(duplicated, {"label": "Edited"}))
+    assert list(edited.desc.range) == [0, 8, 2]
+    assert edited.value == 2
+
+
 def test_edit_anyset_choice_keeps_type_of_values():
     graph, dynamicNode = initGraphAndNode()
     anySet = dynamicNode.ins

@@ -311,7 +311,9 @@ class ListAttribute(Attribute):
                               joinChar=self.joinChar,
                               visible=self.visible,
                               exposed=self.exposed,
-                              value=self.value
+                              value=self.value,
+                              uidIgnoreValueIfEmpty=self._uidIgnoreValueIfEmpty,
+                              validators=self.validators
                               )
 
     # Override
@@ -450,7 +452,8 @@ class GroupAttribute(Attribute):
                               joinChar=self.joinChar,
                               brackets=self.brackets,
                               visible=self.visible,
-                              exposed=self.exposed)
+                              exposed=self.exposed,
+                              validators=self.validators)
 
     # Override
     def shortDesc(self) -> dict:
@@ -602,6 +605,11 @@ class IntParam(Param):
             return self.name, ValueTypeErrors.RANGE
         return "", ValueTypeErrors.NONE
 
+    def clone(self):
+        cloned = super().clone()
+        cloned._range = self._range
+        return cloned
+
     range = Property(VariantList, lambda self: self._range, constant=True)
 
 
@@ -638,6 +646,11 @@ class FloatParam(Param):
         if (self.range and not all([isinstance(r, float) for r in self.range])):
             return self.name, ValueTypeErrors.RANGE
         return "", ValueTypeErrors.NONE
+
+    def clone(self):
+        cloned = super().clone()
+        cloned._range = self._range
+        return cloned
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
@@ -846,7 +859,9 @@ class StringParam(Param):
         return "", ValueTypeErrors.NONE
 
     def clone(self):
-        return Attribute.clone(self)
+        cloned = Attribute.clone(self)
+        cloned._uidIgnoreValue = self._uidIgnoreValue
+        return cloned
 
 class ColorParam(Param):
     """

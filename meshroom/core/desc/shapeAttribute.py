@@ -29,6 +29,11 @@ class Shape(GroupAttribute):
         from meshroom.core.attribute import ShapeAttribute
         return ShapeAttribute
 
+    def asDict(self) -> dict:
+        # A shape is keyable through its geometry
+        geometryItem = self.items[2].items[0]
+        return {**super().asDict(), "keyable": geometryItem.keyable, "keyType": geometryItem.keyType}
+
     def shortDesc(self) -> dict:
         serializedData = {
             "type": self.__class__.__name__,

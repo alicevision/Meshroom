@@ -75,6 +75,22 @@ class UndoStack(QUndoStack):
             command.setEnabled(True)
         return res
 
+    def discardLastCommand(self, command):
+        # type: (UndoCommand) -> bool
+        """
+        Undo 'command' and remove it from the history, if it is the last command done.
+
+        Returns:
+            bool: whether the command has been discarded
+        """
+        if not self.isUndoableIndex or self.command(self.index - 1) is not command:
+            return False
+        command.undo()
+        # QUndoStack.undo() removes an obsolete command without undoing it again
+        command.setObsolete(True)
+        self.undo()
+        return True
+
     def setUndoableIndex(self, value):
         if self._undoableIndex == value:
             return
@@ -585,16 +601,8 @@ class RemoveAnySetAttributeCommand(GraphCommand):
         self.anySetAttrName = anySetAttribute.fullName
         self.index = list(anySetAttribute.value).index(attribute)
         self.value = attribute.asDict()
-        self.edges = self._connectedEdgeNames(attribute)
+        self.edges = anySetAttribute.connectedEdgeNames(attribute)
         self.setText(f"Remove {attribute.fullName}")
-
-    def _connectedEdgeNames(self, attribute):
-        attributes = [attribute] + attribute.flatStaticChildren
-        return [
-            (edge.src.fullName, edge.dst.fullName)
-            for edge in self.graph.edges.values()
-            if edge.src in attributes or edge.dst in attributes
-        ]
 
     def redoImpl(self):
         anySetAttribute = self.graph.attribute(self.anySetAttrName)
@@ -623,39 +631,59 @@ class RemoveAnySetAttributeCommand(GraphCommand):
             dstAttr = self.graph.anyAttribute(dstName)
             if srcAttr is not None and dstAttr is not None:
                 self.graph.addEdge(srcAttr, dstAttr)
+                # The edge replaces the link expression, which would connect the attribute again later
+                dstAttr._linkExpression = None
         return True
 
 
-class RenameAnySetAttributeCommand(GraphCommand):
-    def __init__(self, graph, attribute, name, label, parent=None):
+class AddAnySetAttributeCommand(GraphCommand):
+    def __init__(self, graph, anySetAttribute, attributeType, parent=None):
+        super().__init__(graph, parent)
+        assert isinstance(anySetAttribute, AnySet)
+        self.anySetAttrName = anySetAttribute.fullName
+        self.value = anySetAttribute.getNewAttributeData(attributeType)
+        self.index = anySetAttribute.value.count
+        self.setText(f"Add {self.anySetAttrName}.{self.value['name']}")
+
+    def redoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        if anySetAttribute is None:
+            return False
+        return anySetAttribute.insertAttribute(self.value, self.index) is not None
+
+    def undoImpl(self):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        attribute = self.graph.attribute(f"{self.anySetAttrName}.{self.value['name']}")
+        if anySetAttribute is None or attribute is None:
+            return False
+        anySetAttribute.removeAttribute(attribute)
+        return True
+
+
+class EditAnySetAttributeCommand(GraphCommand):
+    """ Edit the description parameters of an AnySet child, by replacing it with an attribute built
+    from the edited description. Its connections are restored on the new attribute. """
+    def __init__(self, graph, attribute, parameters, parent=None):
         super().__init__(graph, parent)
         anySetAttribute = attribute.root
         assert isinstance(anySetAttribute, AnySet)
         self.anySetAttrName = anySetAttribute.fullName
-        self.oldName = attribute.name
-        self.oldLabel = attribute.label
-        self.newName = name
-        self.newLabel = label
-        self.setText(f"Rename {attribute.fullName} to {name}")
+        self.oldValue = attribute.asDict()
+        self.newValue = anySetAttribute.getEditedAttributeData(attribute, parameters)
+        self.setText(f"Edit {attribute.fullName}")
 
-    def _attribute(self, name):
-        return self.graph.attribute(f"{self.anySetAttrName}.{name}")
+    def _replace(self, fromValue, toValue):
+        anySetAttribute = self.graph.attribute(self.anySetAttrName)
+        attribute = self.graph.attribute(f"{self.anySetAttrName}.{fromValue['name']}")
+        if anySetAttribute is None or attribute is None:
+            return False
+        return anySetAttribute.replaceAttributeWithEdges(attribute, toValue) is not None
 
     def redoImpl(self):
-        anySetAttribute = self.graph.attribute(self.anySetAttrName)
-        attribute = self._attribute(self.oldName)
-        if anySetAttribute is None or attribute is None:
-            return False
-        anySetAttribute.renameAttribute(attribute, self.newName, self.newLabel)
-        return True
+        return self._replace(self.oldValue, self.newValue)
 
     def undoImpl(self):
-        anySetAttribute = self.graph.attribute(self.anySetAttrName)
-        attribute = self._attribute(self.newName)
-        if anySetAttribute is None or attribute is None:
-            return False
-        anySetAttribute.renameAttribute(attribute, self.oldName, self.oldLabel)
-        return True
+        return self._replace(self.newValue, self.oldValue)
 
 
 class MoveAnySetAttributeCommand(GraphCommand):
@@ -841,15 +869,18 @@ class ConnectAnySetCommand(GraphCommand):
     Create a new dynamic input attribute on a node by connecting a source attribute
     to a AnySet.
 
-    When executed, a new attribute of the same type as the source is created on the
-    node (inserted before the AnySet) and the edge is established.
+    When executed, a new attribute of the same type as the source is created at the
+    end of the AnySet and the edge is established: from the new attribute if the AnySet
+    is the source of the connection, to the new attribute otherwise.
     On undo, the edge is removed and the created attribute is deleted.
     """
 
-    def __init__(self, graph, src, anySetAttribute, parent=None):
+    def __init__(self, graph, src, anySetAttribute, isSource=False, parent=None):
         super().__init__(graph, parent)
         self.srcAttrName = src.fullName
         self.anySetAttribute = anySetAttribute.fullName
+        self.isSource = isSource or anySetAttribute.isOutput
+        self.previousLink = None
         self.newAttrFullName = None
         self.setText(f"Connect '{src.fullName}' to AnySet '{anySetAttribute.fullName}'")
         self.newAttribute = None
@@ -869,7 +900,9 @@ class ConnectAnySetCommand(GraphCommand):
 
         # Connect newly created attribute to the other one
         try:
-            if anySetAttribute.isOutput:
+            if self.isSource:
+                previousEdge = self.graph.edges.get(srcAttr)
+                self.previousLink = previousEdge.src.fullName if previousEdge else None
                 self.graph.addEdge(newAttr, srcAttr)
             else:
                 self.graph.addEdge(srcAttr, newAttr)
@@ -886,7 +919,13 @@ class ConnectAnySetCommand(GraphCommand):
         node = newAttr.node
 
         # Disconnect the edge
-        newAttr.disconnectEdge()
+        if self.isSource:
+            srcAttr = self.graph.anyAttribute(self.srcAttrName)
+            self.graph.removeEdge(srcAttr)
+            if self.previousLink:
+                self.graph.addEdge(self.graph.anyAttribute(self.previousLink), srcAttr)
+        else:
+            newAttr.disconnectEdge()
 
         anySetAttribute = self.graph.attribute(self.anySetAttribute)
         anySetAttribute.removeAttribute(newAttr)

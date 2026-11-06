@@ -91,7 +91,7 @@ def overrideValue(attr: Attribute) -> str:
     return str(value)
 
 
-class ComputeMeshroomScene(desc.CommandLineNode, desc.InputNode):
+class ComputeMeshroomScene(desc.CommandLineNode):
     """
     Compute or Submits a meshroom scene on the farm.
     """
@@ -278,21 +278,6 @@ class ComputeMeshroomScene(desc.CommandLineNode, desc.InputNode):
                 # A link expression refers to a node of the scene: copy the value it resolves to
                 attrDesc['value'] = resolvedValue(attr)
             anySet.insertAttribute(attrDesc, anySet.value.count)
-
-    def initialize(self, node, inputs, recursiveInputs):
-
-        if inputs is None or len(inputs) == 0:
-            return
-
-        givenFile = Path(inputs[0])
-
-        if len(inputs) == 1 and givenFile.exists() and givenFile.suffix in ('.mg', '.mgt'):
-            givenFilePath = str(givenFile)
-
-            if node.scene.value == givenFilePath:
-                return
-
-            node.scene.value = givenFilePath
 
     @staticmethod
     def _disconnectExposedAttributes(node) -> list:

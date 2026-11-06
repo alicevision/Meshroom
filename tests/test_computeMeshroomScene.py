@@ -42,21 +42,21 @@ def _saveScene(path):
     """ Save a scene with a GraphInput and a GraphOutput exposing a few attributes. """
     scene = Graph("")
     graphInput = scene.addNewNode("GraphInput")
-    graphInput.exposeds.insertAttribute({"name": "inputFile", "label": "Input File", "type": "File",
-                                         "value": "/data/my shots/a.jpg"}, 0)
-    graphInput.exposeds.insertAttribute({"name": "count_", "label": "Count", "type": "IntParam", "value": 3}, 1)
-    graphInput.exposeds.insertAttribute({"name": "size", "label": "Size", "type": "GroupAttribute", "items": [
+    graphInput.ins.insertAttribute({"name": "inputFile", "label": "Input File", "type": "File",
+                                   "value": "/data/my shots/a.jpg"}, 0)
+    graphInput.ins.insertAttribute({"name": "count_", "label": "Count", "type": "IntParam", "value": 3}, 1)
+    graphInput.ins.insertAttribute({"name": "size", "label": "Size", "type": "GroupAttribute", "items": [
         {"name": "width", "label": "Width", "type": "IntParam", "value": 1},
         {"name": "height", "label": "Height", "type": "IntParam", "value": 2},
     ]}, 2)
     graphOutput = scene.addNewNode("GraphOutput")
-    graphOutput.exposeds.insertAttribute({"name": "result", "label": "Result", "type": "File", "value": "/out"}, 0)
+    graphOutput.outs.insertAttribute({"name": "result", "label": "Result", "type": "File", "value": "/out"}, 0)
     scene.save(str(path))
     return graphInput, graphOutput
 
 
 def test_attributeNameRoundTrip():
-    for fullName in ("Node_1.exposeds.foo", "Node_1.foo_.bar", "Node_1._foo.bar__baz", "Node_1.a_0.b"):
+    for fullName in ("Node_1.ins.foo", "Node_1.foo_.bar", "Node_1._foo.bar__baz", "Node_1.a_0.b"):
         assert decodeAttributeName(encodeAttributeName(fullName)) == fullName
 
 
@@ -72,20 +72,20 @@ def test_sceneAttributesAreExposedAndOverridden(tmp_path):
         # The children of the groups are exposed, in the order of the scene attributes
         exposedInputs = [decodeAttributeName(attr.name) for attr in node.inputs.value]
         assert exposedInputs == [
-            f"{graphInput.name}.exposeds.inputFile",
-            f"{graphInput.name}.exposeds.count_",
-            f"{graphInput.name}.exposeds.size.width",
-            f"{graphInput.name}.exposeds.size.height",
+            f"{graphInput.name}.ins.inputFile",
+            f"{graphInput.name}.ins.count_",
+            f"{graphInput.name}.ins.size.width",
+            f"{graphInput.name}.ins.size.height",
         ]
-        assert [decodeAttributeName(attr.name) for attr in node.outputs.value] == [f"{graphOutput.name}.exposeds.result"]
+        assert [decodeAttributeName(attr.name) for attr in node.outputs.value] == [f"{graphOutput.name}.outs.result"]
 
         # Without any change, no input is overridden, and the given scene is not overwritten either
         args = shlex.split(node.nodeDesc.buildCommandLine(SimpleNamespace(node=node)))
         assert "--paramOverrides" not in args
         assert Path(args[args.index("--save") + 1]) != scenePath
 
-        node.inputs.value.get(encodeAttributeName(f"{graphInput.name}.exposeds.inputFile")).value = "/data/other shots/b.jpg"
-        node.inputs.value.get(encodeAttributeName(f"{graphInput.name}.exposeds.count_")).value = 5
+        node.inputs.value.get(encodeAttributeName(f"{graphInput.name}.ins.inputFile")).value = "/data/other shots/b.jpg"
+        node.inputs.value.get(encodeAttributeName(f"{graphInput.name}.ins.count_")).value = 5
         cmd = node.nodeDesc.buildCommandLine(SimpleNamespace(node=node))
         args = shlex.split(cmd)
 
@@ -106,8 +106,8 @@ def test_sceneAttributesAreExposedAndOverridden(tmp_path):
             values[attribute.fullName] = value
 
         assert values == {
-            f"{graphInput.name}.exposeds.inputFile": "/data/other shots/b.jpg",
-            f"{graphInput.name}.exposeds.count_": "5",
+            f"{graphInput.name}.ins.inputFile": "/data/other shots/b.jpg",
+            f"{graphInput.name}.ins.count_": "5",
         }
 
 
@@ -123,7 +123,7 @@ def test_outputNodesAreNotExposed(tmp_path):
         graph = Graph("")
         node = graph.addNewNode("ComputeMeshroomScene")
         node.scene.value = str(scenePath)
-        assert [decodeAttributeName(attr.name) for attr in node.outputs.value] == [f"{graphOutput.name}.exposeds.result"]
+        assert [decodeAttributeName(attr.name) for attr in node.outputs.value] == [f"{graphOutput.name}.outs.result"]
 
 
 def test_graphOutputIsKeptInTemplates(tmp_path):
@@ -147,7 +147,7 @@ def test_exposedOutputsAreSetFromTheComputedScene(tmp_path):
         scene = Graph("")
         producer = scene.addNewNode("FileProducer")
         graphOutput = scene.addNewNode("GraphOutput")
-        result = graphOutput.exposeds.insertAttribute({"name": "result", "label": "Result", "type": "File", "value": ""}, 0)
+        result = graphOutput.outs.insertAttribute({"name": "result", "label": "Result", "type": "File", "value": ""}, 0)
         scene.addEdge(producer.output, result)
         scenePath = tmp_path / "scene" / "scene.mg"
         scenePath.parent.mkdir()
@@ -176,8 +176,8 @@ def test_edgesFollowTheSceneChanges(tmp_path):
         graphInput, graphOutput = _saveScene(fullScenePath)
         # Same scene without the "count_" input
         partialScene = loadGraph(str(fullScenePath))
-        exposeds = partialScene.node(graphInput.name).exposeds
-        exposeds.removeAttribute(exposeds.value.get("count_"))
+        ins = partialScene.node(graphInput.name).ins
+        ins.removeAttribute(ins.value.get("count_"))
         partialScenePath = tmp_path / "partial.mg"
         partialScene.save(str(partialScenePath))
 
@@ -188,8 +188,8 @@ def test_edgesFollowTheSceneChanges(tmp_path):
         node.scene.value = str(fullScenePath)
         inputInt = graph.addNewNode("InputInt")
         consumer = graph.addNewNode("FileConsumer")
-        countName = encodeAttributeName(f"{graphInput.name}.exposeds.count_")
-        resultName = encodeAttributeName(f"{graphOutput.name}.exposeds.result")
+        countName = encodeAttributeName(f"{graphInput.name}.ins.count_")
+        resultName = encodeAttributeName(f"{graphOutput.name}.outs.result")
         graph.addEdge(inputInt.integer, node.inputs.value.get(countName))
         graph.addEdge(node.outputs.value.get(resultName), consumer.input)
 
@@ -241,7 +241,7 @@ def test_inputValuesAreKeptWhenUsingOnlyGraphIONodes(tmp_path):
         graph = Graph("")
         node = graph.addNewNode("ComputeMeshroomScene")
         node.scene.value = str(scenePath)
-        countName = encodeAttributeName(f"{graphInput.name}.exposeds.count_")
+        countName = encodeAttributeName(f"{graphInput.name}.ins.count_")
         integerName = encodeAttributeName(f"{inputInt.name}.integer")
         node.inputs.value.get(countName).value = 5
         node.inputs.value.get(integerName).value = 7
@@ -274,7 +274,7 @@ def test_inputValuesAreRestoredAfterReloadAndSceneChange(tmp_path):
         graphInput, _ = _saveScene(scenePath)
         otherScenePath = tmp_path / "other.mg"
         _saveScene(otherScenePath)
-        countName = encodeAttributeName(f"{graphInput.name}.exposeds.count_")
+        countName = encodeAttributeName(f"{graphInput.name}.ins.count_")
 
         projectPath = tmp_path / "project.mg"
         graph = Graph("")

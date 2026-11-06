@@ -47,3 +47,5 @@ class AnySet(GroupAttribute):
         return serializedData
 
     isCustomAttribute = Property(bool, lambda _: True, constant=True)
+    # An AnySet starts without any item, but its children can invalidate the node
+    invalidate = Property(bool, lambda _: True, constant=True)

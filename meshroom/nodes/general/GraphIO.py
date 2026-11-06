@@ -14,8 +14,8 @@ class GraphInput(desc.InitNode, desc.InputNode):
 
     inputs = [
         desc.AnySet(
-            name="exposeds",
-            label="Exposed attributes",
+            name="in",
+            label="Incoming attributes",
             description="Attributes exposed as the inputs of the scene.",
             exposed=True
         )
@@ -36,8 +36,8 @@ class GraphOutput(desc.InitNode):
 
     inputs = [
         desc.AnySet(
-            name="exposeds",
-            label="Exposed attributes",
+            name="out",
+            label="Outcoming attributes",
             description="Attributes exposed as the outputs of the scene.",
             exposed=True
         )

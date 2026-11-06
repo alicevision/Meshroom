@@ -3,7 +3,7 @@ import traceback
 from contextlib import contextmanager
 
 from PySide6.QtGui import QUndoCommand, QUndoStack
-from PySide6.QtCore import Property, Signal
+from PySide6.QtCore import Property, Signal, Slot
 from PySide6.QtQml import QJSValue
 
 from meshroom.core.attribute import Attribute, Flow, ListAttribute, AnySet
@@ -46,6 +46,12 @@ class UndoCommand(QUndoCommand):
         # type: () -> bool
         pass
 
+    def canRedo(self):
+        return True
+
+    def canUndo(self):
+        return True
+
 
 class UndoStack(QUndoStack):
     def __init__(self, parent=None):
@@ -74,6 +80,25 @@ class UndoStack(QUndoStack):
             self.setLockedRedo(False)  # make sure to unlock the redo action
             command.setEnabled(True)
         return res
+
+    # Not overrides of undo/redo: QML would call the C++ slots of QUndoStack instead
+    @Slot()
+    def tryUndo(self):
+        """ Undo the current command, unless it refuses: the stack must stay in sync with the graph. """
+        command = self.command(self.index - 1)
+        if isinstance(command, UndoCommand) and not command.canUndo():
+            self.parent().showMessage(f"Cannot undo '{command.text()}'", status="warning")
+            return
+        self.undo()
+
+    @Slot()
+    def tryRedo(self):
+        """ Redo the next command, unless it refuses: the stack must stay in sync with the graph. """
+        command = self.command(self.index)
+        if isinstance(command, UndoCommand) and not command.canRedo():
+            self.parent().showMessage(f"Cannot redo '{command.text()}'", status="warning")
+            return
+        self.redo()
 
     def setUndoableIndex(self, value):
         if self._undoableIndex == value:
@@ -154,21 +179,34 @@ class AddNodeCommand(GraphCommand):
 
 
 class RenameNodeCommand(GraphCommand):
-    def __init__(self, graph, node, name, parent=None):
+    def __init__(self, graph, taskManager, node, name, parent=None):
         """ Command to rename a node. The new name should not be used yet.
         """
         super().__init__(graph, parent)
-        self.node = node
+        self.taskManager = taskManager
         self.oldName = node._name
         self.name = name
 
+    def _canRename(self, currentName):
+        # Same rules as UIGraph.renameNode: the node may have been computed since this command was pushed
+        node = self.graph.node(currentName)
+        return not (node.getLocked() or node.hasCache() or self.taskManager.contains(node))
+
+    def canRedo(self):
+        return self._canRename(self.oldName)
+
+    def canUndo(self):
+        return self._canRename(self.name)
+
     def redoImpl(self):
         self.setText(f"Rename Node {self.oldName} to {self.name}")
-        self.graph.renameNode(self.node, self.name)
-        return self.node._name
+        node = self.graph.node(self.oldName)
+        if not self.graph.renameNode(node, self.name):
+            return False
+        return node._name
 
     def undoImpl(self):
-        self.graph.renameNode(self.node, self.oldName)
+        self.graph.renameNode(self.graph.node(self.name), self.oldName)
 
 
 class RemoveNodeCommand(GraphCommand):

@@ -127,7 +127,13 @@ class BaseNode(BaseObject):
         return self._name
 
     def getDefaultLabel(self):
-        return self.nameToLabel(self._name)
+        return self.nodeType
+
+    def setName(self, value):
+        self._name = value
+        self.nodeNameChanged.emit()
+        # The label falls back to the name when no custom label is set
+        self.internalAttributesChanged.emit()
 
     def getLabel(self) -> str:
         """
@@ -138,7 +144,7 @@ class BaseNode(BaseObject):
             label = self.internalAttribute("label").value.strip()
             if label:
                 return label
-        return self.getDefaultLabel()
+        return self.getName()
 
     def getNodeLogLevel(self) -> str:
         """
@@ -212,15 +218,6 @@ class BaseNode(BaseObject):
         if self.hasInternalAttribute("nodeHeight"):
             return self.internalAttribute("nodeHeight").value
         return 0
-
-    @Slot(str, result=str)
-    def nameToLabel(self, name):
-        """
-        Returns:
-            str: the high-level label from the technical node name
-        """
-        t, idx = name.rsplit("_", 1) if "_" in name else (name, "1")
-        return f"{t}{idx if int(idx) > 1 else ''}"
 
     def getDocumentation(self):
         if not self.nodeDesc:
@@ -568,6 +565,17 @@ class BaseNode(BaseObject):
         if not self.isComputableType:
             return True
         return self.hasStatus(Status.SUCCESS)
+
+    def hasCache(self) -> bool:
+        """
+        Returns:
+            True if this node has data in its cache (computed, running, submitted, failed...), False otherwise.
+        """
+        if not self._isComputableType() or self.isInitNode:
+            return False
+        if self._chunksCreated:
+            return any(chunk._status.status != Status.NONE for chunk in self.getAllChunks())
+        return self._nodeStatus.status != Status.NONE
 
     def _isComputableType(self):
         """ Return True if this node type is computable, False otherwise.
@@ -1528,7 +1536,7 @@ class BaseNode(BaseObject):
 
 
     nodeNameChanged = Signal()
-    name = Property(str, getName, notify=nodeNameChanged)
+    name = Property(str, getName, setName, notify=nodeNameChanged)
     defaultLabel = Property(str, getDefaultLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
@@ -1587,6 +1595,7 @@ class BaseNode(BaseObject):
     jobName = Property(str, lambda self: self._getJobName(), notify=globalStatusChanged)
     isExternal = Property(bool, isExtern, notify=globalStatusChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
+    hasCacheData = Property(bool, hasCache, notify=globalStatusChanged)
     isComputableType = Property(bool, _isComputableType, notify=globalStatusChanged)
     aliveChanged = Signal()
     alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)

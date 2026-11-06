@@ -1007,28 +1007,33 @@ class UIGraph(QObject):
     @Slot(Node, str, result=str)
     def renameNode(self, node: Node, newName: str):
         """ Triggers the node renaming.
-
-        In this function the last `_N` index is removed, then all special characters
-        (everything except letters and numbers) are removed.
-        The name uniqueness will be ensured later by adding a suffix (e.g. `_1`, `_2`, ...)
-
-        Labels can be used to have special characters in the displayed name.
+        This will also validate the node authorized characters and make sure the
+        name is unique.
+        An empty string will reset the name to the default.
 
         Args:
             node (Node): Node to rename.
             newName (str): New name to set.
 
         Returns:
-            str: The final name of the node.
+            str: The final name of the node, or an empty string if the node has not been renamed.
         """
-        newName = "_".join(newName.split("_")[:-1]) if "_" in newName else newName
-        # Eliminate all characters except digits and letters
-        newName = re.sub(r"[^0-9a-zA-Z]", "", newName)
-        # Create unique name
-        uniqueName = self._graph._createUniqueNodeName(newName, {n._name for n in self._graph._nodes if n != node})
-        if not newName or uniqueName == node._name:
+        # Nodes in the Task Manager are referenced by name
+        if node.hasCache() or self._taskManager.contains(node):
+            self.parent().showMessage(f"Cannot rename node {node.name}: it has computed data or is in the Task Manager", "warning")
             return ""
-        return self.push(commands.RenameNodeCommand(self._graph, node, uniqueName))
+        if not newName:
+            # Empty string -> reset to default
+            newName = node.defaultLabel
+        # Eliminate all characters except digits and letters and underscore
+        newName = re.sub(r"[^0-9a-zA-Z\_]", "", newName)
+        if not newName:
+            return ""
+        # Create unique name
+        newName = self._graph._createUniqueNodeName(newName, {n._name for n in self._graph._nodes if n != node})
+        if newName == node._name:
+            return ""
+        return self.push(commands.RenameNodeCommand(self._graph, self._taskManager, node, newName)) or ""
 
     def moveNode(self, node: Node, position: Position):
         """
@@ -1291,9 +1296,10 @@ class UIGraph(QObject):
 
     @Slot(list)
     def clearData(self, nodes: list[Node]):
-        """ Clear data from 'nodes'. """
+        """ Clear data from 'nodes' and remove them from the Task Manager. """
         for n in nodes:
             n.clearData()
+            self._taskManager.removeNode(n, displayList=True, processList=True, externList=True)
 
     @Slot(list)
     def clearDataFrom(self, nodes: list[Node]):

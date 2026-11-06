@@ -605,7 +605,7 @@ Page {
         text: "Undo"
         shortcut: "Ctrl+Z"
         enabled: _currentScene ? _currentScene.undoStack.canUndo && _currentScene.undoStack.isUndoableIndex : false
-        onTriggered: _currentScene.undoStack.undo()
+        onTriggered: _currentScene.undoStack.tryUndo()
     }
 
     Action {
@@ -615,7 +615,7 @@ Page {
         text: "Redo"
         shortcut: "Ctrl+Shift+Z"
         enabled: _currentScene ? _currentScene.undoStack.canRedo && !_currentScene.undoStack.lockedRedo : false
-        onTriggered: _currentScene.undoStack.redo()
+        onTriggered: _currentScene.undoStack.tryRedo()
     }
 
     Action {

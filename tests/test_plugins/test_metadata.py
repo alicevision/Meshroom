@@ -3,7 +3,7 @@
 
 import json
 
-from meshroom.core.plugins.metadata import PluginAsset, PluginMetadata
+from meshroom.core.plugins.metadata import PluginAsset, PluginInstalledAsset, PluginMetadata
 from ..utils import writeFile
 
 
@@ -231,6 +231,43 @@ class TestAssets:
             PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt")
         ]
 
+    def test_release(self, tmp_path):
+        """ An asset can come from a GitHub release instead of a url, and be made executable. """
+        content = (
+            "[[tool.meshroom.assets]]\n"
+            "name = \"tool\"\n"
+            "category = \"binary\"\n"
+            "release = \"myOrg/my-tool@v1.0.0\"\n"
+            "path = \"tool\"\n"
+            "executable = true\n"
+        )
+        path = writeFile(tmp_path / "pyproject.toml", content)
+
+        metadata = PluginMetadata.loadToml(path)
+
+        assert metadata.assets == [
+            PluginAsset("tool", "binary", None, "tool", release="myOrg/my-tool@v1.0.0", executable=True)
+        ]
+
+    def test_invalidReleaseEntriesAreIgnored(self, tmp_path):
+        """ A release asset must have a valid release, no url and no sha256. """
+        valid = {"name": "valid", "category": "binary", "release": "myOrg/myRepo@v1.0.0", "path": "valid"}
+        content = {"assets": [
+            {"name": "a", "category": "binary", "path": "a"},
+            dict(valid, name="a", path="a", url="https://example.com/a.zip"),
+            dict(valid, name="a", path="a", release="myRepo@v1.0.0"),
+            dict(valid, name="a", path="a", release="myOrg/myRepo"),
+            dict(valid, name="a", path="a", release=1),
+            dict(valid, name="a", path="a", sha256="a" * 64),
+            dict(valid, name="a", path="a", executable="yes"),
+            valid,
+        ]}
+        path = writeFile(tmp_path / "config.json", json.dumps(content))
+
+        metadata = PluginMetadata.loadJson(path)
+
+        assert metadata.assets == [PluginAsset("valid", "binary", None, "valid", release="myOrg/myRepo@v1.0.0")]
+
     def test_pathIsNormalized(self, tmp_path):
         """ An asset path is stored normalized, with POSIX separators. """
         content = {"assets": [{"name": "a", "category": "model", "url": "https://example.com/a.pt",
@@ -331,7 +368,13 @@ class TestLockfile:
             requirements="CUDA >= X.X",
             license="MIT (see file(s): LICENSE)",
             env=[{"key": "MY_VAR", "type": "string", "value": "myValue"}],
-            assets=[PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt", "a" * 64)],
+            assets=[PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt", "a" * 64),
+                    PluginAsset("tool", "binary", None, "tool", release="myOrg/myRepo@v1.0.0", executable=True)],
+            sourceUrl="https://github.com/myOrg/myPlugin",
+            sourceVersion="v1.2.3",
+            installedAssets=[PluginInstalledAsset("weights", "models/weights.pt", "https://example.com/weights.pt", "a" * 64),
+                             PluginInstalledAsset("tool", "tool", "https://example.com/tool-linux.zip", "b" * 64, True)],
+            files=["meshroom/__init__.py", "pyproject.toml"],
         )
         lockfilePath = tmp_path / "plugin.lock"
 
@@ -348,3 +391,29 @@ class TestLockfile:
         assert reloaded.license == metadata.license
         assert reloaded.env == metadata.env
         assert reloaded.assets == metadata.assets
+        assert reloaded.sourceUrl == metadata.sourceUrl
+        assert reloaded.sourceVersion == metadata.sourceVersion
+        assert reloaded.installedAssets == metadata.installedAssets
+        assert reloaded.files == metadata.files
+
+    def test_installationUnknown(self, tmp_path):
+        """ A lockfile written before the installation was recorded has no source, installed assets or files. """
+        path = writeFile(tmp_path / "plugin.lock", json.dumps({"name": "my-plugin", "version": "1.0"}))
+        metadata = PluginMetadata.loadJson(path)
+        assert metadata.sourceUrl is None
+        assert metadata.sourceVersion is None
+        assert metadata.installedAssets is None
+        assert metadata.files is None
+
+    def test_invalidInstallation(self, tmp_path):
+        """ Invalid installed assets are ignored, invalid files make the files unknown. """
+        valid = {"name": "weights", "path": "weights.pt", "url": "https://example.com/weights.pt", "sha256": "A" * 64}
+        content = {
+            "source": "not a table",
+            "installedAssets": [valid, {**valid, "path": "../weights.pt"}, {**valid, "sha256": "x"}, "not a table"],
+            "files": ["meshroom/__init__.py", "../outside.txt"],
+        }
+        metadata = PluginMetadata.loadJson(writeFile(tmp_path / "plugin.lock", json.dumps(content)))
+        assert metadata.sourceUrl is None
+        assert metadata.installedAssets == [PluginInstalledAsset("weights", "weights.pt", valid["url"], "a" * 64)]
+        assert metadata.files is None

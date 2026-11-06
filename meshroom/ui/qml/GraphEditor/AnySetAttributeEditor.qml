@@ -30,7 +30,9 @@ Pane {
     readonly property bool isChoice: attributeType === "ChoiceParam"
     readonly property bool isMultiChoice: isChoice && !targetAttribute.desc.exclusive
     readonly property bool isMultiline: attributeType === "StringParam" && semantic.includes("multiline")
+    // A default value computed by a function or set at runtime is not editable: it is either a Python object or undefined
     readonly property bool hasDefaultValue: ["StringParam", "File", "IntParam", "FloatParam", "BoolParam", "ChoiceParam", "ColorParam"].includes(attributeType)
+                                            && targetAttribute.desc.value != null && (isMultiChoice || typeof targetAttribute.desc.value !== "object")
 
     // Pending default value, set by the value control and applied with the other parameters
     property var defaultValue: targetAttribute && hasDefaultValue ? targetAttribute.desc.value : undefined
@@ -89,15 +91,17 @@ Pane {
             "description": descriptionField.text,
             "advanced": advancedCheckBox.checked
         }
-        if (isNumber)
-            params["defaultValue"] = Number(defaultValue)
-        else if (isMultiChoice)
-            // Only keep the default choices that are still available
-            params["defaultValue"] = defaultValue.filter(function(v) { return choiceValues().includes(v) })
-        else if (isChoice)
-            params["defaultValue"] = choiceValues().includes(defaultValue) ? defaultValue : choiceValues()[0]
-        else if (hasDefaultValue)
-            params["defaultValue"] = defaultValue
+        if (hasDefaultValue) {
+            if (isNumber)
+                params["defaultValue"] = Number(defaultValue)
+            else if (isMultiChoice)
+                // Only keep the default choices that are still available
+                params["defaultValue"] = defaultValue.filter(function(v) { return choiceValues().includes(v) })
+            else if (isChoice)
+                params["defaultValue"] = choiceValues().includes(defaultValue) ? defaultValue : choiceValues()[0]
+            else
+                params["defaultValue"] = defaultValue
+        }
         if (isNumber)
             params["range"] = hasRange ? [Number(minField.text), Number(maxField.text), Number(stepField.text)] : []
         if (isChoice)

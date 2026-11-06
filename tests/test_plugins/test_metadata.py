@@ -231,6 +231,43 @@ class TestAssets:
             PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt")
         ]
 
+    def test_release(self, tmp_path):
+        """ An asset can come from a GitHub release instead of a url, and be made executable. """
+        content = (
+            "[[tool.meshroom.assets]]\n"
+            "name = \"tool\"\n"
+            "category = \"binary\"\n"
+            "release = \"myOrg/my-tool@v1.0.0\"\n"
+            "path = \"tool\"\n"
+            "executable = true\n"
+        )
+        path = writeFile(tmp_path / "pyproject.toml", content)
+
+        metadata = PluginMetadata.loadToml(path)
+
+        assert metadata.assets == [
+            PluginAsset("tool", "binary", None, "tool", release="myOrg/my-tool@v1.0.0", executable=True)
+        ]
+
+    def test_invalidReleaseEntriesAreIgnored(self, tmp_path):
+        """ A release asset must have a valid release, no url and no sha256. """
+        valid = {"name": "valid", "category": "binary", "release": "myOrg/myRepo@v1.0.0", "path": "valid"}
+        content = {"assets": [
+            {"name": "a", "category": "binary", "path": "a"},
+            dict(valid, name="a", path="a", url="https://example.com/a.zip"),
+            dict(valid, name="a", path="a", release="myRepo@v1.0.0"),
+            dict(valid, name="a", path="a", release="myOrg/myRepo"),
+            dict(valid, name="a", path="a", release=1),
+            dict(valid, name="a", path="a", sha256="a" * 64),
+            dict(valid, name="a", path="a", executable="yes"),
+            valid,
+        ]}
+        path = writeFile(tmp_path / "config.json", json.dumps(content))
+
+        metadata = PluginMetadata.loadJson(path)
+
+        assert metadata.assets == [PluginAsset("valid", "binary", None, "valid", release="myOrg/myRepo@v1.0.0")]
+
     def test_pathIsNormalized(self, tmp_path):
         """ An asset path is stored normalized, with POSIX separators. """
         content = {"assets": [{"name": "a", "category": "model", "url": "https://example.com/a.pt",
@@ -331,7 +368,8 @@ class TestLockfile:
             requirements="CUDA >= X.X",
             license="MIT (see file(s): LICENSE)",
             env=[{"key": "MY_VAR", "type": "string", "value": "myValue"}],
-            assets=[PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt", "a" * 64)],
+            assets=[PluginAsset("weights", "model", "https://example.com/weights.pt", "models/weights.pt", "a" * 64),
+                    PluginAsset("tool", "binary", None, "tool", release="myOrg/myRepo@v1.0.0", executable=True)],
         )
         lockfilePath = tmp_path / "plugin.lock"
 

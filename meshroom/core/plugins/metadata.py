@@ -38,6 +38,16 @@ _PLUGIN_PUBLISHER_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 # SHA-256 pattern: 64 hexadecimal characters.
 _PLUGIN_SHA256_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
 
+# Plugin asset release pattern: "<owner>/<repository>@<tag>" of a GitHub release.
+_PLUGIN_RELEASE_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[A-Za-z0-9_.+/-]+$")
+
+
+def _isRelativePluginPath(path: str) -> bool:
+    """ Return whether "path" is a relative POSIX path inside of the plugin folder, without '..'. """
+    posixPath = PurePosixPath(path)
+    return not (posixPath.is_absolute() or PureWindowsPath(path).drive or "\\" in path
+                or ".." in posixPath.parts or not posixPath.parts)
+
 
 class PluginMetadata:
     """
@@ -379,8 +389,10 @@ class PluginMetadata:
         "assets" itself must be a list, if it is not, it is ignored entirely.
 
         Each entry is expected to be formatted as follows:
-        { "name": "...", "category": "...", "url": "...", "path": "...", "sha256": "..." }
-        "sha256" is optional.
+        { "name": "...", "category": "...", "url": "...", "path": "...", "sha256": "...", "executable": false }
+        or, for a file of a GitHub release chosen for the current platform:
+        { "name": "...", "category": "...", "release": "<owner>/<repository>@<tag>", "path": "..." }
+        "sha256" and "executable" are optional.
         """
         if assets is None:
             return []
@@ -404,6 +416,29 @@ class PluginMetadata:
         return validAssets
 
     @staticmethod
+    def _assetSourceError(url, release) -> Optional[str]:
+        """ Return why the "url" and "release" of an asset are invalid, or None if they are valid. """
+        # An asset comes either from a url, or from a GitHub release (in which case "url" may be stored as None).
+        if (url is None) == (release is None):
+            return "Exactly one of 'url' and 'release' must be set."
+        if url is not None and (not isinstance(url, str) or not url):
+            return "'url' must be a non-empty string."
+        if release is not None and (not isinstance(release, str) or not _PLUGIN_RELEASE_PATTERN.match(release)):
+            return "'release' must be formatted as '<owner>/<repository>@<tag>'."
+        return None
+
+    @staticmethod
+    def _assetChecksumError(sha256, release) -> Optional[str]:
+        """ Return why the "sha256" of an asset is invalid, or None if it is valid. """
+        if sha256 is None:
+            return None
+        if not isinstance(sha256, str) or not _PLUGIN_SHA256_PATTERN.match(sha256):
+            return "'sha256' must be a string of 64 hexadecimal characters."
+        if release is not None:
+            return "'sha256' cannot be set with 'release': the checksum published by GitHub is checked."
+        return None
+
+    @staticmethod
     def _sanitizeAsset(entry, path: Path) -> Optional[PluginAsset]:
         """
         Return the asset "entry" parsed into a PluginAsset, or None (logging a warning) if it is invalid.
@@ -414,9 +449,15 @@ class PluginMetadata:
 
         if not isinstance(entry, dict):
             return invalid("Asset entries must be tables/objects.")
-        for key in ("name", "category", "url", "path"):
+        for key in ("name", "category", "path"):
             if not isinstance(entry.get(key), str) or not entry[key]:
                 return invalid(f"'{key}' must be a non-empty string.")
+
+        url = entry.get("url")
+        release = entry.get("release")
+        error = PluginMetadata._assetSourceError(url, release)
+        if error:
+            return invalid(error)
 
         name = entry["name"]
         if not _PLUGIN_NAME_PATTERN.match(name):
@@ -424,18 +465,20 @@ class PluginMetadata:
                            "and start/end with a letter or digit.")
 
         assetPath = entry["path"]
-        posixPath = PurePosixPath(assetPath)
-        if (posixPath.is_absolute() or PureWindowsPath(assetPath).drive or "\\" in assetPath
-                or ".." in posixPath.parts or not posixPath.parts):
+        if not _isRelativePluginPath(assetPath):
             return invalid("'path' must be a relative path inside the plugin folder, without '..'.")
 
         sha256 = entry.get("sha256")
-        if sha256 is not None:
-            if not isinstance(sha256, str) or not _PLUGIN_SHA256_PATTERN.match(sha256):
-                return invalid("'sha256' must be a string of 64 hexadecimal characters.")
-            sha256 = sha256.lower()
+        error = PluginMetadata._assetChecksumError(sha256, release)
+        if error:
+            return invalid(error)
 
-        return PluginAsset(name, entry["category"], entry["url"], posixPath.as_posix(), sha256)
+        executable = entry.get("executable", False)
+        if not isinstance(executable, bool):
+            return invalid("'executable' must be a boolean.")
+
+        sha256 = sha256.lower() if sha256 else None
+        return PluginAsset(name, entry["category"], url, PurePosixPath(assetPath).as_posix(), sha256, release, executable)
 
     def resolveEnv(self, basePath: Path) -> dict[str, str]:
         """
@@ -499,22 +542,30 @@ class PluginMetadata:
 
 class PluginAsset:
     """
-    An external file (model, weights, data...) declared by a plugin, downloaded into the plugin folder
+    An external file (model, weights, binaries...) declared by a plugin, downloaded into the plugin folder
     when the plugin is installed.
 
     Members:
         name: the asset's name, unique within the plugin.
         category: a free-form label describing the kind of asset (e.g. "model", "weights", "data").
-        url: the url to download the asset from.
-        path: the file path of the asset, relative to the plugin folder (POSIX separators).
+        url: the url to download the asset from, or None if it comes from "release".
+        path: the path of the asset, relative to the plugin folder (POSIX separators).
         sha256: the expected SHA-256 hexdigest of the asset (lowercase), or None if not provided.
+        release: the GitHub release "<owner>/<repository>@<tag>" holding the asset, or None if it comes from
+                 "url". The release file is chosen for the current platform, and extracted in "path" if it
+                 is an archive.
+        executable: whether to make the downloaded file executable (ignored for an extracted archive,
+                    whose files keep their own permissions).
     """
-    def __init__(self, name: str, category: str, url: str, path: str, sha256: Optional[str] = None):
+    def __init__(self, name: str, category: str, url: Optional[str], path: str, sha256: Optional[str] = None,
+                 release: Optional[str] = None, executable: bool = False):
         self.name = name
         self.category = category
         self.url = url
         self.path = path
         self.sha256 = sha256
+        self.release = release
+        self.executable = executable
 
     def __eq__(self, other) -> bool:
         return isinstance(other, PluginAsset) and self.toDict() == other.toDict()
@@ -529,6 +580,8 @@ class PluginAsset:
             "url": self.url,
             "path": self.path,
             "sha256": self.sha256,
+            "release": self.release,
+            "executable": self.executable,
         }
 
     def resolvePath(self, pluginFolder: Path) -> Path:

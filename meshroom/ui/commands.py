@@ -639,6 +639,8 @@ class RemoveAnySetAttributeCommand(GraphCommand):
             dstAttr = self.graph.anyAttribute(dstName)
             if srcAttr is not None and dstAttr is not None:
                 self.graph.addEdge(srcAttr, dstAttr)
+                # The edge replaces the link expression, which would connect the attribute again later
+                dstAttr._linkExpression = None
         return True
 
 

@@ -2225,9 +2225,10 @@ class AnySet(GroupAttribute):
                 dstAttr = graph.anyAttribute(renamed(dstName, newPrefix))
                 if srcAttr is not None and dstAttr is not None:
                     graph.addEdge(srcAttr, dstAttr)
+                    # The edge replaces the link expression, which would connect the attribute again later
+                    dstAttr._linkExpression = None
                     if dstName in linkedValues and not isinstance(dstAttr, (GroupAttribute, ListAttribute)):
                         dstAttr._value = linkedValues[dstName]
-                        dstAttr._linkExpression = None
         return newAttribute
 
     def _renameAttributeDescriptionInPlace(self, attributeDesc: AttributeDescription, indexPattern:str="{name}_{index}"):

@@ -567,6 +567,30 @@ def test_edit_anyset_linked_list_stays_disconnected():
     assert [element.value for element in editedList.value] == ["c"]
 
 
+def test_edit_anyset_attribute_ignores_default_value_that_is_not_editable():
+    from meshroom.core import desc
+    from meshroom.core.attribute import attributeFactory
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+
+    def addChild(attributeDesc):
+        child = attributeFactory(attributeDesc, None, False, dynamicNode, root=anySet)
+        anySet.value.insert(anySet.value.count, child)
+        return child
+
+    computedDefault = addChild(desc.IntParam(name="computed", label="Computed", description="", value=lambda attr: 3))
+    noDefault = addChild(desc.FloatParam(name="noDefault", label="No Default", description="", value=None))
+
+    newAttr = anySet.replaceAttribute(computedDefault, anySet.getEditedAttributeData(computedDefault, {"label": "New", "defaultValue": -1}))
+    assert newAttr.label == "New"
+    assert newAttr.value == 3
+
+    newAttr = anySet.replaceAttribute(noDefault, anySet.getEditedAttributeData(noDefault, {"label": "New", "defaultValue": float("nan")}))
+    assert newAttr.label == "New"
+    assert newAttr.value == 0.0
+
+
 def test_duplicated_attributes_are_added_at_the_end():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("Position")

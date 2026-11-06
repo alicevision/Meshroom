@@ -2124,14 +2124,15 @@ class AnySet(GroupAttribute):
         if attribute not in self._value:
             raise ValueError(f"Attribute '{attribute.fullName}' is not a child of '{self.fullName}'.")
 
-        data = {**attribute.asDict(), **self._validatedParameters(attribute.desc, parameters)}
+        editedParameters = self._validatedParameters(attribute.desc, parameters)
+        data = {**attribute.asDict(), **editedParameters}
 
         self._validateAttributeName(data["name"], attribute)
         if not data["label"]:
             raise ValueError("Attribute label cannot be empty.")
 
         # An attribute at its default value follows the new one
-        if "defaultValue" in parameters and attribute.isDefault and not attribute.isLink:
+        if "defaultValue" in editedParameters and attribute.isDefault and not attribute.isLink:
             data["value"] = data["defaultValue"]
 
         # Same form as asDict(), which leaves out these parameters when they are not set
@@ -2155,6 +2156,9 @@ class AnySet(GroupAttribute):
             "defaultValue": attributeDesc.validateValue,
             "range": lambda valueRange: cls._validatedRange(attributeDesc, valueRange),
         }
+        # A default value computed by a function or set at runtime is not editable
+        if callable(attributeDesc.value) or attributeDesc.value is None:
+            del converters["defaultValue"]
         return {key: converters[key](value) for key, value in parameters.items() if key in converters}
 
     @staticmethod

@@ -545,6 +545,28 @@ def test_edit_anyset_attribute_keeps_link_of_whole_group():
     assert [item.name for item in newGroup.value] == ["x", "y", "z"]
 
 
+def test_edit_anyset_linked_list_stays_disconnected():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    elementDesc = {"name": "string", "label": "String", "type": "StringParam", "value": ""}
+    listData = {"label": "List", "type": "ListAttribute", "value": [], "elementDesc": elementDesc}
+    srcList = srcNode.ins.insertAttribute({"name": "src", **listData}, 0)
+    srcList.extend(["a", "b"])
+    linkedList = dynamicNode.ins.insertAttribute({"name": "linked", **listData}, 0)
+    srcList.connectTo(linkedList)
+
+    editedList = dynamicNode.ins.replaceAttributeWithEdges(
+        linkedList, dynamicNode.ins.getEditedAttributeData(linkedList, {"label": "Edited"}))
+    assert editedList.inputLink is srcList
+
+    graph.removeEdge(editedList)
+    editedList.append("c")
+
+    assert not editedList.isLink
+    assert len(graph.edges) == 0
+    assert [element.value for element in editedList.value] == ["c"]
+
+
 def test_duplicated_attributes_are_added_at_the_end():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("Position")

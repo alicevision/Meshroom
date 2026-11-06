@@ -38,9 +38,19 @@ class RegularAppend(desc.BaseNode):
         node.output.value = node.input.value + "r"
 
 
+class ParallelAppend(desc.BaseNode):
+    size = desc.DynamicNodeSize("input")
+    parallelization = desc.Parallelization(blockSize=1)
+    inputs = _INPUTS
+    outputs = _OUTPUTS
+
+    def processChunk(self, chunk):
+        chunk.node.output.value = chunk.node.input.value + "p"
+
+
 @pytest.fixture(autouse=True)
 def nodeTypes():
-    with registeredNodeTypes([InlineAppend, InlineFail, RegularAppend]):
+    with registeredNodeTypes([InlineAppend, InlineFail, RegularAppend, ParallelAppend]):
         yield
 
 
@@ -124,3 +134,41 @@ def test_staleStatusFileIsIgnored(graphSavedOnDisk):
 
     assert not inline.chunks
     assert inline.getGlobalStatus() == Status.NONE
+
+
+def test_parallelNodeSizedByInlineNode(graphSavedOnDisk):
+    graph = graphSavedOnDisk
+    inline = graph.addNewNode("InlineAppend")
+    downstream = graph.addNewNode("ParallelAppend")
+    inline.output.connectTo(downstream.input)
+    graph.save()
+
+    executeGraph(graph)
+
+    assert len(downstream.chunks) == 1
+    assert downstream.output.value == "ip"
+
+
+def test_inlineOutputIsResetWhenInvalidated(graphSavedOnDisk):
+    graph = graphSavedOnDisk
+    upstream, _, inlineB, _ = createChain(graph)
+    executeGraph(graph)
+    assert inlineB.output.value == "rii"
+
+    upstream.input.value = "changed"
+    graph.update()
+
+    assert inlineB.output.value is None
+
+
+def test_inlineNodeFailureWhenCreatingChunks(graphSavedOnDisk):
+    graph = graphSavedOnDisk
+    inline = graph.addNewNode("InlineFail")
+    downstream = graph.addNewNode("ParallelAppend")
+    inline.output.connectTo(downstream.input)
+    graph.save()
+
+    with pytest.raises(RuntimeError, match="Inline failure"):
+        executeGraph(graph)
+
+    assert downstream.getGlobalStatus() == Status.ERROR

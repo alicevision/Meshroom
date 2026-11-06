@@ -4,7 +4,7 @@ import os
 from meshroom.core import desc
 
 
-class PathJoin(desc.Node):
+class PathJoin(desc.InlineNode):
     """ Join multiple paths """
     
     category = "Other"
@@ -45,4 +45,4 @@ class PathJoin(desc.Node):
             if not node.checkIfExists.value or os.path.exists(outputPath):
                 node.outputPath.value = str(outputPath)
                 return
-        node.folder.value = ""
+        node.outputPath.value = ""

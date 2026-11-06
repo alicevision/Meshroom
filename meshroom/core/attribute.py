@@ -2189,6 +2189,21 @@ class AnySet(GroupAttribute):
             self.flatStaticChildrenChanged.emit()
         return newAttribute
 
+    @staticmethod
+    def _isSameOrChildName(attributeName: str, parentName: str) -> bool:
+        """Return whether 'attributeName' is 'parentName', or the name of an attribute inside it."""
+        return attributeName == parentName or attributeName.startswith((parentName + ".", parentName + "["))
+
+    def connectedEdgeNames(self, attribute: Attribute) -> list:
+        """Return the (source, destination) full names of the edges of a child and of the attributes
+        inside it, group items and list elements included."""
+        name = attribute.fullName
+        return [
+            (edge.src.fullName, edge.dst.fullName)
+            for edge in self.node.graph.edges.values()
+            if self._isSameOrChildName(edge.src.fullName, name) or self._isSameOrChildName(edge.dst.fullName, name)
+        ]
+
     def replaceAttributeWithEdges(self, attribute: Attribute, serializedAttribute: dict) -> Attribute | None:
         """
         Replace a child attribute like replaceAttribute(), and reconnect the edges of the child and of its own
@@ -2202,16 +2217,12 @@ class AnySet(GroupAttribute):
         oldPrefix = attribute.fullName
 
         def isReplaced(attributeName):
-            return attributeName == oldPrefix or attributeName.startswith((oldPrefix + ".", oldPrefix + "["))
+            return self._isSameOrChildName(attributeName, oldPrefix)
 
         def renamed(attributeName, newPrefix):
             return newPrefix + attributeName[len(oldPrefix):] if isReplaced(attributeName) else attributeName
 
-        edgeNames = [
-            (edge.src.fullName, edge.dst.fullName)
-            for edge in graph.edges.values()
-            if isReplaced(edge.src.fullName) or isReplaced(edge.dst.fullName)
-        ]
+        edgeNames = self.connectedEdgeNames(attribute)
 
         # A restored attribute only holds its link expression: keep the value it had before being linked
         linkedValues = {dstName: graph.anyAttribute(dstName)._value for _, dstName in edgeNames if isReplaced(dstName)}

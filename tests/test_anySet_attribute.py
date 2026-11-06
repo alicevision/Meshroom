@@ -1,11 +1,14 @@
 """Tests for the AnySet feature."""
 
+import json
+
 import pytest
 
 from meshroom.core import desc
 from meshroom.core.attribute import AnySet, Attribute, attributeFactory
 from meshroom.core.desc import AnySet as AnySetDesc
-from meshroom.core.graph import Graph
+from meshroom.core.graph import Graph, loadGraph
+from meshroom.core.node import CompatibilityNode
 
 
 def anyset_child(serializedAnySet, name):
@@ -667,6 +670,30 @@ def test_nodes_with_different_anyset_values_have_different_uids():
     child1.value = 1
     child2.value = 9
     assert node1._uid != node2._uid
+
+
+def test_upgrading_compatibility_node_keeps_anyset_children_and_edges(tmp_path):
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    intChild = dynamicNode.ins.insertAttribute(dynamicNode.ins.getNewAttributeData("IntParam"), 0)
+    intChild.value = 7
+    stringChild = dynamicNode.ins.insertAttribute(dynamicNode.ins.getNewAttributeData("StringParam"), 1)
+    srcNode.code.connectTo(stringChild)
+
+    # A UID that does not match the node makes it a compatibility node, as with a file saved by an older version
+    graphFile = tmp_path / "graph.mg"
+    graph.save(str(graphFile))
+    graphContent = json.loads(graphFile.read_text())
+    graphContent["graph"][dynamicNode.name]["uid"] = "olderUid"
+    graphFile.write_text(json.dumps(graphContent))
+
+    loadedGraph = loadGraph(str(graphFile))
+    assert isinstance(loadedGraph.node(dynamicNode.name), CompatibilityNode)
+
+    upgradedNode = loadedGraph.upgradeNode(dynamicNode.name)
+    assert [child.name for child in upgradedNode.ins.value] == ["int", "string"]
+    assert upgradedNode.ins.int.value == 7
+    assert upgradedNode.ins.string.inputLink is loadedGraph.node(srcNode.name).code
 
 
 def test_duplicated_attributes_are_added_at_the_end():

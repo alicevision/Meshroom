@@ -2036,31 +2036,6 @@ class AnySet(GroupAttribute):
             self._value.remove(attribute)
             self.flatStaticChildrenChanged.emit()
 
-    def renameAttribute(self, attribute: Attribute, name: str, label: str) -> None:
-        if attribute not in self._value:
-            raise ValueError(f"Attribute '{attribute.fullName}' is not a child of '{self.fullName}'.")
-
-        name = name.strip()
-        label = label.strip()
-        self._validateAttributeName(name, attribute)
-        if not label:
-            raise ValueError("Attribute label cannot be empty.")
-
-        oldName = attribute.name
-        if name != oldName:
-            self._value.rename(oldName, name)
-            attribute._desc._name = name
-            attribute.nameChanged.emit()
-
-        if label != attribute.label:
-            attribute._desc._label = label
-            attribute.labelChanged.emit()
-
-        attribute.fullNameChanged.emit()
-        for child in attribute.flatStaticChildren:
-            child.fullNameChanged.emit()
-        self.flatStaticChildrenChanged.emit()
-
     def moveAttribute(self, attribute: Attribute, toIndex: int) -> None:
         if attribute not in self._value:
             raise ValueError(f"Attribute '{attribute.fullName}' is not a child of '{self.fullName}'.")

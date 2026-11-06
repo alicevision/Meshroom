@@ -1,6 +1,9 @@
 """Tests for the AnySet feature."""
 
-from meshroom.core.attribute import AnySet, Attribute
+import pytest
+
+from meshroom.core import desc
+from meshroom.core.attribute import AnySet, Attribute, attributeFactory
 from meshroom.core.desc import AnySet as AnySetDesc
 from meshroom.core.graph import Graph
 
@@ -568,9 +571,6 @@ def test_edit_anyset_linked_list_stays_disconnected():
 
 
 def test_edit_anyset_attribute_ignores_default_value_that_is_not_editable():
-    from meshroom.core import desc
-    from meshroom.core.attribute import attributeFactory
-
     graph, dynamicNode = initGraphAndNode()
     anySet = dynamicNode.ins
 
@@ -605,6 +605,34 @@ def test_connected_edge_names_include_list_elements():
         (srcNode.code.fullName, listAttr.at(0).fullName),
         (listAttr.at(1).fullName, dstNode.code.fullName),
     ])
+
+
+@pytest.mark.parametrize("attributeDesc", [
+    desc.FloatParam(name="child", label="Child", description="", value=1.0, keyable=True, keyType="viewId"),
+    desc.Point2d(name="child", label="Child", description=""),
+    desc.Point2d(name="child", label="Child", description="", keyable=True, keyType="viewId"),
+    desc.Line2d(name="child", label="Child", description=""),
+    desc.Rectangle(name="child", label="Child", description=""),
+    desc.Circle(name="child", label="Child", description=""),
+    desc.ShapeList(shape=desc.Point2d(name="point", label="Point", description=""), name="child", label="Child", description=""),
+    desc.ShapeList(shape=desc.Point2d(name="point", label="Point", description="", keyable=True, keyType="viewId"), name="child", label="Child", description=""),
+])
+def test_anyset_shape_and_keyable_children_can_be_edited_and_loaded(attributeDesc, tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    child = attributeFactory(attributeDesc.clone(), None, False, dynamicNode, root=anySet)
+    anySet.value.insert(0, child)
+
+    expected = {**child.asDict(), "label": "Edited"}
+
+    edited = anySet.replaceAttribute(child, anySet.getEditedAttributeData(child, {"label": "Edited"}))
+    assert edited.asDict() == expected
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    assert loadGraph(graphFile).node(dynamicNode.name).ins.child.asDict() == expected
 
 
 def test_duplicated_attributes_are_added_at_the_end():

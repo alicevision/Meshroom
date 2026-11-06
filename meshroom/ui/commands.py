@@ -887,7 +887,8 @@ class ConnectAnySetCommand(GraphCommand):
 
     def redoImpl(self) -> bool:
 
-        srcAttr = self.graph.attribute(self.srcAttrName)
+        # The source can be an internal attribute, such as the flow output of a node
+        srcAttr = self.graph.anyAttribute(self.srcAttrName)
         anySetAttribute = self.graph.attribute(self.anySetAttribute)
 
         # Create the new attribute on the node

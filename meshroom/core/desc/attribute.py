@@ -919,3 +919,14 @@ class Flow(Attribute):
 
     def checkValueTypes(self):
         return "", ValueTypeErrors.NONE
+
+    def clone(self):
+        return self.__class__(
+            name=self.name,
+            label=self.label,
+            description=self.description,
+            advanced=self.advanced,
+            enabled=self.enabled,
+            visible=self.visible,
+            exposed=self.exposed
+        )

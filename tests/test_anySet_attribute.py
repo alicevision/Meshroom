@@ -749,6 +749,20 @@ def test_clone_keeps_description_parameters():
     assert desc.GroupAttribute(items=[elementDesc], name="g", validators=validators).clone().validators == validators
 
 
+def test_flow_can_be_duplicated():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+
+    flow = dynamicNode.ins.duplicateAttribute(srcNode.internalAttributes.get("flowOutput"), isOutput=False)
+    graph.addEdge(srcNode.internalAttributes.get("flowOutput"), flow)
+    assert flow.desc.type == "Flow"
+    assert flow.isLink
+
+    graph.removeEdge(flow)
+    restored = dynamicNode.ins.replaceAttribute(flow, flow.asDict())
+    assert restored.desc.type == "Flow"
+
+
 def test_duplicated_number_keeps_range_after_edit():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("DynamicNode")

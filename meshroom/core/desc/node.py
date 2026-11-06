@@ -1,5 +1,3 @@
-# desc/node.py
-
 import enum
 from inspect import getfile, getattr_static
 from pathlib import Path
@@ -12,6 +10,7 @@ import signal
 import subprocess
 from collections import OrderedDict
 from typing import Any, ClassVar, Mapping, Optional, Sequence, TYPE_CHECKING
+from types import SimpleNamespace
 import psutil
 
 from meshroom import _MESHROOM_ROOT
@@ -25,6 +24,7 @@ from .attribute import Attribute, ChoiceParam, ColorParam, File, Flow, IntParam,
 
 if TYPE_CHECKING:
     from meshroom.core.attribute import Attribute as CoreAttribute
+    from meshroom.core.node import BaseNode as CoreBaseNode
     from meshroom.core.node import Node as CoreNode
 
 if getattr(sys, "frozen", False):
@@ -71,6 +71,68 @@ class MrNodeType(enum.Enum):
     COMMANDLINE = enum.auto()
     INIT = enum.auto()
     BACKDROP = enum.auto()
+
+
+class StageSettings(SimpleNamespace):
+    RESOURCES = ("cpu", "ram", "gpu")
+
+    def __init__(self, cpu=Level.NORMAL, ram=Level.NORMAL, gpu=Level.NONE, **kwargs):
+        super().__init__(**kwargs)
+        self.cpu = cpu
+        self.ram = ram
+        self.gpu = gpu
+
+    def __setattr__(self, name, value):
+        """ Ensure the resources are valid levels, which can be given as a Level or its value.
+
+        Raises:
+            ValueError: if the value of a resource does not match any Level.
+        """
+        if name in self.RESOURCES:
+            value = Level(value)
+        super().__setattr__(name, value)
+
+    def __contains__(self, item):
+        return item in self.__dict__
+
+
+class SubmissionSettings:
+    STAGES = [
+        "preprocess",
+        "process",
+        "postprocess"
+    ]
+
+    def __init__(self, node: "CoreBaseNode"):
+        """Holds infos used when we submit the node for remote computing.
+
+        Args:
+            node: the BaseNode instance being updated
+        """
+        # Pre/post process use the default settings
+        self.preprocess = StageSettings()
+        self.postprocess = StageSettings()
+        # Process use the values we set on the node description
+        self.process = StageSettings(cpu=node.cpu, ram=node.ram, gpu=node.gpu)
+        # Copy the list as it is shared by all the node types that do not declare their own licenses
+        self.process.licenses = list(node.nodeDesc._licenses)
+        # Retrocompatibility behaviour
+        if hasattr(node.nodeDesc, "_cuda_tag"):
+            logging.warning(f"DeprecationWarning : Node of type {node.nodeDesc} uses '_cuda_tag'. Please use SubmissionSettings instead.")
+            self.process.cuda_tag = node.nodeDesc._cuda_tag
+        if hasattr(node.nodeDesc, "_service_key"):
+            logging.warning(f"DeprecationWarning : Node of type {node.nodeDesc} uses '_service_key'. Please use SubmissionSettings instead.")
+            self.process.service_key = node.nodeDesc._service_key
+
+    def getStageSettings(self, stageName="process"):
+        stage = getattr(self, stageName, None)
+        if stage and stageName in self.STAGES:
+            return stage
+        raise ValueError(
+             f"Unknown stageName: {stageName!r}. Expected one of: "
+             + ", ".join([f"'{n}'" for n in self.STAGES])
+             + "."
+         )
 
 
 class InternalAttributesFactory:
@@ -400,6 +462,15 @@ class BaseNode(object):
             NodeBase.updateInternals
         """
         pass
+
+    def getSubmissionSettings(self, node) -> SubmissionSettings:
+        """ Gets invoked when we submit the node on farm.
+        SubmissionSettings contain all the settings that we can use on the submitter
+
+        Args:
+            node: The BaseNode instance about to be processed.
+        """
+        return SubmissionSettings(node)
 
     def preprocess(self, node):
         """ Gets invoked just before the processChunk method for the node.

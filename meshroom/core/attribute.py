@@ -65,6 +65,7 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     values = descType.get('values')
     exclusive = descType.get('exclusive')
     keyable = descType.get('keyable')
+    keyType = descType.get('keyType')
     shape = descType.get('shape')
     advanced = descType.get('advanced')
     semantic = descType.get('semantic')
@@ -79,9 +80,16 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
         kwargs['value'] = value
 
     if elementDesc is not None:
-        kwargs['elementDesc'] = attributeDescriptionFactory(elementDesc)
+        elementKey = 'shape' if issubclass(attrClass, desc.ShapeList) else 'elementDesc'
+        kwargs[elementKey] = attributeDescriptionFactory(elementDesc)
 
-    if items is not None:
+    if items is not None and issubclass(attrClass, desc.Shape):
+        # A shape creates its own items: it only needs to know whether its geometry is keyable
+        geometry = next((item for item in items if item.get('name') == 'geometry'), {})
+        geometryItem = (geometry.get('items') or [{}])[0]
+        keyable = geometryItem.get('keyable', keyable)
+        keyType = geometryItem.get('keyType', keyType)
+    elif items is not None:
         kwargs['items'] = [attributeDescriptionFactory(item) for item in items]
 
     if values is not None:
@@ -92,6 +100,7 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
 
     if keyable:
         kwargs['keyable'] = keyable
+        kwargs['keyType'] = keyType
 
     if shape is not None:
         kwargs['shape'] = attributeDescriptionFactory(shape)
@@ -457,6 +466,9 @@ class Attribute(BaseObject):
             "type": self.desc.__class__.__name__,
             "value": self.getSerializedValue()
         }
+        if self.desc.keyable:
+            serializedData["keyable"] = True
+            serializedData["keyType"] = self.desc.keyType
         # Description parameters that can be edited on AnySet children
         if self.desc.description:
             serializedData["description"] = self.desc.description

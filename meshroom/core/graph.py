@@ -1287,6 +1287,8 @@ class Graph(BaseObject):
                 raise StopBranchVisit()
 
         def finishVertex(vertex: BaseNode, graph: Graph):
+            if vertex.isInlineNode:
+                return
             if not vertex.chunks:
                 # Chunks have not been initialized
                 nodes.append(vertex)
@@ -1299,7 +1301,7 @@ class Graph(BaseObject):
                 nodes.append(vertex)  # We could collect specific chunks
 
         def finishEdge(edge, graph: Graph):
-            if edge[0].isComputed or edge[1].isComputed:
+            if any(node.isComputed and not node.isInlineNode for node in edge):
                 return
             edges.append(edge)
 
@@ -1307,7 +1309,31 @@ class Graph(BaseObject):
         visitor.finishEdge = finishEdge
         visitor.discoverVertex = discoverVertex
         self.dfs(visitor=visitor, startNodes=startNodes)
-        return nodes, edges
+        return nodes, self._bypassInlineNodes(edges)
+
+    @staticmethod
+    def _bypassInlineNodes(edges):
+        """
+        Replace the paths going through inline nodes with direct edges: inline nodes are not
+        scheduled, but their downstream nodes must still wait for what these inline nodes read.
+
+        Args:
+            edges: list of (node, inputNode) tuples.
+
+        Returns:
+            list: the (node, inputNode) tuples between non-inline nodes.
+        """
+        inlineInputs = defaultdict(list)
+        for node, inputNode in edges:
+            if node.isInlineNode:
+                inlineInputs[node].append(inputNode)
+
+        def resolve(node):
+            if not node.isInlineNode:
+                return [node]
+            return [resolved for inputNode in inlineInputs[node] for resolved in resolve(inputNode)]
+
+        return [(node, resolved) for node, inputNode in edges if not node.isInlineNode for resolved in resolve(inputNode)]
 
     @Slot(Node, result=bool)
     def canComputeTopologically(self, node):
@@ -1431,7 +1457,7 @@ class Graph(BaseObject):
             assert score != 0
             if score == 1:
                 flowEdges.append(link)
-        return flowEdges
+        return self._bypassInlineNodes(flowEdges)
 
     def getEdges(self, dependenciesOnly=False):
         if not dependenciesOnly:

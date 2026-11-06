@@ -575,7 +575,7 @@ class BaseNode(BaseObject):
         """
         # Ambiguous case for NONE, which could be used for compatibility nodes if we do not have
         # any information about the node descriptor.
-        return self.getMrNodeType() != MrNodeType.INIT and self.getMrNodeType() != MrNodeType.BACKDROP
+        return self.getMrNodeType() not in (MrNodeType.INIT, MrNodeType.BACKDROP, MrNodeType.INLINE)
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -893,6 +893,9 @@ class BaseNode(BaseObject):
 
     def updateStatusFromCache(self):
         """ Update node status based on status file content/existence. """
+        # Inline nodes have no status, but a file may remain if the node type used to be computed
+        if self.isInlineNode:
+            return
         # Update nodeStatus from cache
         chunkChanged = self.updateNodeStatusFromCache()
         # Create chunks from cache if:
@@ -1053,6 +1056,13 @@ class BaseNode(BaseObject):
             self.prepareLogger(ChunkIndex.POSTPROCESS)
             self._postprocessChunk.process(forceCompute, inCurrentEnv)
             self.restoreLogger()
+
+    def processInlineInputs(self):
+        """ Evaluate the inline nodes this node depends on, so that its inputs can be read. """
+        for inputNode in self.getInputNodes(recursive=False, dependenciesOnly=True):
+            if inputNode.isInlineNode:
+                inputNode.processInlineInputs()
+                inputNode.nodeDesc.process(inputNode)
 
     def getLogHandlers(self):
         return self._handlers
@@ -1240,6 +1250,9 @@ class BaseNode(BaseObject):
 
     def _isInitNode(self):
         return isinstance(self.nodeDesc, desc.InitNode)
+
+    def _isInlineNode(self):
+        return isinstance(self.nodeDesc, desc.InlineNode)
 
     def _isInputNode(self):
         return isinstance(self.nodeDesc, desc.InputNode)
@@ -1579,6 +1592,7 @@ class BaseNode(BaseObject):
                                     notify=globalStatusChanged)
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)
     isInitNode = Property(bool, lambda self: self._isInitNode(), constant=True)
+    isInlineNode = Property(bool, lambda self: self._isInlineNode(), constant=True)
     isInputNode = Property(bool, lambda self: self._isInputNode(), constant=True)
     isIONode = Property(bool, lambda self: self._isIONode(), constant=True)
     isBackdropNode = Property(bool, lambda self: self._isBackdropNode(), constant=True)

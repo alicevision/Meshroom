@@ -6,6 +6,7 @@ In this test we test the code that is usually launched directly from the meshroo
 TODO : We could directly test by launching the executable (`desc.node._MESHROOM_COMPUTE_EXE`)
 """
 
+import json
 import os
 import re
 import shutil
@@ -573,6 +574,75 @@ class TestSizeUpdate:
         nodeC.createChunks()
         nodeC.process(inCurrentEnv=True)
         self.checkNodeSizeAndStatus(nodeC, 2, 2, Status.SUCCESS)
+
+
+class TestDynamicChunksStatusFile:
+    """
+    Test that the chunks written in the node status file by another process (e.g. meshroom_createChunks
+    on a render farm) are not lost when the node status is written by a process that has not loaded them.
+    """
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(TestNode_SizeA)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(TestNode_SizeA)
+
+    @staticmethod
+    def readStatusFile(node):
+        with open(node.nodeStatusFile) as jsonFile:
+            return json.load(jsonFile)
+
+    @staticmethod
+    def createChunksInOtherProcess(graph, nodeName):
+        """ Simulate meshroom_createChunks by creating the chunks from a fresh load of the graph. """
+        otherNode = loadGraph(graph.filepath).node(nodeName)
+        assert not otherNode._chunksCreated
+        otherNode.createChunks()
+
+    def test_chunksKeptWhenWritingFromStaleNode(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNode_SizeA.__name__)
+        graph.save()
+
+        # Submitting process: the chunks of a dynamic node are not created yet
+        node.initStatusOnSubmit()
+        assert not node._chunksCreated
+        assert "chunksNbBlocks" not in self.readStatusFile(node)
+
+        self.createChunksInOtherProcess(graph, node.name)
+        assert self.readStatusFile(node)["chunksNbBlocks"] == 2
+
+        # The submitting process writes the node status without having reloaded it
+        node.setJobId("1", "TestSubmitter")
+        assert node._chunksCreated
+        node.upgradeStatusTo(Status.STOPPED)
+        statusData = self.readStatusFile(node)
+        assert statusData["chunksNbBlocks"] == 2
+        assert statusData["jobInfo"]["jid"] == "1"
+        # Once the chunks are created, the status is held by the chunk status files only
+        assert "status" not in statusData
+
+        # Any other process can still create the chunks from the status file, and sees them stopped
+        otherNode = loadGraph(graph.filepath).node(node.name)
+        assert otherNode._chunksCreated
+        assert len(otherNode.chunks) == 2
+        assert otherNode.getGlobalStatus() == Status.STOPPED
+
+    def test_chunksResetOnNewSubmit(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNode_SizeA.__name__)
+        graph.save()
+
+        node.initStatusOnSubmit()
+        self.createChunksInOtherProcess(graph, node.name)
+        assert self.readStatusFile(node)["chunksNbBlocks"] == 2
+
+        # A new submission explicitly drops the chunks so that they are evaluated again
+        node.initStatusOnSubmit()
+        assert "chunksNbBlocks" not in self.readStatusFile(node)
+        assert not loadGraph(graph.filepath).node(node.name)._chunksCreated
 
 
 class TestPrePostProcess:

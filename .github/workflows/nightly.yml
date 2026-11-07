@@ -77,16 +77,18 @@ jobs:
       av_archive: ${{ needs.check-changes.outputs.av_linux }}
 
   # ────────────────────────────────────────────────────────────
-  # Update the single persistent "nightly" pre-release:
-  #   - delete old assets
-  #   - upload new assets
-  #   - prepend a build entry to the release body
-  #   - prune body entries older than 3 days
+  # Update the single persistent "nightly" pre-release, all-or-nothing
+  # (see .github/scripts/nightly-publish.sh): only when both builds
+  # succeeded, and the previous nightly stays published until the new
+  # archives are fully uploaded.
   # ────────────────────────────────────────────────────────────
   release:
     name: Update nightly release
     needs: [check-changes, build-windows, build-linux]
-    if: needs.check-changes.outputs.should_build == 'true'
+    if: >-
+      needs.check-changes.outputs.should_build == 'true'
+      && needs.build-windows.result == 'success'
+      && needs.build-linux.result == 'success'
     runs-on: ubuntu-latest
 
     permissions:
@@ -101,77 +103,25 @@ jobs:
       QTAV_WINDOWS: ${{ needs.check-changes.outputs.qtav_windows }}
       GH_TOKEN:     ${{ github.token }}
 
+    defaults:
+      run:
+        shell: bash
+
     steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+
       - name: Download all build artifacts
         uses: actions/download-artifact@v8
         with:
           path: dist/
 
-      # ── Create the release if it doesn't exist yet ──────────
-      - name: Ensure "nightly" release exists
-        run: |
-          if ! gh release view nightly --repo "$GITHUB_REPOSITORY" &>/dev/null; then
-            echo "Creating initial nightly release…"
-            gh release create nightly \
-              --repo "$GITHUB_REPOSITORY" \
-              --title "Nightly build (develop)" \
-              --notes "_(first build — history will appear here)_" \
-              --prerelease
-          fi
-
-      # ── Replace assets ───────────────────────────────────────
-      # Delete every existing asset on the release, then upload the fresh ones.
-      # This keeps the release page clean: always exactly two assets.
-      - name: Delete existing assets
-        run: |
-          gh release view nightly \
-            --repo "$GITHUB_REPOSITORY" \
-            --json assets \
-            --jq '.assets[].name' \
-          | while read -r ASSET; do
-              echo "  → Deleting asset: $ASSET"
-              gh release delete-asset nightly "$ASSET" \
-                --repo "$GITHUB_REPOSITORY" --yes
-            done
-
-      - name: Upload new assets
-        run: |
-          find dist/ -type f -ls
-          gh release upload nightly \
-            --repo "$GITHUB_REPOSITORY" \
-            "dist/binary-windows/Meshroom-${BUILD_LABEL}-windows.zip" \
-            "dist/binary-linux/Meshroom-${BUILD_LABEL}-linux.tar.gz"
-
-      # ── Update release body ──────────────────────────────────
-      # Rewrite the release body with the latest build info.
-      - name: Update release notes
-        run: |
-          NOW=$(date -u '+%Y-%m-%d %H:%M UTC')
- 
-          cat > nightly_release_notes.md << EOF
-          > [!WARNING]
-          > **Automated nightly build** from the \`develop\` branch. May be unstable.
- 
-          | | |
-          |---|---|
-          | Date   | ${NOW} |
-          | Commit | [${SHORT_SHA}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) |
-          | **Windows** | \`Meshroom-${BUILD_LABEL}-windows.zip\` |
-          | **Linux** | \`Meshroom-${BUILD_LABEL}-linux.tar.gz\` |
-
-          ### Dependencies
-
-          The binaries embed the Python interpreter of the AliceVision nightly below. A new AliceVision or QtAliceVision nightly triggers a rebuild.
-
-          | | Linux | Windows |
-          |---|---|---|
-          | AliceVision | \`${AV_LINUX:-unknown}\` | \`${AV_WINDOWS:-unknown}\` |
-          | QtAliceVision | \`${QTAV_LINUX:-unknown}\` | \`${QTAV_WINDOWS:-unknown}\` |
-          EOF
- 
-          gh release edit nightly \
-            --repo "$GITHUB_REPOSITORY" \
-            --notes-file nightly_release_notes.md
+      - name: Publish nightly release
+        env:
+          DIST_DIR: dist
+        run: bash .github/scripts/nightly-publish.sh
 
       # ── Move the nightly tag to current HEAD ──────
       - name: Re-tag nightly

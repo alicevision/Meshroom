@@ -1,5 +1,9 @@
 # .github/workflows/build-binary.yml
-# Reusable workflow – called by continuous-integration.yml and nightly.yml
+# Reusable workflow – called by nightly.yml
+#
+# Freezes Meshroom (cx_Freeze) with the Python interpreter shipped in the AliceVision nightly bundle, so that
+# the binaries embed the same interpreter as AliceVision. Any error fails the job: the nightly release is then
+# not updated (see the "release" job of nightly.yml).
 
 name: Build binary
 
@@ -14,6 +18,10 @@ on:
         description: "Runner OS: 'ubuntu-22.04' or 'windows-latest'"
         type: string
         required: true
+      av_archive:
+        description: "AliceVision nightly archive for this platform, providing the Python interpreter (as listed in the Meshroom nightly notes)"
+        type: string
+        required: true
     outputs:
       artifact_name:
         description: "Name of the uploaded artifact"
@@ -26,33 +34,94 @@ jobs:
     outputs:
       artifact_name: ${{ steps.set-names.outputs.artifact_name }}
 
+    env:
+      ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
+      PYTHON_VENV: ${{ github.workspace }}/../pyenv
+
+    # bash -eo pipefail on every OS: a failing command, including inside a pipe, fails the step
+    defaults:
+      run:
+        shell: bash
+
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-
       - name: Compute platform names
         id: set-names
-        shell: bash
         run: |
+          set -euo pipefail
           if [ "$RUNNER_OS" = "Windows" ]; then
             echo "platform=windows"          >> "$GITHUB_OUTPUT"
             echo "output_dir=Meshroom-${{ inputs.build_label }}-windows"   >> "$GITHUB_OUTPUT"
             echo "archive=Meshroom-${{ inputs.build_label }}-windows.zip"  >> "$GITHUB_OUTPUT"
             echo "artifact_name=binary-windows"                            >> "$GITHUB_OUTPUT"
+            echo "exe_suffix=.exe"                                         >> "$GITHUB_OUTPUT"
           else
             echo "platform=linux"            >> "$GITHUB_OUTPUT"
             echo "output_dir=Meshroom-${{ inputs.build_label }}-linux"     >> "$GITHUB_OUTPUT"
             echo "archive=Meshroom-${{ inputs.build_label }}-linux.tar.gz" >> "$GITHUB_OUTPUT"
             echo "artifact_name=binary-linux"                              >> "$GITHUB_OUTPUT"
+            echo "exe_suffix="                                             >> "$GITHUB_OUTPUT"
           fi
 
+      # ── Python of the AliceVision nightly ────────────────────
+      # Download the exact archive listed in the Meshroom nightly notes (output of the nightly check). If the
+      # AliceVision nightly was republished meanwhile, the download fails and nothing is published: the next
+      # hourly check rebuilds against the new one.
+      - name: Fetch AliceVision nightly
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AV_ARCHIVE: ${{ inputs.av_archive }}
+        run: |
+          set -euo pipefail
+          if [ -z "$AV_ARCHIVE" ]; then
+            echo "::error title=Build binary::Unknown AliceVision nightly archive (could the nightly check read the AliceVision release?)"
+            exit 1
+          fi
+          mkdir -p "$ALICEVISION_BUNDLE"
+          echo "Downloading: $AV_ARCHIVE"
+          gh release download nightly --repo alicevision/AliceVision --pattern "$AV_ARCHIVE" --dir ..
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            7z x -bd -y "../$AV_ARCHIVE" -o"$ALICEVISION_BUNDLE" > /dev/null
+          else
+            tar -xzf "../$AV_ARCHIVE" -C "$ALICEVISION_BUNDLE" --strip-components=1
+          fi
+          rm "../$AV_ARCHIVE"
+
+      # Venv on top of the interpreter shipped in the AliceVision nightly bundle, as in the AliceVision and
+      # QtAliceVision CI: packages go to the venv only, the bundled interpreter stays untouched.
+      - name: Setup Python
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            BUNDLE_PYTHON="${ALICEVISION_BUNDLE}/python/python.exe"
+            VENV_BIN="${PYTHON_VENV}/Scripts"
+            export PYTHON_ROOT=$(cygpath -w "${ALICEVISION_BUNDLE}/python")
+            VENV_DIR=$(cygpath -w "${PYTHON_VENV}")
+          else
+            BUNDLE_PYTHON="${ALICEVISION_BUNDLE}/python/bin/python3"
+            VENV_BIN="${PYTHON_VENV}/bin"
+            export PYTHON_ROOT="${ALICEVISION_BUNDLE}/python"
+            VENV_DIR="${PYTHON_VENV}"
+          fi
+          if [ ! -f "$BUNDLE_PYTHON" ]; then
+            echo "::error title=Build binary::Python missing from the AliceVision nightly bundle ($BUNDLE_PYTHON)"
+            ls "$ALICEVISION_BUNDLE"
+            exit 1
+          fi
+          "$BUNDLE_PYTHON" -I -m venv "$VENV_DIR"
+          "$VENV_BIN/python" -c "import os, sys; assert os.path.samefile(sys.base_prefix, os.environ['PYTHON_ROOT']), sys.base_prefix; print(sys.version, sys.base_prefix)"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cygpath -w "$VENV_BIN" >> "$GITHUB_PATH"
+          else
+            echo "$VENV_BIN" >> "$GITHUB_PATH"
+          fi
+
+      # ── Build ────────────────────────────────────────────────
       - name: Install system dependencies (Linux only)
         if: runner.os == 'Linux'
         run: |
+          set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             libgl1 libglib2.0-0 libdbus-1-3 \
@@ -61,37 +130,36 @@ jobs:
             libxcb-render-util0 libxcb-shape0 libxkbcommon-x11-0
 
       - name: Install Python dependencies
-        shell: bash
         run: |
+          set -euo pipefail
+          # Fail if "python" does not resolve to the venv on top of the AliceVision interpreter
+          python -c "import os, sys; assert os.path.samefile(sys.prefix, os.environ['PYTHON_VENV']), sys.prefix"
           python -m pip install --upgrade pip
-          pip install -r requirements.txt -r dev_requirements.txt
+          python -m pip install -r requirements.txt -r dev_requirements.txt
 
       - name: Build executable
-        shell: bash
         env:
           OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
         run: |
+          set -euo pipefail
           python setup.py install_exe -d "$OUTPUT_DIR"
 
       - name: Remove unused PySide6 files (Windows)
         if: runner.os == 'Windows'
-        shell: cmd
         env:
           OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
         run: |
-          cd "%OUTPUT_DIR%\lib\PySide6"
-          del /s /q Qt6Web*.dll Qt6Designer*.dll *.exe
-          if exist resources    rmdir /s /q resources
-          if exist translations rmdir /s /q translations
-          if exist typesystems  rmdir /s /q typesystems
-          if exist examples     rmdir /s /q examples
-          if exist include      rmdir /s /q include
+          set -euo pipefail
+          cd "${OUTPUT_DIR}/lib/PySide6"
+          find . \( -name 'Qt6Web*.dll' -o -name 'Qt6Designer*.dll' -o -name '*.exe' \) -type f -delete
+          rm -rf resources translations typesystems examples include
 
       - name: Remove unused PySide6 files (Linux)
         if: runner.os == 'Linux'
         env:
           OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
         run: |
+          set -euo pipefail
           cd "${OUTPUT_DIR}/lib/PySide6"
           rm -rf resources translations typesystems examples include
           cd Qt/lib
@@ -121,28 +189,64 @@ jobs:
         env:
           OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
         run: |
-          find "$OUTPUT_DIR" -name "*.so*" -not -type l | xargs strip --strip-unneeded
+          set -euo pipefail
+          find "$OUTPUT_DIR" -name "*.so*" -not -type l -exec strip --strip-unneeded {} +
 
-      - name: Create archive (Windows)
-        if: github.workflow == 'Nightly' && runner.os == 'Windows'
-        shell: pwsh
+      # ── Checks ───────────────────────────────────────────────
+      # The frozen command line tools must start with the embedded interpreter (after the cleanup above)
+      - name: Smoke test of the frozen binaries
+        env:
+          OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
+          EXE: ${{ steps.set-names.outputs.exe_suffix }}
+        run: |
+          set -euo pipefail
+          for TOOL in meshroom_compute meshroom_batch; do
+            echo "── ${TOOL} -h"
+            "${OUTPUT_DIR}/${TOOL}${EXE}" -h > /dev/null
+          done
+
+      - name: Create archive
         env:
           OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
           ARCHIVE:    ${{ steps.set-names.outputs.archive }}
-        run: Compress-Archive -Path "$env:OUTPUT_DIR" -DestinationPath "$env:ARCHIVE"
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            7z a -tzip -bd "$ARCHIVE" "$OUTPUT_DIR" > /dev/null
+          else
+            tar -czf "$ARCHIVE" "$OUTPUT_DIR"
+          fi
 
-      - name: Create archive (Linux)
-        if: github.workflow == 'Nightly' && runner.os == 'Linux'
+      # Integrity of the archive and expected content: a single top-level folder containing the GUI executable
+      - name: Verify archive
         env:
           OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
           ARCHIVE:    ${{ steps.set-names.outputs.archive }}
-        run: tar -czf "$ARCHIVE" "$OUTPUT_DIR"
+          EXE:        ${{ steps.set-names.outputs.exe_suffix }}
+        run: |
+          set -euo pipefail
+          test -s "$ARCHIVE"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            unzip -tq "$ARCHIVE"
+            LISTING=$(unzip -Z1 "$ARCHIVE")
+          else
+            LISTING=$(tar -tzf "$ARCHIVE")
+          fi
+          TOP_LEVEL=$(cut -d/ -f1 <<< "$LISTING" | sort -u)
+          if [ "$TOP_LEVEL" != "$OUTPUT_DIR" ]; then
+            echo "::error title=Build binary::Unexpected top-level content in ${ARCHIVE}: ${TOP_LEVEL//$'\n'/ }"
+            exit 1
+          fi
+          grep -qx "${OUTPUT_DIR}/Meshroom${EXE}" <<< "$LISTING" || {
+            echo "::error title=Build binary::${OUTPUT_DIR}/Meshroom${EXE} missing from ${ARCHIVE}"
+            exit 1
+          }
+          echo "$(wc -l <<< "$LISTING") entries, $(du -h "$ARCHIVE" | cut -f1)"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
-        if: github.workflow == 'Nightly'
         with:
           name: ${{ steps.set-names.outputs.artifact_name }}
           path: ${{ steps.set-names.outputs.archive }}
           retention-days: 1
-
+          if-no-files-found: error

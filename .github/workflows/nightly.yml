@@ -64,6 +64,7 @@ jobs:
     with:
       os: windows-latest
       build_label: ${{ needs.check-changes.outputs.build_label }}
+      av_archive: ${{ needs.check-changes.outputs.av_windows }}
 
   build-linux:
     name: Build Linux binary
@@ -73,6 +74,7 @@ jobs:
     with:
       os: ubuntu-22.04
       build_label: ${{ needs.check-changes.outputs.build_label }}
+      av_archive: ${{ needs.check-changes.outputs.av_linux }}
 
   # ────────────────────────────────────────────────────────────
   # Update the single persistent "nightly" pre-release:
@@ -159,7 +161,7 @@ jobs:
 
           ### Dependencies
 
-          Nightlies published when this build was made: a new AliceVision or QtAliceVision nightly triggers a rebuild.
+          The binaries embed the Python interpreter of the AliceVision nightly below. A new AliceVision or QtAliceVision nightly triggers a rebuild.
 
           | | Linux | Windows |
           |---|---|---|

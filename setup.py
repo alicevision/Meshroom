@@ -132,6 +132,12 @@ if os.path.isdir(os.path.join(currentDir, "tractor")):
 if os.path.isdir(os.path.join(currentDir, "simpleFarm")):
     build_exe_options["packages"].append("simpleFarm")
 
+if platform.system() == PlatformExecutable.Windows:
+    # Bundle the MSVC runtime (msvcp140, vcruntime140, concrt140, vcomp140...) used by Python, PySide6/Qt and
+    # the QtAliceVision plugins, so that Meshroom starts without the Visual C++ Redistributable installed.
+    # cx_Freeze extracts these DLLs from the latest vc_redist.x64.exe it downloads from Microsoft.
+    build_exe_options["include_msvcr"] = True
+
 if platform.system() == PlatformExecutable.Linux:
     # include required system libs
     # from https://github.com/Ultimaker/cura-build/blob/master/packaging/setup_linux.py.in

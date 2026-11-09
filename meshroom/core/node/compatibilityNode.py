@@ -197,6 +197,10 @@ class CompatibilityNode(BaseNode):
         attrDesc = next((d for d in refAttributes if d.name == name), None)
         if attrDesc is None:
             return None
+        # No serialized value to match (e.g. outputs or default-valued inputs in templates): the attribute
+        # will be reset to its default value
+        if value is None:
+            return attrDesc
         # We have found a description, and we still need to
         # check if the value matches the attribute description.
         #
@@ -207,6 +211,9 @@ class CompatibilityNode(BaseNode):
         # If it is a GroupAttribute, all the attributes within the group should be matched
         # individually so that links can correctly be evaluated.
         if isinstance(attrDesc, desc.GroupAttribute):
+            # A group is serialized as a dict: any other value comes from a different attribute type
+            if not isinstance(value, dict):
+                return None
             for k, v in value.items():
                 if CompatibilityNode.attributeDescFromName(attrDesc.items,
                                                            k, v, strict=True) is None:
@@ -279,6 +286,9 @@ class CompatibilityNode(BaseNode):
         # If it is a GroupAttribute, all the attributes within the group should be matched
         # individually so that links can correctly be evaluated
         if isinstance(attrDesc, desc.GroupAttribute):
+            # A group is serialized as a dict: any other value comes from a different attribute type
+            if not isinstance(value, dict):
+                return None
             for k, v in value.items():
                 if CompatibilityNode.attributeDescFromName(attrDesc.items, k, v, strict) is None:
                     return None

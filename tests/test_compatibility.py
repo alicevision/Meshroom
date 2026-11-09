@@ -5,6 +5,7 @@ import os
 
 import copy
 import json
+from contextlib import nullcontext
 from typing import Type
 import pytest
 
@@ -196,6 +197,37 @@ class OutputTemplateNodeV2(desc.Node):
         desc.File(name="output", label="Output", description="",
                   value="{nodeCacheFolder}/file.cba"),
     ]
+
+
+class GroupInputNode(desc.Node):
+    """ Node with a GroupAttribute input. """
+    inputs = [
+        desc.File(name="input", label="Input", description="", value=""),
+        desc.GroupAttribute(name="group", label="Group", description="", items=[
+            desc.IntParam(name="a", label="a", description="", value=0, range=None),
+        ]),
+    ]
+    outputs = []
+
+
+class TypeChangeNodeV1(desc.Node):
+    inputs = [
+        desc.BoolParam(name="boolToGroup", label="Bool To Group", description="", value=True),
+    ]
+    outputs = []
+
+
+class TypeChangeNodeV2(desc.Node):
+    """
+    Changes from TypeChangeNodeV1:
+        * 'boolToGroup' has become a GroupAttribute
+    """
+    inputs = [
+        desc.GroupAttribute(name="boolToGroup", label="Bool To Group", description="", items=[
+            desc.IntParam(name="a", label="a", description="", value=0, range=None),
+        ]),
+    ]
+    outputs = []
 
 
 def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
@@ -723,6 +755,31 @@ def test_unknownNodeTypeWithAnysetLoadsWithoutNodeDescriptions(tmp_path):
     assert nodeDict["outputs"]["outs"] == serializedNode["outputs"]["outs"]
 
 
+@pytest.mark.parametrize("template", [False, True])
+@pytest.mark.parametrize("versionChange", [False, True])
+def test_attributeTypeChangeCreatesCompatibilityNode(graphSavedOnDisk, template, versionChange):
+    """
+    A value serialized for an attribute that has become a GroupAttribute does not match the new description:
+    the node is loaded as a CompatibilityNode, and upgrading it resets this attribute to its default value.
+    """
+    with registeredNodeTypes([TypeChangeNodeV1, TypeChangeNodeV2]):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TypeChangeNodeV1.__name__, boolToGroup=False)
+        graph.save(template=template)
+
+        replaceNodeTypeDesc(TypeChangeNodeV1.__name__, TypeChangeNodeV2)
+        with overrideNodeTypeVersion(TypeChangeNodeV2, "2.0") if versionChange else nullcontext():
+            loadedGraph = loadGraph(graph.filepath)
+            loadedNode = loadedGraph.node(node.name)
+            # Templates are automatically upgraded
+            if not template:
+                assert isinstance(loadedNode, CompatibilityNode)
+                loadedNode = loadedGraph.upgradeNode(node.name)
+
+    assert isinstance(loadedNode, Node)
+    assert loadedNode.boolToGroup.a.value == 0
+
+
 class TestGraphLoadingWithStrictCompatibility:
 
     def test_failsOnUnknownNodeType(self, graphSavedOnDisk):
@@ -875,6 +932,25 @@ class TestGraphTemplateLoading:
         loadedNode = loadedGraph.node(node.name)
         assert isinstance(loadedNode, Node)
         assert loadedNode.paramA.value == "foo"
+
+    def test_loadsVersionConflictWithDefaultGroupAttribute(self, graphSavedOnDisk):
+        """
+        A template does not serialize a GroupAttribute with a default value: on a version conflict, the
+        CompatibilityNode creates it from the serialized node description, with no value to match.
+        """
+        with registeredNodeTypes([GroupInputNode]):
+            graph: Graph = graphSavedOnDisk
+            with overrideNodeTypeVersion(GroupInputNode, "1.0"):
+                node = graph.addNewNode(GroupInputNode.__name__, input="foo")
+                graph.save(template=True)
+
+            with overrideNodeTypeVersion(GroupInputNode, "2.0"):
+                loadedGraph = loadGraph(graph.filepath)
+
+        loadedNode = loadedGraph.node(node.name)
+        assert isinstance(loadedNode, Node)
+        assert loadedNode.input.value == "foo"
+        assert loadedNode.group.a.value == 0
 
 
 class TestVersionConflict:

@@ -38,6 +38,19 @@ class AnySet(GroupAttribute):
         return value
 
     # Override
+    def clone(self):
+        return self.__class__(items=[item.clone() for item in self._items],
+                              name=self.name,
+                              label=self.label,
+                              description=self.description,
+                              commandLineGroup=self.commandLineGroup,
+                              advanced=self.advanced,
+                              semantic=self.semantic,
+                              enabled=self.enabled,
+                              visible=self.visible,
+                              exposed=self.exposed)
+
+    # Override
     def shortDesc(self) -> dict:
         serializedData = {
             "type": self.__class__.__name__,

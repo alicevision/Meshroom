@@ -608,13 +608,15 @@ class BaseNode(BaseObject):
         if self._chunksCreated:
             return any(c.isAlreadySubmitted() for c in self.getAllChunks())
         else:
-            return self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING)
+            # The global status also accounts for the preprocess chunk, whose status changes are
+            # not reported in the node status file
+            return self.getGlobalStatus() in (Status.SUBMITTED, Status.RUNNING)
 
     def isAlreadySubmittedOrFinished(self):
         if self._chunksCreated:
             return all(c.isAlreadySubmittedOrFinished() for c in self.getAllChunks())
         else:
-            return self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS)
+            return self.getGlobalStatus() in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS)
 
     @Slot(result=bool)
     def isSubmittedOrRunning(self):
@@ -666,7 +668,7 @@ class BaseNode(BaseObject):
         if not self._chunksCreated:
             if self._nodeStatus.execMode == ExecMode.EXTERN:
                 return True
-            elif self._nodeStatus.execMode == ExecMode.LOCAL and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
+            elif self._nodeStatus.execMode == ExecMode.LOCAL and self.getGlobalStatus() in (Status.SUBMITTED, Status.RUNNING):
                 return meshroom.core.sessionUid != self._nodeStatus.submitterSessionUid
             return False
         return any(chunk.isExtern() for chunk in self.getAllChunks())
@@ -868,8 +870,9 @@ class BaseNode(BaseObject):
         if self._chunksCreated:
             # Only monitor when chunks are not created (in this case monitor chunk status files instead)
             return False
-        return (self.isExtern() and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or \
-               (self.getMrNodeType() == MrNodeType.NODE and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING))
+        status = self.getGlobalStatus()
+        return (self.isExtern() and status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or \
+               (self.getMrNodeType() == MrNodeType.NODE and status in (Status.SUBMITTED, Status.RUNNING))
 
     def updateNodeStatusFromCache(self):
         """
@@ -926,9 +929,10 @@ class BaseNode(BaseObject):
             # Restore placeholder chunk if needed
             chunkPlaceholder = NodeChunk(self, desc.computation.Range(), placeholder=True)
             chunkPlaceholder._status.execMode = self._nodeStatus.execMode
-            if self._nodeStatus.status in (Status.NONE, Status.SUBMITTED):
-                chunkPlaceholder._status.status = self._nodeStatus.status
-            elif self._nodeStatus.status in (Status.RUNNING,):
+            globalStatus = self.getGlobalStatus()
+            if globalStatus in (Status.NONE, Status.SUBMITTED):
+                chunkPlaceholder._status.status = globalStatus
+            elif globalStatus in (Status.RUNNING,):
                 chunkPlaceholder._status.status = Status.SUBMITTED
             else:
                 chunkPlaceholder._status.status = Status.NONE

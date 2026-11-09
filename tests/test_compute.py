@@ -15,9 +15,11 @@ from types import SimpleNamespace
 from pathlib import Path
 import logging
 
+import pytest
+
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core import desc, pluginManager
-from meshroom.core.node import Status, ChunkIndex
+from meshroom.core.node import Status, ChunkIndex, CompatibilityNode
 from .utils import registerNodeDesc, unregisterNodeDesc
 
 LOGGER = logging.getLogger("TestCompute")
@@ -643,6 +645,92 @@ class TestDynamicChunksStatusFile:
         node.initStatusOnSubmit()
         assert "chunksNbBlocks" not in self.readStatusFile(node)
         assert not loadGraph(graph.filepath).node(node.name)._chunksCreated
+
+
+class TestNode_SizeAFailingPreprocess(TestNode_SizeA):
+    """ Dynamic size node whose preprocess fails """
+    def preprocess(self, node):
+        raise RuntimeError()
+
+
+class TestStatusFromChunks:
+    """
+    Test that the global status of a node seen from another process is correct, although the chunks
+    only write their own status file and never update the node status file.
+    """
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(TestNode_SizeA)
+        registerNodeDesc(TestNode_SizeAFailingPreprocess)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(TestNode_SizeA)
+        unregisterNodeDesc(TestNode_SizeAFailingPreprocess)
+
+    def test_failingPreprocessBeforeChunksCreation(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNode_SizeAFailingPreprocess.__name__)
+        graph.save()
+        node.initStatusOnSubmit()
+
+        # The preprocess fails in another process (e.g. on a render farm), before the chunks are created
+        farmNode = loadGraph(graph.filepath).node(node.name)
+        with pytest.raises(RuntimeError):
+            farmNode.preprocess(inCurrentEnv=True)
+
+        # Any other process sees the node as failed, and not as still submitted
+        otherNode = loadGraph(graph.filepath).node(node.name)
+        assert not otherNode._chunksCreated
+        assert otherNode.getGlobalStatus() == Status.ERROR
+        assert not otherNode.isAlreadySubmitted()
+
+        # Writing the node status only stores the node-level status, not the preprocess one
+        otherNode.setJobId("1", "TestSubmitter")
+        assert TestDynamicChunksStatusFile.readStatusFile(otherNode)["status"] == Status.SUBMITTED.name
+        assert otherNode.getGlobalStatus() == Status.ERROR
+
+        # Cleanup: Close all logging handlers to release file locks (Windows fix)
+        for handler in logging.root.handlers[:]:
+            handler.close()
+            logging.root.removeHandler(handler)
+
+    def test_noStatusStoredOnceChunksCreated(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNode_SizeA.__name__)
+        graph.save()
+
+        # Before the chunks creation, the node status file holds the node-level status
+        node.initStatusOnSubmit()
+        assert TestDynamicChunksStatusFile.readStatusFile(node)["status"] == Status.SUBMITTED.name
+
+        # Once the chunks are created, the status is only held by the chunk status files
+        TestDynamicChunksStatusFile.createChunksInOtherProcess(graph, node.name)
+        statusData = TestDynamicChunksStatusFile.readStatusFile(node)
+        assert "status" not in statusData
+        assert statusData["chunksNbBlocks"] == 2
+
+    def test_compatibilityNodeStatusFromChunks(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNode_SizeA.__name__)
+        graph.save()
+        node.initStatusOnSubmit()
+
+        # The chunks are created and computed in another process
+        farmNode = loadGraph(graph.filepath).node(node.name)
+        farmNode.createChunks()
+        farmNode.process(inCurrentEnv=True)
+        assert farmNode.getGlobalStatus() == Status.SUCCESS
+
+        # Without its description, the node is loaded as a CompatibilityNode, which has no chunks
+        unregisterNodeDesc(TestNode_SizeA)
+        try:
+            compatNode = loadGraph(graph.filepath).node(node.name)
+            assert isinstance(compatNode, CompatibilityNode)
+            assert compatNode.getGlobalStatus() == Status.SUCCESS
+            assert compatNode.hasStatus(Status.SUCCESS)
+        finally:
+            registerNodeDesc(TestNode_SizeA)
 
 
 class TestPrePostProcess:

@@ -459,7 +459,7 @@ class Graph(BaseObject):
         # impacted as well, as the uid flows through connections.
         # Therefore, we deal with conflicting uid nodes by depth: replacing a node with a CompatibilityNode restores
         # the serialized uid, which might solve "false-positives" downstream conflicts as well.
-        nodesSortedByDepth = sorted(uidConflictingNodes, key=lambda node: node.minDepth)
+        nodesSortedByDepth = sorted(uidConflictingNodes, key=lambda node: node.depth)
         for node in nodesSortedByDepth:
             nodeData = graphContent[node.name]
             # Evaluate if the node uid is still conflicting at this point, or if it has been resolved by an

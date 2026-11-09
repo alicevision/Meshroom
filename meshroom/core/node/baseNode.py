@@ -940,15 +940,21 @@ class BaseNode(BaseObject):
         self.updateOutputAttr()
 
     def upgradeStatusFile(self):
-        """ Write node status on disk. """
-        # Make sure the node has the globalStatus before saving it
-        self._nodeStatus.status = self.getGlobalStatus()
+        """
+        Write node status on disk.
+
+        The status is only written while the chunks are not created: it is then the node-level status
+        (e.g. submitted, stopped before the chunks creation). Once the chunks are created, the status of
+        the node is the aggregation of the statuses of its chunks, which are stored in their own files.
+        """
         # Ensure chunk info is always in sync with the actual chunks before writing,
         # as _nodeStatus.chunks can be cleared by _resetChunks/loadFromCache and may not
         # have been restored (e.g. after createChunksFromCache which does not call setChunks).
         if self._chunksCreated and self._chunks:
             self._nodeStatus.setChunks(self._chunks)
         data = self._nodeStatus.toDict()
+        if self._chunksCreated:
+            data.pop("status", None)
         statusFilepath = self.nodeStatusFile
         folder = os.path.dirname(statusFilepath)
         os.makedirs(folder, exist_ok=True)

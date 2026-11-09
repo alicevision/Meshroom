@@ -10,8 +10,8 @@ LayerListGroup {
 
     property var collection: null
 
-    name: "Sfm data"
-    emptyText: "No sfmData entries"
+    name: "SfM Data"
+    emptyText: "No SfM Data entry"
     layerList: collection ? collection.sfmData : null
     showPicking: true
 
@@ -64,7 +64,7 @@ LayerListGroup {
             PropertySlider {
                 Layout.fillWidth: true
                 icon: MaterialIcons.switch_video
-                toolTipName: "ResectionId"
+                toolTipName: "Resection ID"
                 from: 0
                 to: advanced.sfmData && advanced.sfmData.maxResectionId !== undefined ? advanced.sfmData.maxResectionId : 100
                 stepSize: 1
@@ -99,7 +99,7 @@ LayerListGroup {
             }
 
             CheckBox {
-                text: "View through camera"
+                text: "View Through Camera"
                 font.pointSize: 10
                 // Reflects the collection's selection, so selecting another SfmData unchecks this one
                 checked: root.collection !== null && advanced.sfmData !== null && root.collection.selectedSfmDataObject === advanced.sfmData

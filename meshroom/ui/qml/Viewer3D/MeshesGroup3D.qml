@@ -7,7 +7,7 @@ LayerListGroup {
     property var collection: null
 
     name: "Meshes"
-    emptyText: "No mesh entries"
+    emptyText: "No mesh entry"
     layerList: collection ? collection.meshes : null
     showPicking: true
 

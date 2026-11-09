@@ -1000,6 +1000,28 @@ class TestUidConflict:
 
             assert loadedNodeB.param.at(0).inputLink == loadedNodeA.output
 
+    def test_uidConflictingNodesPreserveFlowConnectionsOnGraphLoad(self, graphSavedOnDisk):
+        with registeredNodeTypes([UidTestingNodeV2]):
+            graph: Graph = graphSavedOnDisk
+            nodeA = graph.addNewNode(UidTestingNodeV2.__name__)
+            nodeB = graph.addNewNode(UidTestingNodeV2.__name__)
+
+            nodeB.internalAttribute("flowInputs").append("0")
+            graph.addEdge(nodeA.internalAttribute("flowOutput"), nodeB.internalAttribute("flowInputs").at(0))
+
+            graph.save()
+            replaceNodeTypeDesc(UidTestingNodeV2.__name__, UidTestingNodeV3)
+
+            # UID conflicting nodes are recreated without their node description
+            loadedGraph = loadGraph(graph.filepath)
+            assert len(loadedGraph.compatibilityNodes) == 2
+
+            loadedNodeA = loadedGraph.node(nodeA.name)
+            loadedNodeB = loadedGraph.node(nodeB.name)
+
+            flowInput = loadedNodeB.internalAttribute("flowInputs").at(0)
+            assert flowInput.inputLink == loadedNodeA.internalAttribute("flowOutput")
+
     def test_upgradingConflictingNodesPreserveConnections(self, graphSavedOnDisk):
         with registeredNodeTypes([UidTestingNodeV2]):
             graph: Graph = graphSavedOnDisk
@@ -1325,6 +1347,64 @@ class TestUpgradeConnections:
 
         assert isinstance(graph.node(nodeName), Node)
         assert self.edgeNames(graph) == edgesBefore
+
+    def test_recreatingCompatibilityNodeWithoutNodeDescriptionPreservesConnections(self, connectedGraphFactory):
+        """
+        Mirrors the undo of the RemoveNodeCommand (UI), which recreates the CompatibilityNode
+        from its serialized data only, without its node description.
+        """
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        edgesBefore = self.edgeNames(graph)
+
+        nodeDict = copy.deepcopy(graph.node(nodeName).toDict())
+        _, outEdges, outListAttributes = graph.removeNode(nodeName)
+        graph.addNode(nodeFactory(nodeDict, nodeName), nodeName)
+        graph._restoreOutEdges(outEdges, outListAttributes)
+
+        assert isinstance(graph.node(nodeName), CompatibilityNode)
+        assert self.edgeNames(graph) == edgesBefore
+
+    def test_compatibilityNodeSerializesUpdatedFlowConnections(self, connectedGraphFactory, tmp_path):
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        flowInputs = graph.node(nodeName).internalAttribute("flowInputs")
+        upNode = flowInputs.at(0).inputLink.node
+
+        # Rename the upstream node: its previous name is then taken by a new node, connected with a new flow edge
+        graph.renameNode(upNode, "renamedUp")
+        newUpNode = graph.addNewNode(UidTestingNodeV1.__name__)
+        flowInputs.append("0")
+        graph.addEdge(newUpNode.internalAttribute("flowOutput"), flowInputs.at(1))
+        edgesBefore = self.edgeNames(graph)
+
+        graphFile = str(tmp_path / "test_updated_graph.mg")
+        graph.save(graphFile)
+        loadedGraph = loadGraph(graphFile)
+
+        assert isinstance(loadedGraph.node(nodeName), CompatibilityNode)
+        assert self.edgeNames(loadedGraph) == edgesBefore
+
+    def test_compatibilityNodeSerializesRemovedFlowConnections(self, connectedGraphFactory, tmp_path):
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        flowInputs = graph.node(nodeName).internalAttribute("flowInputs")
+        graph.removeEdge(flowInputs.at(0))
+        flowInputs.remove(0)
+        edgesBefore = self.edgeNames(graph)
+
+        graphFile = str(tmp_path / "test_updated_graph.mg")
+        graph.save(graphFile)
+        loadedGraph = loadGraph(graphFile)
+
+        assert len(loadedGraph.node(nodeName).internalAttribute("flowInputs")) == 0
+        assert self.edgeNames(loadedGraph) == edgesBefore
+
+    def test_savingAsTemplateDoesNotAlterCompatibilityNodeSerialization(self, connectedGraphFactory, tmp_path):
+        graph, nodeName = connectedGraphFactory(ConnectedNodeV2)
+        nodeDictBefore = copy.deepcopy(graph.node(nodeName).toDict())
+
+        # The template serialization removes the outputs, uid and parallelization from the serialized node
+        graph.save(str(tmp_path / "test_template.mg"), setupProjectFile=False, template=True)
+
+        assert graph.node(nodeName).toDict() == nodeDictBefore
 
     def test_undoUpgradeRestoresCompatibilityNodeAndConnections(self, connectedGraphFactory):
         graph, nodeName = connectedGraphFactory(ConnectedNodeV2)

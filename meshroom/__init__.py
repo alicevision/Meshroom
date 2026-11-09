@@ -116,6 +116,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
                    - cameraSensors.db   # sensor database
                    - vlfeat_K80L3.tree  # voctree file
        - lib/      # Python lib folder
+       - python/   # bundled Python interpreter (windows: python.exe, unix: bin/python3)
        - qtPlugins/
        - plugins/
        Meshroom    # main executable
@@ -175,7 +176,11 @@ def setupEnvironment(backend=Backend.STANDALONE):
 
         # The frozen lib folder only holds bytecode for the bundled interpreter: expose it so that
         # "python" (used to run meshroom_compute for Python nodes) does not resolve to the system one.
-        pythonBinDir = os.path.join(rootDir, "python", "bin")
+        # The bundled interpreter is python/python.exe on Windows, python/bin/python3 elsewhere.
+        if sys.platform == "win32":
+            pythonBinDir = os.path.join(rootDir, "python")
+        else:
+            pythonBinDir = os.path.join(rootDir, "python", "bin")
         if os.path.isdir(pythonBinDir):
             env["PATH"].append(pythonBinDir)
 

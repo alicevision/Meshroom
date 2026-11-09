@@ -5,6 +5,7 @@ import json
 import logging
 import sys
 
+from meshroom.common import Backend
 from meshroom.core.plugins.base import PluginType, NodeDescProviderStatus, SubmitterProviderStatus
 from meshroom.core.plugins.loader import PLUGINS_ROOT_PACKAGE, PluginLoader
 from ..utils import writeFile
@@ -29,6 +30,17 @@ def _submitterSource(className: str, name: str = None) -> str:
 
 def _brokenSource() -> str:
     return "raise RuntimeError('broken')\n"
+
+
+def _menuSource(counterFile: str) -> str:
+    """ Menu declaration writing its execution count to "counterFile", to detect how many
+    times it was executed. """
+    return (
+        "from pathlib import Path\n"
+        f"counter = Path({counterFile!r})\n"
+        "count = int(counter.read_text()) if counter.exists() else 0\n"
+        "counter.write_text(str(count + 1))\n"
+    )
 
 
 class TestPluginLoader:
@@ -438,3 +450,88 @@ class TestPluginLoader:
         assert plugin.version == "1.0.0"
 
         loader.unloadPlugin("fallbackPlugin")
+
+    def test_menuLoaded(self, tmp_path, monkeypatch):
+        """ A "menu.py" at the plugin's root is executed when the plugin is loaded. """
+        monkeypatch.setattr("meshroom.common.CurrentBackend", Backend.PYSIDE)
+        counterFile = tmp_path / "menu_count.txt"
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/menu.py", _menuSource(str(counterFile)))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("menuPlugin", str(tmp_path), PluginType.PATH)
+
+        assert plugin is not None
+        assert list(plugin.nodeDescProviders.keys()) == ["MyNode"]
+        # The menu file was executed exactly once.
+        assert counterFile.read_text() == "1"
+        # It is registered as a module of the plugin's virtual package.
+        menuModuleName = f"{PLUGINS_ROOT_PACKAGE}.menuPlugin.menu"
+        assert menuModuleName in sys.modules
+
+        loader.unloadPlugin("menuPlugin")
+        assert menuModuleName not in sys.modules
+
+    def test_menuLoadedWithoutNodes(self, tmp_path, monkeypatch):
+        """ A plugin with only a menu declaration still gets its menu executed. """
+        monkeypatch.setattr("meshroom.common.CurrentBackend", Backend.PYSIDE)
+        counterFile = tmp_path / "menu_count.txt"
+        writeFile(tmp_path / "meshroom/menu.py", _menuSource(str(counterFile)))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("menuOnlyPlugin", str(tmp_path), PluginType.PATH)
+
+        # The plugin itself is empty and not returned...
+        assert plugin is None
+        # ... but its menu declaration was still executed.
+        assert counterFile.read_text() == "1"
+
+        loader.unloadPlugin("menuOnlyPlugin")
+
+    def test_brokenMenuDoesNotBlockPlugin(self, tmp_path, caplog, monkeypatch):
+        """ A failing "menu.py" is logged as an issue, but the plugin still loads. """
+        monkeypatch.setattr("meshroom.common.CurrentBackend", Backend.PYSIDE)
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/menu.py", _brokenSource())
+
+        loader = PluginLoader()
+        with caplog.at_level(logging.WARNING):
+            plugin = loader.loadPlugin("brokenMenuPlugin", str(tmp_path), PluginType.PATH)
+
+        assert plugin is not None
+        assert list(plugin.nodeDescProviders.keys()) == ["MyNode"]
+        assert "menu" in caplog.text
+
+        loader.unloadPlugin("brokenMenuPlugin")
+
+    def test_menuNotLoadedOutsidePysideBackend(self, tmp_path, monkeypatch):
+        """ The menu declaration file is ignored when the PySide backend is not active. """
+        monkeypatch.setattr("meshroom.common.CurrentBackend", Backend.STANDALONE)
+        counterFile = tmp_path / "menu_count.txt"
+        writeFile(tmp_path / "meshroom/MyNode.py", _nodeDescSource("MyNode"))
+        writeFile(tmp_path / "meshroom/menu.py", _menuSource(str(counterFile)))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("standaloneMenuPlugin", str(tmp_path), PluginType.PATH)
+
+        assert plugin is not None
+        assert list(plugin.nodeDescProviders.keys()) == ["MyNode"]
+        # The menu file was not executed.
+        assert not counterFile.exists()
+        assert f"{PLUGINS_ROOT_PACKAGE}.standaloneMenuPlugin.menu" not in sys.modules
+
+        loader.unloadPlugin("standaloneMenuPlugin")
+
+    def test_menuInSubfolderIsRegularModule(self, tmp_path, monkeypatch):
+        """ Only the root "menu.py" is reserved: a "menu.py" in a subfolder is loaded and scanned like any module. """
+        monkeypatch.setattr("meshroom.common.CurrentBackend", Backend.PYSIDE)
+        writeFile(tmp_path / "meshroom/tools/menu.py", _nodeDescSource("MenuNode"))
+
+        loader = PluginLoader()
+        plugin = loader.loadPlugin("subfolderMenuPlugin", str(tmp_path), PluginType.PATH)
+
+        assert plugin is not None
+        assert list(plugin.nodeDescProviders.keys()) == ["MenuNode"]
+        assert f"{PLUGINS_ROOT_PACKAGE}.subfolderMenuPlugin.menu" not in sys.modules
+
+        loader.unloadPlugin("subfolderMenuPlugin")

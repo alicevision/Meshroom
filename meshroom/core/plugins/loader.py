@@ -9,7 +9,8 @@ from types import ModuleType
 from pathlib import Path
 from typing import List, Optional
 
-from meshroom.common import BaseObject
+import meshroom.common
+from meshroom.common import BaseObject, Backend
 from meshroom.core import desc
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.plugins.base import PluginType, PluginContext, Plugin
@@ -18,6 +19,11 @@ from meshroom.core.plugins.metadata import PluginMetadata
 # The virtual package all the imported plugins are nested in.
 # Registered directly in sys.modules.
 PLUGINS_ROOT_PACKAGE = "_meshroomPlugins"
+
+# Reserved file name, at the root of a plugin's host modules, declaring the plugin's menus.
+# It is executed as "<PLUGINS_ROOT_PACKAGE>.<pluginName>.menu" when the plugin is loaded,
+# instead of being scanned for node/submitter providers like the other modules.
+PLUGIN_MENU_FILE = "menu.py"
 
 
 class _LoadIssues:
@@ -69,7 +75,8 @@ class PluginLoader:
         Python package, and every standalone Python file directly inside a plain (non-package)
         subfolder is loaded. A NodeDescProvider is created for each node description that is found.
         A SubmitterProvider for each submitter class, that is found. The templates and the configuration
-        file are read from "pluginFolder".
+        file are read from "pluginFolder". A "menu.py" file at the root of the host modules, if any,
+        is executed so that the plugin can declare its menus.
 
         The plugin's final name and version are resolved from its configuration file (config.json),
         falling back to "pluginName"/"pluginVersion" when the configuration file does not provide them.
@@ -163,6 +170,9 @@ class PluginLoader:
         issues = _LoadIssues()
         self._loadRootFolder(plugin, pluginPackage, hostPath, issues)
 
+        # Execute the plugin's menu declarations, if any.
+        self._loadMenu(pluginPackage, hostPath, issues)
+
         # Log issues.
         issues.log(pluginName)
 
@@ -187,6 +197,33 @@ class PluginLoader:
         for moduleName in [name for name in sys.modules if name == pluginPackage or name.startswith(f"{pluginPackage}.")]:
             del sys.modules[moduleName]
 
+    def _loadMenu(self, packageName: str, hostPath: Path, issues: _LoadIssues):
+        """
+        Execute the plugin's menu declaration file ("menu.py" at the root of its host modules),
+        so that the plugin can register its menus. The file is executed as the module
+        "<packageName>.menu" of the plugin's virtual package, and is not scanned for
+        node/submitter providers.
+
+        Menus are a UI concept: the file is only executed when Meshroom runs with its
+        graphical interface (the PySide backend), and ignored by the command-line tools.
+
+        Args:
+            packageName: the dotted name of the plugin's virtual package.
+            hostPath: the plugin's host modules folder (its "meshroom" folder).
+            issues: the collector for the issues found while loading the plugin.
+        """
+        # Read at call time: the backend is chosen after this module may have been imported.
+        if meshroom.common.CurrentBackend != Backend.PYSIDE:
+            return
+
+        menuFile = hostPath / PLUGIN_MENU_FILE
+        if not menuFile.is_file():
+            return
+
+        # Register the package now that the folder is known to provide the menu module.
+        self._registerPackage(packageName, hostPath)
+        self._execModule(f"{packageName}.menu", menuFile, issues)
+
     def _loadRootFolder(self, plugin: Plugin, packageName: str, folderRootPath: Path, issues: _LoadIssues):
         """
         Load plugin's root folder. The root itself is always treated as a flat folder,
@@ -199,7 +236,8 @@ class PluginLoader:
             folderRootPath: the plugin's root folder to load.
             issues: the collector for the issues found while loading the plugin.
         """
-        self._loadFlatFolder(plugin, packageName, folderRootPath, issues)
+        # The menu declaration file (menu.py) is reserved at the root only
+        self._loadFlatFolder(plugin, packageName, folderRootPath, issues, excludedStems=(Path(PLUGIN_MENU_FILE).stem,))
 
         for subFolderPath in sorted(p for p in folderRootPath.iterdir()
                                     if p.is_dir() and not p.name.startswith(("__", "."))):
@@ -271,7 +309,8 @@ class PluginLoader:
                 continue
             self._collectProviders(plugin, childModule, issues)
 
-    def _loadFlatFolder(self, plugin: Plugin, packageName: str, folderPath: Path, issues: _LoadIssues):
+    def _loadFlatFolder(self, plugin: Plugin, packageName: str, folderPath: Path, issues: _LoadIssues,
+                        excludedStems: tuple = ()):
         """
         Load every Python file directly contained in "folderPath" as a module of the virtual
         package "packageName", and collect the node/submitter providers these modules define.
@@ -280,10 +319,13 @@ class PluginLoader:
             packageName: the dotted name of the virtual package the folder stands for.
             folderPath: the folder containing the Python files to load.
             issues: the collector for the issues found while loading the plugin.
+            excludedStems: the stems of the files of "folderPath" that must not be loaded.
         """
         for filePath in sorted([*folderPath.glob("*.py"), *folderPath.glob("*.pyc")]):
             # Skip special/dunder files like __init__.py
             if filePath.stem.startswith("__"):
+                continue
+            if filePath.stem in excludedStems:
                 continue
 
             module = self._execModule(f"{packageName}.{filePath.stem}", filePath, issues)

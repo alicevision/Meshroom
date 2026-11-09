@@ -1,5 +1,6 @@
 module Controls
 
+UserMenu 1.0 UserMenu.qml
 ColorChart 1.0 ColorChart.qml
 ColorSelector 1.0 ColorSelector.qml
 ExpandableGroup 1.0 ExpandableGroup.qml

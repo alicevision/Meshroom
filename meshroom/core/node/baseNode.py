@@ -1186,33 +1186,39 @@ class BaseNode(BaseObject):
         Returns:
             Status: the node global status
         """
-        anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
-                 Status.RUNNING, Status.SUBMITTED)
-        allOf = (Status.SUCCESS,)
-
         if self.isInitNode:
             return Status.INIT
         if not self._chunksCreated:
             # If the preprocess chunk failed we might not reach the chunk creation part
-            if self.hasPreprocessChunk and self._preprocessChunk._status.status in anyOf:
+            if self.hasPreprocessChunk and self._preprocessChunk._status.status in self.dominantChunkStatuses:
                 return self._preprocessChunk._status.status
             # Get status from nodeStatus
             return self._nodeStatus.status
-        allChunks = self.getAllChunks()
-        if not allChunks:
-            return Status.NONE
+        return self.aggregateChunksStatus([chunk._status.status for chunk in self.getAllChunks()])
 
-        chunksStatus = [chunk._status.status for chunk in allChunks]
+    # Statuses that define the global status of a node as soon as one of its chunks has them, by priority
+    dominantChunkStatuses = (Status.ERROR, Status.STOPPED, Status.KILLED, Status.RUNNING, Status.SUBMITTED)
+
+    @classmethod
+    def aggregateChunksStatus(cls, chunksStatus):
+        """
+        Get a node global status from the statuses of its chunks.
+
+        Args:
+            chunksStatus (list[Status]): the statuses of all the chunks of the node.
+
+        Returns:
+            Status: the node global status
+        """
+        if not chunksStatus:
+            return Status.NONE
         if len(chunksStatus) == 1:
             return chunksStatus[0]
-
-        for status in anyOf:
-            if any(s == status for s in chunksStatus):
+        for status in cls.dominantChunkStatuses:
+            if status in chunksStatus:
                 return status
-        for status in allOf:
-            if all(s == status for s in chunksStatus):
-                return status
-
+        if all(s == Status.SUCCESS for s in chunksStatus):
+            return Status.SUCCESS
         return Status.NONE
 
     @Slot(result=ChunkStatusData)

@@ -5,6 +5,7 @@ import os
 
 import copy
 import json
+from contextlib import nullcontext
 from typing import Type
 import pytest
 
@@ -203,6 +204,26 @@ class GroupInputNode(desc.Node):
     inputs = [
         desc.File(name="input", label="Input", description="", value=""),
         desc.GroupAttribute(name="group", label="Group", description="", items=[
+            desc.IntParam(name="a", label="a", description="", value=0, range=None),
+        ]),
+    ]
+    outputs = []
+
+
+class TypeChangeNodeV1(desc.Node):
+    inputs = [
+        desc.BoolParam(name="boolToGroup", label="Bool To Group", description="", value=True),
+    ]
+    outputs = []
+
+
+class TypeChangeNodeV2(desc.Node):
+    """
+    Changes from TypeChangeNodeV1:
+        * 'boolToGroup' has become a GroupAttribute
+    """
+    inputs = [
+        desc.GroupAttribute(name="boolToGroup", label="Bool To Group", description="", items=[
             desc.IntParam(name="a", label="a", description="", value=0, range=None),
         ]),
     ]
@@ -732,6 +753,31 @@ def test_unknownNodeTypeWithAnysetLoadsWithoutNodeDescriptions(tmp_path):
     nodeDict = node.toDict()
     assert nodeDict["inputs"]["ins"] == serializedNode["inputs"]["ins"]
     assert nodeDict["outputs"]["outs"] == serializedNode["outputs"]["outs"]
+
+
+@pytest.mark.parametrize("template", [False, True])
+@pytest.mark.parametrize("versionChange", [False, True])
+def test_attributeTypeChangeCreatesCompatibilityNode(graphSavedOnDisk, template, versionChange):
+    """
+    A value serialized for an attribute that has become a GroupAttribute does not match the new description:
+    the node is loaded as a CompatibilityNode, and upgrading it resets this attribute to its default value.
+    """
+    with registeredNodeTypes([TypeChangeNodeV1, TypeChangeNodeV2]):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TypeChangeNodeV1.__name__, boolToGroup=False)
+        graph.save(template=template)
+
+        replaceNodeTypeDesc(TypeChangeNodeV1.__name__, TypeChangeNodeV2)
+        with overrideNodeTypeVersion(TypeChangeNodeV2, "2.0") if versionChange else nullcontext():
+            loadedGraph = loadGraph(graph.filepath)
+            loadedNode = loadedGraph.node(node.name)
+            # Templates are automatically upgraded
+            if not template:
+                assert isinstance(loadedNode, CompatibilityNode)
+                loadedNode = loadedGraph.upgradeNode(node.name)
+
+    assert isinstance(loadedNode, Node)
+    assert loadedNode.boolToGroup.a.value == 0
 
 
 class TestGraphLoadingWithStrictCompatibility:

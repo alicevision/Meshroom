@@ -198,6 +198,17 @@ class OutputTemplateNodeV2(desc.Node):
     ]
 
 
+class GroupInputNode(desc.Node):
+    """ Node with a GroupAttribute input. """
+    inputs = [
+        desc.File(name="input", label="Input", description="", value=""),
+        desc.GroupAttribute(name="group", label="Group", description="", items=[
+            desc.IntParam(name="a", label="a", description="", value=0, range=None),
+        ]),
+    ]
+    outputs = []
+
+
 def replaceNodeTypeDesc(nodeType: str, nodeDesc: Type[desc.Node]):
     """ Change the `nodeDesc` associated to `nodeType`. """
     pluginManager.getNodeDescProviders()[nodeType] = NodeDescProvider(nodeDesc)
@@ -875,6 +886,25 @@ class TestGraphTemplateLoading:
         loadedNode = loadedGraph.node(node.name)
         assert isinstance(loadedNode, Node)
         assert loadedNode.paramA.value == "foo"
+
+    def test_loadsVersionConflictWithDefaultGroupAttribute(self, graphSavedOnDisk):
+        """
+        A template does not serialize a GroupAttribute with a default value: on a version conflict, the
+        CompatibilityNode creates it from the serialized node description, with no value to match.
+        """
+        with registeredNodeTypes([GroupInputNode]):
+            graph: Graph = graphSavedOnDisk
+            with overrideNodeTypeVersion(GroupInputNode, "1.0"):
+                node = graph.addNewNode(GroupInputNode.__name__, input="foo")
+                graph.save(template=True)
+
+            with overrideNodeTypeVersion(GroupInputNode, "2.0"):
+                loadedGraph = loadGraph(graph.filepath)
+
+        loadedNode = loadedGraph.node(node.name)
+        assert isinstance(loadedNode, Node)
+        assert loadedNode.input.value == "foo"
+        assert loadedNode.group.a.value == 0
 
 
 class TestVersionConflict:

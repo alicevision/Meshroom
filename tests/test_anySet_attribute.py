@@ -36,6 +36,30 @@ def test_dynamic_attribute_desc_instance_type():
     assert d.instanceType is AnySet
 
 
+def test_anyset_desc_clone():
+    """Cloning an AnySet descriptor creates a distinct AnySet descriptor with the same properties."""
+    d = AnySetDesc(name="customInputs", label="Custom Inputs", description="Some description",
+                   commandLineGroup="customGroup", advanced=True, semantic="someSemantic", enabled=False,
+                   visible=False, exposed=True)
+    clone = d.clone()
+
+    assert clone is not d
+    assert isinstance(clone, AnySetDesc)
+    for prop in ("name", "label", "description", "commandLineGroup", "advanced", "semantic", "enabled",
+                 "visible", "exposed", "items"):
+        assert getattr(clone, prop) == getattr(d, prop), prop
+
+
+def test_duplicate_anyset_into_anyset():
+    """An AnySet can be duplicated as a child of another AnySet."""
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+
+    newAttr = dynamicNode.ins.duplicateAttribute(srcNode.ins)
+    assert isinstance(newAttr, AnySet)
+    assert newAttr.desc is not srcNode.ins.desc
+
+
 # ---------------------------------------------------------------------------
 # Node / attribute creation tests
 # ---------------------------------------------------------------------------

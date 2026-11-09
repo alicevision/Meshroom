@@ -197,6 +197,10 @@ class CompatibilityNode(BaseNode):
         attrDesc = next((d for d in refAttributes if d.name == name), None)
         if attrDesc is None:
             return None
+        # No serialized value to match (e.g. outputs or default-valued inputs in templates): the attribute
+        # will be reset to its default value
+        if value is None:
+            return attrDesc
         # We have found a description, and we still need to
         # check if the value matches the attribute description.
         #

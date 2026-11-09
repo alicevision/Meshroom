@@ -85,7 +85,7 @@ for subName, sub in submitters.items():
         submitter = sub
         break
 
-if node._nodeStatus.status in (Status.STOPPED, Status.KILLED):
+if node.getGlobalStatus() in (Status.STOPPED, Status.KILLED):
     logging.error("Node status is STOPPED or KILLED.")
     if submitter:
         submitter.killRunningJob()

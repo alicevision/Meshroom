@@ -47,3 +47,7 @@ class AnySet(GroupAttribute):
         return serializedData
 
     isCustomAttribute = Property(bool, lambda _: True, constant=True)
+    # Override
+    # A GroupAttribute is invalidating if any of its items is, but an AnySet has no predefined items:
+    # its children are user-defined, so it must always be taken into account in the node UID.
+    invalidate = Property(bool, lambda _: True, constant=True)

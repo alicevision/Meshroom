@@ -2,67 +2,59 @@ name: Nightly
 
 on:
   schedule:
-    # Runs every day at 02:00 UTC
-    - cron: '0 2 * * *'
+    # Hourly check (the "check-changes" job takes a few seconds and skips the build when not needed):
+    # rebuild when develop, the AliceVision nightly or the QtAliceVision nightly changed
+    - cron: '45 * * * *'
   # Allow manual trigger from the Actions tab
   workflow_dispatch:
 
 permissions:
   contents: write  # needed to edit releases, upload/delete assets and update "nightly" tag
 
+# Queue (do not cancel) a nightly triggered while another one is running: cancelling a build
+# could leave the release half published. GitHub keeps a single pending run per group and
+# replaces it with the newest one: this is harmless, as every scheduled run decides whether
+# to build from the published state, not from what triggered it.
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
 jobs:
   # ────────────────────────────────────────────────────────────
-  # Guard: skip everything if develop hasn't changed since the
-  # SHA recorded in the single persistent "nightly" release.
+  # Guard: decide whether to build (see .github/scripts/nightly-check.sh).
+  # Defaults to no build on any error or unexpected answer.
   # ────────────────────────────────────────────────────────────
   check-changes:
-    name: Check for new commits on develop
+    name: Check whether a nightly build is needed
     runs-on: ubuntu-latest
     outputs:
       should_build: ${{ steps.check.outputs.should_build }}
-      short_sha:    ${{ steps.check.outputs.short_sha }}
-      full_sha:     ${{ steps.check.outputs.full_sha }}
-      build_label:  ${{ steps.check.outputs.build_label }}
+      av_linux:     ${{ steps.check.outputs.av_linux }}
+      av_windows:   ${{ steps.check.outputs.av_windows }}
+      qtav_linux:   ${{ steps.check.outputs.qtav_linux }}
+      qtav_windows: ${{ steps.check.outputs.qtav_windows }}
+      short_sha:    ${{ steps.label.outputs.short_sha }}
+      build_label:  ${{ steps.label.outputs.build_label }}
 
     steps:
-      - name: Checkout develop
+      - name: Checkout scripts
         uses: actions/checkout@v6
         with:
-          ref: develop
-          fetch-tags: true  # required to find the previous nightly tag
+          sparse-checkout: .github/scripts
 
-      - name: Determine whether a build is needed
+      - name: Compute build label
+        id: label
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+          echo "build_label=$(date -u '+%Y.%m.%d')-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Compare with the last nightly and the AliceVision / QtAliceVision nightlies
         id: check
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          FULL_SHA=$(git rev-parse HEAD)
-          BUILD_LABEL="$(date -u '+%Y.%m.%d')-${SHORT_SHA}"
-          echo "short_sha=$SHORT_SHA"   >> "$GITHUB_OUTPUT"
-          echo "full_sha=$FULL_SHA"     >> "$GITHUB_OUTPUT"
-          echo "build_label=$BUILD_LABEL" >> "$GITHUB_OUTPUT"
-
-          # Read the SHA stored in the body of the persistent "nightly" release.
-          # The body always contains a line of the form:  **Latest commit:** `<sha>`
-          # LAST_SHA=$(
-          #   gh release view nightly \
-          #     --repo "$GITHUB_REPOSITORY" \
-          #     --json body \
-          #     --jq '.body' 2>/dev/null \
-          #   | grep -oP '(?<=\*\*Latest commit:\*\* `)[\w]+' \
-          #   || true
-          # )
-          # Read the SHA of the last "nightly" git tag
-          LAST_SHA=$(git rev-parse --short nightly 2>/dev/null || true)
-
-          if [ "$SHORT_SHA" = "$LAST_SHA" ]; then
-            echo "develop unchanged since last nightly (SHA: $SHORT_SHA). Skipping."
-            echo "should_build=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "New commits detected (current: $SHORT_SHA, last nightly: ${LAST_SHA:-none}). Building."
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-          fi
+          GH_TOKEN:   ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: bash .github/scripts/nightly-check.sh
 
   build-windows:
     name: Build Windows binary
@@ -72,6 +64,8 @@ jobs:
     with:
       os: windows-latest
       build_label: ${{ needs.check-changes.outputs.build_label }}
+      av_archive: ${{ needs.check-changes.outputs.av_windows }}
+      qtav_archive: ${{ needs.check-changes.outputs.qtav_windows }}
 
   build-linux:
     name: Build Linux binary
@@ -81,6 +75,8 @@ jobs:
     with:
       os: ubuntu-22.04
       build_label: ${{ needs.check-changes.outputs.build_label }}
+      av_archive: ${{ needs.check-changes.outputs.av_linux }}
+      qtav_archive: ${{ needs.check-changes.outputs.qtav_linux }}
 
   # ────────────────────────────────────────────────────────────
   # Update the single persistent "nightly" pre-release:

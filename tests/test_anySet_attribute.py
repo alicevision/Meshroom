@@ -429,3 +429,120 @@ def test_clone_attributes():
 
     for attribute in node.attributes:
         assert(attribute.desc.clone() is not None)  # Check clone doesn't raise
+
+
+# ---------------------------------------------------------------------------
+# UID tests
+# ---------------------------------------------------------------------------
+
+def test_anyset_input_contributes_to_node_uid():
+    """An input AnySet is an invalidating attribute: changing a child value changes the node UID."""
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.intParam)
+    graph.update()
+
+    assert dynamicNode.ins in dynamicNode.invalidatingAttributes
+
+    uidBefore = dynamicNode._uid
+    dynamicNode.ins.intParam.value = 42
+    assert dynamicNode._uid != uidBefore
+
+
+def test_anyset_uid_depends_on_children_names():
+    """Renaming an AnySet child changes the AnySet UID."""
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+
+    dynamicNode.ins.duplicateAttribute(srcNode.intParam)
+    uidBefore = dynamicNode.ins.uid()
+
+    dynamicNode.ins.renameAttribute(dynamicNode.ins.intParam, "renamedParam", "Renamed Param")
+    assert dynamicNode.ins.uid() != uidBefore
+
+
+def test_anyset_uid_depends_on_children_types():
+    """AnySets with children of different types but with the same name and string representation have different UIDs."""
+    graph = Graph("test")
+    srcNode = graph.addNewNode("AllAttributesNode")
+    intNode = graph.addNewNode("DynamicNode")
+    stringNode = graph.addNewNode("DynamicNode")
+
+    intNode.ins.duplicateAttribute(srcNode.intParam)
+    intNode.ins.renameAttribute(intNode.ins.intParam, "param", "Param")
+    intNode.ins.param.value = 5
+    stringNode.ins.duplicateAttribute(srcNode.stringParam)
+    stringNode.ins.renameAttribute(stringNode.ins.stringParam, "param", "Param")
+    stringNode.ins.param.value = "5"
+
+    assert intNode.ins.uid() != stringNode.ins.uid()
+
+
+def test_anyset_child_duplicated_from_non_invalidating_attribute_contributes_to_uid():
+    """
+    A child duplicated into an input AnySet from a non-invalidating attribute contributes to the node UID:
+    the 'invalidate' flag is not serialized, so the children restored when loading a graph are invalidating.
+    """
+    from types import SimpleNamespace
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+    nonInvalidatingDesc = srcNode.intParam.desc.clone()
+    nonInvalidatingDesc._invalidate = False
+
+    child = dynamicNode.ins.duplicateAttribute(SimpleNamespace(desc=nonInvalidatingDesc))
+    graph.update()
+    assert child.invalidate
+
+    uidBefore = dynamicNode._uid
+    child.value = 42
+    assert dynamicNode._uid != uidBefore
+
+
+def test_anyset_child_duplicated_from_disabled_attribute_contributes_to_uid():
+    """
+    A child duplicated into an input AnySet from a disabled attribute contributes to the node UID:
+    the 'enabled' flag is not serialized, so the children restored when loading a graph are enabled.
+    """
+    from types import SimpleNamespace
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+    for enabled in (False, lambda node: False):
+        disabledDesc = srcNode.intParam.desc.clone()
+        disabledDesc._enabled = enabled
+
+        child = dynamicNode.ins.duplicateAttribute(SimpleNamespace(desc=disabledDesc))
+        graph.update()
+        assert child.enabled
+
+        uidBefore = dynamicNode._uid
+        child.value = 42
+        assert dynamicNode._uid != uidBefore
+
+
+def test_anyset_structural_changes_update_node_uid():
+    """Adding, renaming, moving and removing AnySet children updates the node UID without an explicit update."""
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+
+    uidBefore = dynamicNode._uid
+    dynamicNode.ins.duplicateAttribute(srcNode.intParam)
+    assert dynamicNode._uid != uidBefore, "Adding a child should update the node UID"
+
+    dynamicNode.ins.duplicateAttribute(srcNode.floatParam)
+    assert [attribute.name for attribute in dynamicNode.ins.value] == ["floatParam", "intParam"]
+
+    uidBefore = dynamicNode._uid
+    dynamicNode.ins.renameAttribute(dynamicNode.ins.intParam, "renamedParam", "Renamed Param")
+    assert dynamicNode._uid != uidBefore, "Renaming a child should update the node UID"
+
+    uidBefore = dynamicNode._uid
+    dynamicNode.ins.moveAttribute(dynamicNode.ins.renamedParam, 0)
+    assert [attribute.name for attribute in dynamicNode.ins.value] == ["renamedParam", "floatParam"]
+    assert dynamicNode._uid != uidBefore, "Moving a child should update the node UID"
+
+    uidBefore = dynamicNode._uid
+    dynamicNode.ins.removeAttribute(dynamicNode.ins.floatParam)
+    assert dynamicNode._uid != uidBefore, "Removing a child should update the node UID"

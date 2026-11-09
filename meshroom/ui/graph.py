@@ -832,7 +832,7 @@ class UIGraph(QObject):
                             chunk.upgradeStatusTo(Status.STOPPED)
                 for _node in self._graph.dfsOnFinish(None)[0]:
                     if jobManager.getNodeJob(_node) == job and not _node._chunksCreated and \
-                        _node._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
+                        _node.getGlobalStatus() in (Status.SUBMITTED, Status.RUNNING):
                         _node.upgradeStatusTo(Status.STOPPED)
                 self.parent().showMessage(f"Interrupted the job for node {node}")
         elif not node.isExtern():
@@ -842,7 +842,7 @@ class UIGraph(QObject):
                     chunk.upgradeStatusTo(Status.STOPPED)
             for node in self._graph.dfsOnFinish(None)[0]:
                 if not node.isExtern() and not node._chunksCreated and \
-                    node._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
+                    node.getGlobalStatus() in (Status.SUBMITTED, Status.RUNNING):
                     node.upgradeStatusTo(Status.STOPPED)
             self.stopExecution()
             self.parent().showMessage(f"Stopped the local job process")
@@ -862,7 +862,7 @@ class UIGraph(QObject):
                     if jobManager.getNodeJob(chunk.node) == job:
                         chunk.upgradeStatusTo(Status.SUBMITTED)
                 for node in self._graph.dfsOnFinish(None)[0]:
-                    if not node._chunksCreated and node._nodeStatus.status in (Status.ERROR, Status.STOPPED, Status.KILLED):
+                    if not node._chunksCreated and node.getGlobalStatus() in (Status.ERROR, Status.STOPPED, Status.KILLED):
                         node.upgradeStatusTo(Status.SUBMITTED)
                 job.restartErrorTasks()
                 job.resumeJob()
@@ -918,7 +918,7 @@ class UIGraph(QObject):
         for node in dfsNodes:
             if node._chunksCreated:
                 continue
-            if node._nodeStatus.status in (Status.RUNNING, Status.SUBMITTED):
+            if node.getGlobalStatus() in (Status.RUNNING, Status.SUBMITTED):
                 # TODO : save session ID in node
                 if node._nodeStatus.execMode == ExecMode.LOCAL:
                     computingLocally = True

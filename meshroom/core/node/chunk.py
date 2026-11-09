@@ -176,8 +176,6 @@ class NodeChunk(BaseObject):
         Upgrade node status file based on the current status.
         """
         self.saveStatusFile()
-        # We want to make sure the nodeStatus is up to date too
-        self.node.upgradeStatusFile()
         self.statusChanged.emit()
 
     def upgradeStatusTo(self, newStatus, execMode=None):

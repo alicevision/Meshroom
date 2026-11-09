@@ -1062,6 +1062,59 @@ class TestUidConflict:
             loadedGraph = loadGraph(graph.filepath)
             assert len(loadedGraph.compatibilityNodes) == 1
 
+    def test_uidConflictsCorrectlyEvaluated(self, tmp_path):
+        """ Test that UID conflicts are correctly evaluated and result in CompatibilityNodes where expected. """
+
+        graph = Graph("Test uidConflicts")
+
+        A = graph.addNewNode("Ls", input="Alpha")
+        B = graph.addNewNode("AppendText", "AppendText_1", input="Beta0", inputText=A.output)
+        C = graph.addNewNode("AppendText", "AppendText_2", input="Gamma", inputText=B.output)
+        graph.addNewNode("AppendText", "AppendText_3", input=A.output, inputText=C.output)
+
+        """
+            A ──> B ──> C
+            |           |
+            |           v
+            └──────────>D
+        """
+
+        node_names = [node.name for node in graph.nodes]
+        beta0_node_uids = [node._uid for node in graph.nodes]
+
+        # Change the input value of node B to trigger a UID conflict for subsequent nodes
+        B.input.value = "Beta"
+
+        beta_node_uids = [node._uid for node in graph.nodes]
+
+        # Restore the previous UIDs for the last two nodes to generate UID conflicts with consistent UIDs
+        for node in graph.nodes:
+            if node.name in ["AppendText_2", "AppendText_3"]:
+                assert node._uid != beta0_node_uids[node_names.index(node.name)]
+                node._uid = beta0_node_uids[node_names.index(node.name)]
+
+        graphFile = os.path.join(tmp_path, "test_uid_conflicts.mg")
+        graph.save(graphFile)
+
+        graph = loadGraph(graphFile, strictCompatibility=False)
+
+        # The "AppendText_2" node should have a UID conflict, as its UID does not match its current 'input' value
+        # The "AppendText_3" node should NOT have a UID conflict, as its UID is consistent with the other node UIDs in the graph
+        for node in graph.nodes:
+            if node.name == "AppendText_2":
+                assert isinstance(node, CompatibilityNode)
+                assert node.issue == CompatibilityIssue.UidConflict
+                new_A = node
+            else:
+                assert not isinstance(node, CompatibilityNode)
+
+        # An upgrade of the conflicting node should resolve the UID conflict and restore the UIDs matching the beta_node_uids
+        graph.replaceNode(new_A.name, new_A.upgrade())
+
+        for node in graph.nodes:
+            assert node._uid == beta_node_uids[node_names.index(node.name)]
+            assert not isinstance(node, CompatibilityNode)
+
 
 class ValidatedNodeV1(desc.Node):
     """ Node with a mandatory input, validated by a NotEmptyValidator. """

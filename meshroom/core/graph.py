@@ -19,10 +19,16 @@ from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttri
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
-from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
+from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode, GRAPH_INPUT_NODE_TYPE, GRAPH_OUTPUT_NODE_TYPE
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
 from meshroom.core.submitter import BaseSubmittedJob, jobManager
+
+# AnySetNode replacing the GraphInput and GraphOutput nodes added to a graph that already has one
+ANYSET_NODE_TYPE = "AnySetNode"
+ANYSET_NODE_ATTRIBUTE = "attributes"
+# AnySet of the GraphInput and GraphOutput nodes, and label of the AnySetNode replacing them
+GRAPH_IO_ANYSETS = {GRAPH_INPUT_NODE_TYPE: ("ins", "Inputs"), GRAPH_OUTPUT_NODE_TYPE: ("outs", "Outputs")}
 
 # Replace default encoder to support Enums
 
@@ -624,6 +630,51 @@ class Graph(BaseObject):
                 for _, attr in node.internalAttributes.items():
                     _removeLinkExpressions(attr, skippedEdges)
         return node, skippedEdges
+
+    @staticmethod
+    def _anySetNodeAttributeName(nodeType: str, attributeName: str) -> str:
+        """
+        Args:
+            nodeType: GraphInput or GraphOutput
+            attributeName: the name of an attribute of this node type, relative to the node (e.g. "ins.path")
+
+        Returns:
+            The name of this attribute in the AnySetNode replacing the node (e.g. "attributes.path").
+        """
+        anySetName, _ = GRAPH_IO_ANYSETS[nodeType]
+        return ANYSET_NODE_ATTRIBUTE + attributeName[len(anySetName):]
+
+    @staticmethod
+    def _anySetNodeData(node: Node) -> dict:
+        """
+        Returns:
+            The serialized AnySetNode replacing the GraphInput or GraphOutput `node`, with the same attributes,
+            values and incoming links.
+        """
+        anySetName, label = GRAPH_IO_ANYSETS[node.nodeType]
+        return {
+            "nodeType": ANYSET_NODE_TYPE,
+            "position": node.position,
+            "inputs": {ANYSET_NODE_ATTRIBUTE: node.attribute(anySetName).getSerializedValue()},
+            "internalInputs": {"label": label},
+        }
+
+    def convertToAnySetNode(self, node: Node) -> Node:
+        """
+        Replace the GraphInput or GraphOutput `node` with an AnySetNode holding the same attributes and connections.
+
+        Returns:
+            The created AnySetNode.
+        """
+        nodeData = self._anySetNodeData(node)
+        with GraphModification(self):
+            _, outEdges, outListAttributes = self.removeNode(node.name)
+            # Incoming edges are restored from the links serialized in the attributes
+            newNode = self.addNode(nodeFactory(nodeData, ANYSET_NODE_TYPE))
+            outEdges = {dst: f"{newNode.name}.{self._anySetNodeAttributeName(node.nodeType, src.split('.', 1)[1])}"
+                        for dst, src in outEdges.items()}
+            self._restoreOutEdges(outEdges, outListAttributes)
+        return newNode
 
     def duplicateNodes(self, srcNodes):
         """ Duplicate nodes in the graph with their connections.

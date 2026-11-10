@@ -22,6 +22,8 @@ Item {
     property bool isForLoop: false
     property int loopSize: 0
     property int iteration: 0
+    // Dashed edges are links between input attributes
+    property bool dashed: !(edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined))
 
     // Note: edgeArea is destroyed before path, so we need to test if not null to avoid warnings.
     readonly property bool containsMouse: (loopArea && loopArea.containsMouse) || (edgeArea && edgeArea.containsMouse)
@@ -63,7 +65,7 @@ Item {
             fillColor: "transparent"
 
             strokeColor: "#3E3E3E"
-            strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
+            strokeStyle: root.dashed ? ShapePath.DashLine : ShapePath.SolidLine
             strokeWidth: 1
             // Final visual width of this path (never below 1)
             readonly property real visualWidth: Math.max(strokeWidth, 1)
@@ -89,7 +91,7 @@ Item {
             fillColor: "transparent"
 
             strokeColor: root.isForLoop ? root.color : "transparent"
-            strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
+            strokeStyle: root.dashed ? ShapePath.DashLine : ShapePath.SolidLine
             strokeWidth: root.thickness
             // Final visual width of this path (never below 1)
             readonly property real visualWidth: Math.max(strokeWidth, 1)

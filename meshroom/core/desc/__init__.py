@@ -43,6 +43,7 @@ from .node import (
     BaseNode,
     BackdropNode,
     CommandLineNode,
+    ConversionNode,
     InputNode,
     InitNode,
     InternalAttributesFactory,

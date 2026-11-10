@@ -1033,7 +1033,7 @@ class UIGraph(QObject):
         newName = self._graph._createUniqueNodeName(newName, {n._name for n in self._graph._nodes if n != node})
         if newName == node._name:
             return ""
-        return self.push(commands.RenameNodeCommand(self._graph, node, newName)) or ""
+        return self.push(commands.RenameNodeCommand(self._graph, self._taskManager, node, newName)) or ""
 
     def moveNode(self, node: Node, position: Position):
         """

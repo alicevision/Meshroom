@@ -2183,6 +2183,12 @@ class AnySet(GroupAttribute):
             return (attributeDesc.type, AnySet._schemaKey(attributeDesc.elementDesc))
         return attributeDesc.type
 
+    def schemaUid(self) -> str:
+        """ Return a hash of the user-defined structure of the AnySet: the names and types of its children,
+            regardless of their order and values.
+        """
+        return hashValue(sorted((child.name, AnySet._schemaKey(child.desc)) for child in self._value))
+
     # Override
     def uid(self):
         if self.isOutput:

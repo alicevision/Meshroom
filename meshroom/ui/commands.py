@@ -841,15 +841,18 @@ class ConnectAnySetCommand(GraphCommand):
     Create a new dynamic input attribute on a node by connecting a source attribute
     to a AnySet.
 
-    When executed, a new attribute of the same type as the source is created on the
-    node (inserted before the AnySet) and the edge is established.
+    When executed, a new attribute of the same type as the source is created at the
+    end of the AnySet and the edge is established: from the new attribute if the AnySet
+    is the source of the connection, to the new attribute otherwise.
     On undo, the edge is removed and the created attribute is deleted.
     """
 
-    def __init__(self, graph, src, anySetAttribute, parent=None):
+    def __init__(self, graph, src, anySetAttribute, isSource=False, parent=None):
         super().__init__(graph, parent)
         self.srcAttrName = src.fullName
         self.anySetAttribute = anySetAttribute.fullName
+        self.isSource = isSource or anySetAttribute.isOutput
+        self.previousLink = None
         self.newAttrFullName = None
         self.setText(f"Connect '{src.fullName}' to AnySet '{anySetAttribute.fullName}'")
         self.newAttribute = None
@@ -869,7 +872,9 @@ class ConnectAnySetCommand(GraphCommand):
 
         # Connect newly created attribute to the other one
         try:
-            if anySetAttribute.isOutput:
+            if self.isSource:
+                previousEdge = self.graph.edges.get(srcAttr)
+                self.previousLink = previousEdge.src.fullName if previousEdge else None
                 self.graph.addEdge(newAttr, srcAttr)
             else:
                 self.graph.addEdge(srcAttr, newAttr)
@@ -883,10 +888,15 @@ class ConnectAnySetCommand(GraphCommand):
             return True
 
         newAttr = self.graph.attribute(self.newAttrFullName)
-        node = newAttr.node
 
-        # Disconnect the edge
-        newAttr.disconnectEdge()
+        # Disconnect the edge, and restore the one replaced by the connection
+        if self.isSource:
+            srcAttr = self.graph.anyAttribute(self.srcAttrName)
+            self.graph.removeEdge(srcAttr)
+            if self.previousLink:
+                self.graph.addEdge(self.graph.anyAttribute(self.previousLink), srcAttr)
+        else:
+            newAttr.disconnectEdge()
 
         anySetAttribute = self.graph.attribute(self.anySetAttribute)
         anySetAttribute.removeAttribute(newAttr)

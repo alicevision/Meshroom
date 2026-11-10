@@ -194,6 +194,14 @@ def test_move_anyset_attribute_updates_order():
 # Serialization / deserialization tests
 # ---------------------------------------------------------------------------
 
+def test_duplicated_attributes_are_added_at_the_end():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("AllAttributesNode")
+    for attribute in (srcNode.stringParam, srcNode.intParam, srcNode.boolParam):
+        dynamicNode.ins.duplicateAttribute(attribute)
+    assert [attribute.name for attribute in dynamicNode.ins.value] == ["stringParam", "intParam", "boolParam"]
+
+
 def test_dynamic_inputs_serialized_in_todict():
     """Dynamic inputs are included in the node's serialized form."""
 

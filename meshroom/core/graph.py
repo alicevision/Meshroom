@@ -506,7 +506,7 @@ class Graph(BaseObject):
             unavailableNames = set(self.nodes.keys())
             for node in graph.nodes:
                 if node._name in unavailableNames:
-                    node._name = self._createUniqueNodeName(node.nodeType, unavailableNames)
+                    node._name = self._createUniqueNodeName(node._name, unavailableNames)
                 unavailableNames.add(node._name)
 
         def _importNodesAndEdges() -> list[Node]:

@@ -436,6 +436,8 @@ class UIGraph(QObject):
         self._selectedChunk = None
         self._nodeSelection: QItemSelectionModel = QItemSelectionModel(self._graph.nodes, parent=self)
         self._hoveredNode = None
+        # Last command that added an AnySet child, discarded if the creation of this child is canceled
+        self._addAnySetAttributeCommand = None
 
         self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
@@ -1308,7 +1310,7 @@ class UIGraph(QObject):
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(src, AnySet):
-            self.push(commands.ConnectAnySetCommand(self._graph, src=dst, anySetAttribute=src))
+            self.push(commands.ConnectAnySetCommand(self._graph, src=dst, anySetAttribute=src, isSource=True))
         elif isinstance(dst, AnySet):
             self.push(commands.ConnectAnySetCommand(self._graph, src=src, anySetAttribute=dst))
         elif isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
@@ -1448,17 +1450,69 @@ class UIGraph(QObject):
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
+    @Slot(Attribute, str, result=Attribute)
+    def addAnySetAttribute(self, attribute, attributeType):
+        """
+        Add a new child attribute of the given description type to an AnySet attribute.
+
+        Args:
+            attribute (Attribute): the AnySet attribute
+            attributeType (str): the description type of the new attribute (e.g. "FloatParam")
+
+        Returns:
+            Attribute: the created attribute, or None if it could not be created
+        """
+        if not isinstance(attribute, AnySet):
+            return None
+        command = commands.AddAnySetAttributeCommand(self._graph, attribute, attributeType)
+        if not self.push(command):
+            return None
+        self._addAnySetAttributeCommand = command
+        return self._graph.attribute(f"{attribute.fullName}.{command.value['name']}")
+
+    @Slot(Attribute)
+    def cancelAnySetAttributeCreation(self, attribute):
+        """
+        Remove an AnySet child that has just been added, without leaving any trace in the undo history.
+        If other commands have been done since it was added, it is removed with an undoable command instead.
+
+        Args:
+            attribute (Attribute): the AnySet child created by addAnySetAttribute()
+        """
+        if not isinstance(attribute.root, AnySet):
+            return
+        command = self._addAnySetAttributeCommand
+        self._addAnySetAttributeCommand = None
+        if command is not None and attribute.fullName == f"{command.anySetAttrName}.{command.value['name']}" \
+                and self._undoStack.discardLastCommand(command):
+            return
+        self.removeAnySetAttribute(attribute)
+
+    @Slot(Attribute, "QVariantMap")
+    def editAnySetAttribute(self, attribute, parameters):
+        """
+        Edit the description parameters of an AnySet child attribute.
+
+        Args:
+            attribute (Attribute): the AnySet child attribute
+            parameters (dict): the edited parameters, among "name", "label", "description", "advanced",
+                               "defaultValue", "range" (numeric types) and "values" (choices)
+        """
+        if not isinstance(attribute.root, AnySet):
+            return
+        try:
+            command = commands.EditAnySetAttributeCommand(self._graph, attribute, parameters)
+        except ValueError as e:
+            logging.warning(f"Cannot edit attribute '{attribute.fullName}': {e}")
+            return
+        if command.newValue != command.oldValue:
+            self.push(command)
+
     @Slot(Attribute)
     def removeAnySetAttribute(self, attribute):
         if not isinstance(attribute.root, AnySet):
             return
         self.push(commands.RemoveAnySetAttributeCommand(self._graph, attribute))
-
-    @Slot(Attribute, str, str)
-    def renameAnySetAttribute(self, attribute, name, label):
-        if not isinstance(attribute.root, AnySet):
-            return
-        self.push(commands.RenameAnySetAttributeCommand(self._graph, attribute, name, label))
 
     @Slot(Attribute, int)
     def moveAnySetAttribute(self, attribute, offset):

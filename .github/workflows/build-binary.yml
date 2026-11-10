@@ -317,14 +317,17 @@ jobs:
           find "$OUTPUT_DIR" -name "*.so*" -not -type l -not -path "*.libs/*" -exec strip --strip-unneeded {} +
 
       # ── Checks ───────────────────────────────────────────────
-      # The frozen command line tools must start with the embedded interpreter (after the cleanup above)
+      # The frozen executables must start with the embedded interpreter (after the cleanup and strip above).
+      # Meshroom -h imports the UI (meshroom/ui/app.py), so every PySide6 module Meshroom uses and shiboken6, from
+      # the frozen lib/PySide6, and exits while parsing the arguments, before the QApplication is created.
+      # The command line tools run with the standalone backend: they do not import PySide6.
       - name: Smoke test of the frozen binaries
         env:
           OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
           EXE: ${{ steps.set-names.outputs.exe_suffix }}
         run: |
           set -euo pipefail
-          for TOOL in meshroom_compute meshroom_batch; do
+          for TOOL in Meshroom meshroom_compute meshroom_batch; do
             echo "── ${TOOL} -h"
             "${OUTPUT_DIR}/${TOOL}${EXE}" -h > /dev/null
           done

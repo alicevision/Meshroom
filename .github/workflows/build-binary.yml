@@ -235,7 +235,9 @@ jobs:
           OUTPUT_DIR: ${{ steps.set-names.outputs.output_dir }}
         run: |
           set -euo pipefail
-          find "$OUTPUT_DIR" -name "*.so*" -not -type l -exec strip --strip-unneeded {} +
+          # Skip the libraries vendored by wheels (<package>.libs, e.g. numpy.libs): auditwheel already stripped and
+          # patchelf'ed them, and strip breaks their segment alignment ("ELF load command address/offset not properly aligned")
+          find "$OUTPUT_DIR" -name "*.so*" -not -type l -not -path "*.libs/*" -exec strip --strip-unneeded {} +
 
       # ── Checks ───────────────────────────────────────────────
       # The frozen command line tools must start with the embedded interpreter (after the cleanup above)

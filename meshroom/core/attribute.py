@@ -64,6 +64,7 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     exclusive = descType.get('exclusive')
     keyable = descType.get('keyable')
     shape = descType.get('shape')
+    valueRange = descType.get('range')
 
     kwargs = {'name': name, 'label': label, 'description': description}
 
@@ -87,6 +88,9 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
 
     if keyable is not None:
         kwargs['keyable'] = keyable
+
+    if valueRange is not None:
+        kwargs['range'] = valueRange
 
     if shape is not None:
         kwargs['shape'] = attributeDescriptionFactory(shape)
@@ -442,6 +446,8 @@ class Attribute(BaseObject):
             "type": self.desc.__class__.__name__,
             "value": self.getSerializedValue()
         }
+        if hasattr(self.desc, "range"):
+            serializedData["range"] = list(self.desc.range)
 
         return serializedData
 
@@ -974,6 +980,13 @@ class ChoiceParam(Attribute):
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
         }
+
+    # Override
+    def asDict(self) -> dict:
+        serializedData = super().asDict()
+        serializedData["values"] = list(self.desc.values)
+        serializedData["exclusive"] = self.desc.exclusive
+        return serializedData
 
     # Override
     def shortDesc(self) -> dict:

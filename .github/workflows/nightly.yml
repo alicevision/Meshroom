@@ -67,9 +67,19 @@ jobs:
       av_archive: ${{ needs.check-changes.outputs.av_windows }}
       qtav_archive: ${{ needs.check-changes.outputs.qtav_windows }}
 
+  # PySide6 built from source for the Linux binary (the PyPI wheels crash with the AliceVision Python);
+  # cached: only rebuilt for a new PySide6 version, AliceVision deps image or recipe
+  build-pyside6-linux:
+    name: Build PySide6 (Linux)
+    needs: check-changes
+    if: needs.check-changes.outputs.should_build == 'true'
+    uses: ./.github/workflows/build-pyside6-linux.yml
+    with:
+      av_archive: ${{ needs.check-changes.outputs.av_linux }}
+
   build-linux:
     name: Build Linux binary
-    needs: check-changes
+    needs: [check-changes, build-pyside6-linux]
     if: needs.check-changes.outputs.should_build == 'true'
     uses: ./.github/workflows/build-binary.yml
     with:
@@ -77,6 +87,7 @@ jobs:
       build_label: ${{ needs.check-changes.outputs.build_label }}
       av_archive: ${{ needs.check-changes.outputs.av_linux }}
       qtav_archive: ${{ needs.check-changes.outputs.qtav_linux }}
+      pyside6_cache_key: ${{ needs.build-pyside6-linux.outputs.cache_key }}
 
   # ────────────────────────────────────────────────────────────
   # Update the single persistent "nightly" pre-release, all-or-nothing
@@ -119,6 +130,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: dist/
+          pattern: binary-*
 
       - name: Publish nightly release
         env:

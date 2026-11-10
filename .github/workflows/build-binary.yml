@@ -6,6 +6,8 @@
 #  - Meshroom-<label>-<os>:      Meshroom only;
 #  - Meshroom-<label>-<os>-full: Meshroom with the AliceVision and QtAliceVision nightlies, in the standalone
 #                                layout of meshroom.setupEnvironment (aliceVision/, qtPlugins/, python/).
+# On Linux, PySide6 is the source build of build-pyside6-linux.yml, never the PyPI wheels (they crash on signal
+# emission with this interpreter).
 # Any error fails the job: the nightly release is then not updated (see the "release" job of nightly.yml).
 
 name: Build binary
@@ -29,6 +31,11 @@ on:
         description: "QtAliceVision nightly archive for this platform, bundled in the full archive (as listed in the Meshroom nightly notes)"
         type: string
         required: true
+      pyside6_cache_key:
+        description: "Linux only (required there): cache key of the PySide6 wheels built from source (output of build-pyside6-linux.yml)"
+        type: string
+        required: false
+        default: ''
     outputs:
       artifact_name:
         description: "Name of the uploaded artifact"
@@ -45,6 +52,8 @@ jobs:
       ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
       QTALICEVISION_BUNDLE: ${{ github.workspace }}/../QTAV_bundle
       PYTHON_VENV: ${{ github.workspace }}/../pyenv
+      # Same path as in build-pyside6-linux.yml: it is part of the cache version
+      PYSIDE6_WHEELS: ${{ runner.temp }}/pyside6-wheels
 
     # bash -eo pipefail on every OS: a failing command, including inside a pipe, fails the step
     defaults:
@@ -169,10 +178,39 @@ jobs:
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            libgl1 libglib2.0-0 libdbus-1-3 \
+            libgl1 libegl1 libopengl0 libfontconfig1 libglib2.0-0 libdbus-1-3 \
             libxcb-cursor0 libxcb-xinerama0 libxcb-icccm4 \
             libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
             libxcb-render-util0 libxcb-shape0 libxkbcommon-x11-0
+
+      # ── PySide6 built from source (Linux) ────────────────────
+      # Restored from the cache, or downloaded from the build of this run (cache miss in build-pyside6-linux.yml)
+      # and then saved in the cache once validated on this runner (see "Cache PySide6 wheels (Linux)").
+      - name: Check PySide6 cache key (Linux)
+        if: runner.os == 'Linux'
+        env:
+          PYSIDE6_CACHE_KEY: ${{ inputs.pyside6_cache_key }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PYSIDE6_CACHE_KEY" ]; then
+            echo "::error title=Build binary::Unknown PySide6 wheels cache key (required on Linux: output of build-pyside6-linux.yml)"
+            exit 1
+          fi
+
+      - name: Restore PySide6 wheels (Linux)
+        id: pyside6-cache
+        if: runner.os == 'Linux'
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ env.PYSIDE6_WHEELS }}
+          key: ${{ inputs.pyside6_cache_key }}
+
+      - name: Download PySide6 wheels (Linux)
+        if: runner.os == 'Linux' && steps.pyside6-cache.outputs.cache-hit != 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: pyside6-linux
+          path: ${{ env.PYSIDE6_WHEELS }}
 
       - name: Install Python dependencies
         run: |
@@ -180,7 +218,41 @@ jobs:
           # Fail if "python" does not resolve to the venv on top of the AliceVision interpreter
           python -c "import os, sys; assert os.path.samefile(sys.prefix, os.environ['PYTHON_VENV']), sys.prefix"
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt -r dev_requirements.txt
+          if [ "$RUNNER_OS" != "Linux" ]; then
+            python -m pip install -r requirements.txt -r dev_requirements.txt
+            exit 0
+          fi
+
+          # Linux: PySide6 built from source, for this interpreter (same version, ABI and build configuration)
+          if ! diff <(python -I .github/scripts/pyside6-smoke-test.py --python-info) "${PYSIDE6_WHEELS}/python-info.txt"; then
+            echo "::error title=Build binary::PySide6 was built for another Python interpreter than the AliceVision one"
+            exit 1
+          fi
+          python -m pip install --no-index --no-deps "$PYSIDE6_WHEELS"/shiboken6-*.whl "$PYSIDE6_WHEELS"/PySide6-*.whl
+          # Other requirements, without PySide6: nothing may pull the PyPI wheels
+          grep -viE '^\s*pyside6\b' requirements.txt > "${RUNNER_TEMP}/requirements-linux.txt"
+          python -m pip install -r "${RUNNER_TEMP}/requirements-linux.txt" -r dev_requirements.txt
+          python -m pip list | grep -iE '^(pyside6|shiboken6)'
+          # The PyPI PySide6 is a meta package: its modules come from PySide6_Essentials / PySide6_Addons
+          if python -m pip list --format=freeze | grep -iE '^pyside6[-_](essentials|addons)=='; then
+            echo "::error title=Build binary::PySide6 wheels from PyPI installed"
+            exit 1
+          fi
+          if ! python -m pip show -f PySide6 | grep -qE '^\s*PySide6/QtCore\.'; then
+            echo "::error title=Build binary::The installed PySide6 is not the source build"
+            exit 1
+          fi
+          python -I .github/scripts/pyside6-smoke-test.py
+
+      # cache/save stores immediately (not in a post step on success): only once the wheels are validated above
+      # with the AliceVision interpreter on this runner. Saved from here, on the runner, so that the path matches
+      # the restore and the lookup in build-pyside6-linux.yml.
+      - name: Cache PySide6 wheels (Linux)
+        if: runner.os == 'Linux' && steps.pyside6-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.PYSIDE6_WHEELS }}
+          key: ${{ inputs.pyside6_cache_key }}
 
       - name: Build executable
         env:
@@ -206,6 +278,11 @@ jobs:
         run: |
           set -euo pipefail
           cd "${OUTPUT_DIR}/lib/PySide6"
+          # Qt bundled by the PySide6 source build (--standalone)
+          if [ ! -f Qt/lib/libQt6Core.so.6 ]; then
+            echo "::error title=Build binary::Qt missing from the frozen PySide6 (${OUTPUT_DIR}/lib/PySide6/Qt/lib/libQt6Core.so.6)"
+            exit 1
+          fi
           rm -rf resources translations typesystems examples include
           cd Qt/lib
           rm -f \

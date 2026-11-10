@@ -19,7 +19,7 @@ from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttri
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
-from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
+from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode, Position
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
 from meshroom.core.submitter import BaseSubmittedJob, jobManager
@@ -1106,6 +1106,46 @@ class Graph(BaseObject):
         srcAttr.outputLinksChanged.emit()
         return [edge.src, edge.dst], deletedEdge
 
+    @staticmethod
+    def getConversionNodeTypes(srcAttr: Attribute, dstAttr: Attribute) -> List[str]:
+        """
+        Return the sorted names of the conversion node types able to convert the value of `srcAttr`
+        into a value for `dstAttr` (see desc.ConversionNode).
+        """
+        return sorted(
+            name for name, provider in meshroom.core.pluginManager.getNodeDescProviders().items()
+            if issubclass(provider.nodeDescClass, meshroom.core.desc.ConversionNode)
+            and provider.nodeDescClass.canConvert(srcAttr, dstAttr)
+        )
+
+    def connectWithConversion(self, srcAttr: Attribute, dstAttr: Attribute, nodeType: Optional[str] = None) -> Node:
+        """
+        Connect `srcAttr` to `dstAttr` through a new conversion node converting the value between their types.
+
+        Args:
+            srcAttr: the attribute providing the value to convert.
+            dstAttr: the attribute receiving the converted value.
+            nodeType: the conversion node type to use. If None, the first available one is used.
+
+        Returns:
+            The created conversion node.
+
+        Raises:
+            InvalidEdgeError: if no (or not the requested) conversion node type is available for these attributes.
+        """
+        nodeTypes = self.getConversionNodeTypes(srcAttr, dstAttr)
+        if not nodeTypes or (nodeType and nodeType not in nodeTypes):
+            requestedType = f" '{nodeType}'" if nodeType else ""
+            raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
+                                   f"No conversion node{requestedType} available from {srcAttr.type} to {dstAttr.type}.")
+        # Place the node between the connected nodes
+        position = Position((srcAttr.node.x + dstAttr.node.x) / 2, (srcAttr.node.y + dstAttr.node.y) / 2)
+        with GraphModification(self):
+            node = self.addNewNode(nodeType or nodeTypes[0], position=position)
+            srcAttr.connectTo(node.inputAttribute)
+            node.outputAttribute.connectTo(dstAttr)
+        return node
+
     @changeTopology
     def removeEdge(self, dstAttr: Attribute):
         if not self.edges.get(dstAttr):
@@ -1287,6 +1327,9 @@ class Graph(BaseObject):
                 raise StopBranchVisit()
 
         def finishVertex(vertex: BaseNode, graph: Graph):
+            if vertex.isConversionNode:
+                # Conversion nodes are evaluated on-the-fly and never processed
+                return
             if not vertex.chunks:
                 # Chunks have not been initialized
                 nodes.append(vertex)
@@ -1358,12 +1401,15 @@ class Graph(BaseObject):
             # update depths
             currentDepths = self._nodesMinMaxDepths[currentVertex]
             inputDepths = self._nodesMinMaxDepths[inputVertex]
+            # Conversion nodes are displayed on edges: they share the depth of their input node
+            # to avoid adding a level between the nodes they connect
+            depthIncrement = 0 if currentVertex.isConversionNode else 1
             if currentDepths[0] == 0:
                 # if not initialized, set the depth of the first child
-                depthMin = inputDepths[0] + 1
+                depthMin = inputDepths[0] + depthIncrement
             else:
-                depthMin = min(currentDepths[0], inputDepths[0] + 1)
-            self._nodesMinMaxDepths[currentVertex] = (depthMin, max(currentDepths[1], inputDepths[1] + 1))
+                depthMin = min(currentDepths[0], inputDepths[0] + depthIncrement)
+            self._nodesMinMaxDepths[currentVertex] = (depthMin, max(currentDepths[1], inputDepths[1] + depthIncrement))
 
             # update computability
             if currentVertex.hasStatus(Status.SUCCESS):
@@ -1439,15 +1485,30 @@ class Graph(BaseObject):
 
         outEdges = []
         for e in self.edges:
-            attr = e.src
-            if dependenciesOnly:
-                if attr.isLink:
-                    attr = attr.inputRootLink
-                if not attr.isOutput:
-                    continue
+            # Conversion nodes are evaluated on-the-fly: dependencies go through them, from the attribute
+            # providing the value to convert to the attribute receiving the converted value
+            if e.dst.node.isConversionNode:
+                continue
+            attr = self._getValueSourceAttribute(e.src)
+            if not attr.isOutput:
+                continue
             newE = Edge(attr, e.dst)
             outEdges.append(newE)
         return outEdges
+
+    @staticmethod
+    def _getValueSourceAttribute(attr: Attribute) -> Attribute:
+        """
+        Return the attribute providing the value of `attr`, by following its links and going
+        through the conversion nodes.
+        """
+        while True:
+            if attr.isLink:
+                attr = attr.inputRootLink
+            elif attr.isOutput and attr.node.isConversionNode:
+                attr = attr.node.inputAttribute
+            else:
+                return attr
 
     def getInputNodes(self, node, recursive, dependenciesOnly):
         """ Return either the first level input nodes of a node or the whole chain. """

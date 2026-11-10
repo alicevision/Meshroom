@@ -390,11 +390,11 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             logger.exception(f"The scene '{node.scene.value}' is not readable by Meshroom")
             return
 
-        for inputNode in graph.findInputNodes():
+        inputNodes = graph.nodesOfType('GraphInput')
+        if not node.useOnlyGraphIONodes.value:
+            inputNodes += graph.findInputNodes()
 
-            if node.useOnlyGraphIONodes.value and inputNode.nodeType != 'GraphInput':
-                continue
-
+        for inputNode in inputNodes:
             # Linked inputs are computed in the scene and cannot be overridden
             attributes = flattenAttributes(inputNode.getAttributes(), lambda attr: not attr.isInput or attr.isLink)
             self._exposeAttributes(node.inputs, attributes)

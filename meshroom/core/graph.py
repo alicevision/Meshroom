@@ -1091,6 +1091,10 @@ class Graph(BaseObject):
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    "Attributes do not belong to this graph.")
 
+        if dstAttr.node.isGraphInputNode:
+            raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
+                                   "GraphInput attributes cannot be connected as destination.")
+
         if not isinstance(srcAttr, AnySet) and not dstAttr.validateIncomingConnection(srcAttr):
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    f"Attributes are not compatible (src base type: {srcAttr.baseType}; dst base type: {dstAttr.baseType}).")

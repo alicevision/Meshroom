@@ -38,7 +38,7 @@ class TestGroupAttributes:
         # Reload the graph
         graph = loadGraph(graphFile)
 
-        assert graph.node("GroupAttributes_2").firstGroup.inputLink == graph.node("GroupAttributes_1").firstGroup
+        assert graph.node("GroupAttributes_1").firstGroup.inputLink == graph.node("GroupAttributes").firstGroup
 
     def test_saveLoadGroupConnections(self):
         """
@@ -202,8 +202,8 @@ class TestGroupAttributes:
 
         # Reload the graph
         graph = loadGraph(graphFile)
-        nestedPosition = graph.node("NestedPosition_1")
-        nestedColor = graph.node("NestedColor_1")
+        nestedPosition = graph.node("NestedPosition")
+        nestedColor = graph.node("NestedColor")
 
         assert nestedPosition.xyz.isLink and \
             nestedPosition.xyz.inputLink.asLinkExpr() == nestedColor.rgb.asLinkExpr()

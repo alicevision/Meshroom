@@ -1,4 +1,5 @@
 from meshroom.core.graph import Graph
+from meshroom.core.node import Status
 
 
 def test_depth():
@@ -116,9 +117,9 @@ def test_rename_nodes():
     ls2 = graph.addNewNode("Ls")
 
     # Test with empty string
-    assert ls0.name == "Ls_1"
+    assert ls0.name == "Ls"
     graph.renameNode(ls0, "")
-    assert ls0.name == "Ls_1"
+    assert ls0.name == "Ls"
 
     # Rename
     graph.renameNode(ls0, "nodels")
@@ -130,8 +131,87 @@ def test_rename_nodes():
 
     # Check we cannot rename in locked mode
     ls0.setLocked(True)
-    graph.renameNode(ls0, "lockedLs")
+    assert not graph.renameNode(ls0, "lockedLs")
     assert ls0.name == "nodels"
+    ls0.setLocked(False)
+
+    # Check the returned value
+    assert graph.renameNode(ls0, "renamedLs")
+    assert ls0.name == "renamedLs"
+    assert not graph.renameNode(ls0, "")
+    assert ls0.name == "renamedLs"
+
+
+def test_rename_node_with_cache():
+    """
+    Test that a node with a cache cannot be renamed.
+    """
+    graph = Graph("")
+    ls = graph.addNewNode("Ls")
+    assert not ls.hasCache()
+
+    for chunk in ls.getAllChunks():
+        chunk._status.status = Status.SUCCESS
+    ls._nodeStatus.status = Status.SUCCESS
+    assert ls.hasCache()
+    assert not graph.renameNode(ls, "cachedLs")
+    assert ls.name == "Ls"
+
+
+def test_rename_node_updates_label():
+    """
+    Test that the label follows the name when no custom label is set.
+    """
+    graph = Graph("")
+    ls = graph.addNewNode("Ls")
+    assert ls.label == "Ls"
+    assert ls.defaultLabel == "Ls"
+
+    labelChanges = []
+    ls.internalAttributesChanged.connect(lambda: labelChanges.append(ls.label))
+    graph.renameNode(ls, "myLs")
+    assert ls.label == "myLs"
+    assert labelChanges and labelChanges[-1] == "myLs"
+    # The default label stays the node type
+    assert ls.defaultLabel == "Ls"
+
+    # A custom label is kept after renaming
+    ls.internalAttribute("label").value = "Custom"
+    graph.renameNode(ls, "otherLs")
+    assert ls.label == "Custom"
+
+
+class TestUniqueNodeName:
+    """ Tests for the unique node name generation. """
+
+    def test_free_name_is_kept(self):
+        graph = Graph("")
+        assert graph._createUniqueNodeName("Ls", set()) == "Ls"
+
+    def test_index_is_added_on_collision(self):
+        graph = Graph("")
+        assert graph._createUniqueNodeName("Ls", {"Ls"}) == "Ls_1"
+        assert graph._createUniqueNodeName("Ls", {"Ls", "Ls_1"}) == "Ls_2"
+
+    def test_first_free_index_is_used(self):
+        graph = Graph("")
+        assert graph._createUniqueNodeName("Ls", {"Ls", "Ls_2"}) == "Ls_1"
+
+    def test_index_suffix_is_stripped(self):
+        graph = Graph("")
+        assert graph._createUniqueNodeName("Ls_5", set()) == "Ls"
+        assert graph._createUniqueNodeName("Ls_5", {"Ls"}) == "Ls_1"
+
+    def test_non_index_underscore_is_kept(self):
+        graph = Graph("")
+        assert graph._createUniqueNodeName("My_Ls", set()) == "My_Ls"
+
+    def test_uses_graph_nodes_by_default(self):
+        graph = Graph("")
+        graph.addNewNode("Ls")
+        graph.addNewNode("Ls")
+        assert sorted(graph.nodes.keys()) == ["Ls", "Ls_1"]
+        assert graph._createUniqueNodeName("Ls") == "Ls_2"
 
 
 class TestDFS:

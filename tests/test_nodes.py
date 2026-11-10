@@ -314,6 +314,29 @@ class TestOutputNode:
         assert firstNode.exportLabel.value == "final"
         assert secondNode.exportLabel.value == "final"
 
+    def test_configureOutputNodes_colon_separator_falls_back_to_node_name(self):
+        graph = Graph("")
+        node = graph.addNewNode("OutputNodeTest")
+        otherNode = graph.addNewNode("OutputNodeTest")
+        graph.renameNode(node, "myExport")
+
+        graph.configureOutputNodes(["myExport:exportLabel=custom"])
+
+        assert node.exportLabel.value == "custom"
+        assert otherNode.exportLabel.value == "default"
+
+    def test_configureOutputNodes_dot_separator_targets_node_name_only(self):
+        graph = Graph("")
+        firstNode = graph.addNewNode("OutputNodeTest")
+        secondNode = graph.addNewNode("OutputNodeTest")
+        # The first node is named after its type
+        assert firstNode.name == "OutputNodeTest"
+
+        graph.configureOutputNodes(["OutputNodeTest.exportLabel=custom"])
+
+        assert firstNode.exportLabel.value == "custom"
+        assert secondNode.exportLabel.value == "default"
+
     def test_configureOutputNodes_sets_output_folder_attribute_by_node_type(self):
         graph = Graph("")
         firstNode = graph.addNewNode("OutputNodeTest")
@@ -469,7 +492,7 @@ class TestBackdropNode:
 
         # Reload the graph and check the values for the backdrop node are the default ones
         g = loadGraph(graphFile)
-        backdrop = g.node("Backdrop_1")
+        backdrop = g.node("Backdrop")
         assert backdrop is not None
         assert backdrop.nodeWidth == 600
         assert backdrop.nodeHeight == 400
@@ -503,7 +526,7 @@ class TestBackdropNode:
 
         # Reload the graph and check the values for the backdrop node are the default ones
         g = loadGraph(graphFile)
-        backdrop = g.node("Backdrop_1")
+        backdrop = g.node("Backdrop")
         assert backdrop is not None
         assert backdrop.nodeWidth == 400
         assert backdrop.nodeHeight == 200
@@ -523,7 +546,7 @@ class TestBackdropNode:
 
         # Reload the graph and check both nodes are present
         g = loadGraph(templateFile)
-        assert g.node("Backdrop_1") is not None
+        assert g.node("Backdrop") is not None
 
     def test_backdropNode_templateSerialization_customAttributes(self):
         """ Test that a backdrop node with custom values is correctly saved as a template. """
@@ -539,7 +562,7 @@ class TestBackdropNode:
 
         # Reload and verify custom values are preserved
         g = loadGraph(templateFile)
-        backdrop = g.node("Backdrop_1")
+        backdrop = g.node("Backdrop")
         assert backdrop is not None
         assert backdrop.nodeWidth == 400
         assert backdrop.comment == "Template backdrop"

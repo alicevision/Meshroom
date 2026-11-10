@@ -506,7 +506,7 @@ class Graph(BaseObject):
             unavailableNames = set(self.nodes.keys())
             for node in graph.nodes:
                 if node._name in unavailableNames:
-                    node._name = self._createUniqueNodeName(node.nodeType, unavailableNames)
+                    node._name = self._createUniqueNodeName(node._name, unavailableNames)
                 unavailableNames.add(node._name)
 
         def _importNodesAndEdges() -> list[Node]:
@@ -549,7 +549,7 @@ class Graph(BaseObject):
                     node.nodeType, self.name, node.graph.name))
 
         assert uniqueName not in self._nodes.keys()
-        node._name = uniqueName
+        node.name = uniqueName
         node.graph = self
         self._nodes.add(node)
         node.chunksChanged.connect(self.updated)
@@ -565,20 +565,27 @@ class Graph(BaseObject):
             node._applyExpr()
         return node
 
-    def renameNode(self, node: Node, newName: str):
+    def renameNode(self, node: Node, newName: str) -> bool:
         """ Rename a node in the Node Graph.
-        If the proposed name is already assigned to a node then it will create a unique name
+        If the proposed name is already assigned to a node then it will create a unique name.
+        A node that is locked or has a cache cannot be renamed.
 
         Args:
             node (Node): Node to rename.
             newName (str): New name of the node.
+
+        Returns:
+            bool: True if the node has been renamed, False otherwise.
         """
         # Handle empty string
         if not newName:
-            return
+            return False
         if node.getLocked():
             logging.warning(f"Cannot rename node {node} because of the locked status")
-            return
+            return False
+        if node.hasCache():
+            logging.warning(f"Cannot rename node {node} because it has a cache")
+            return False
         usedNames = {n._name for n in self._nodes if n != node}
         # Make sure we rename to an available name
         if newName in usedNames:
@@ -586,8 +593,8 @@ class Graph(BaseObject):
         # Rename in the dict model
         self._nodes.rename(node._name, newName)
         # Finally rename the node name property and notify Qt
-        node._name = newName
-        node.nodeNameChanged.emit()
+        node.name = newName
+        return True
 
     def copyNode(self, srcNode: Node, withEdges: bool=False):
         """
@@ -775,11 +782,13 @@ class Graph(BaseObject):
         """
         existingNodeNames = existingNames or set(self._nodes.objects.keys())
 
+        baseName = re.sub(r"_\d+$", "", inputName)
         idx = 1
+        newName = baseName
         while idx:
-            newName = f"{inputName}_{idx}"
             if newName not in existingNodeNames:
                 return newName
+            newName = f"{baseName}_{idx}"
             idx += 1
 
     def node(self, nodeName) -> Optional[Node]:
@@ -1024,13 +1033,12 @@ class Graph(BaseObject):
 
             nodeName, separator, attributeName, value = result.groups()
             outputNode = next((n for n in outputNodes if n.name == nodeName), None)
-            if separator == ':' and outputNode is None:
-                targetNodes = [n for n in outputNodes if n.nodeType == nodeName]
-                if not targetNodes:
-                    raise RuntimeError(f'Unknown output node type "{nodeName}".')
-            elif outputNode is None:
-                raise RuntimeError(f'Unknown output node "{nodeName}".')
-            else:
+            # With ":", the node type takes precedence over the node name, as the first node
+            # of a type is named after it
+            targetNodes = [n for n in outputNodes if n.nodeType == nodeName] if separator == ':' else []
+            if not targetNodes:
+                if outputNode is None:
+                    raise RuntimeError(f'Unknown output node {"type " if separator == ":" else ""}"{nodeName}".')
                 targetNodes = [outputNode]
 
             outputFolderSet = False

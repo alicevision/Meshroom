@@ -72,8 +72,8 @@ MessageDialog {
                 var longest = 0
                 for (var i = 0; i < issueCount; ++i) {
                     var n = nodesModel.at(i)
-                    if (n.defaultLabel.length > longest)
-                        longest = n.defaultLabel.length
+                    if (n.name.length > longest)
+                        longest = n.name.length
                 }
                 return longest
             }
@@ -109,7 +109,7 @@ MessageDialog {
 
                 Label {
                     Layout.preferredWidth: listView.longestLabel * root.textMetrics.width
-                    text: compatibilityNodeDelegate.node ? compatibilityNodeDelegate.node.defaultLabel : ""
+                    text: compatibilityNodeDelegate.node ? compatibilityNodeDelegate.node.name : ""
                 }
                 Label {
                     Layout.fillWidth: true

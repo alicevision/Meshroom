@@ -36,7 +36,7 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 │   │   └── node/               # Live node INSTANCES, re-exported by __init__.py (import from `meshroom.core.node`):
 │   │                           #   status.py (Status, ExecMode, ChunkIndex, Node/ChunkStatusData), logManager.py,
 │   │                           #   chunk.py (NodeChunk), baseNode.py (BaseNode, Position), node.py (Node),
-│   │                           #   backdropNode.py, compatibilityNode.py (CompatibilityNode, CompatibilityIssue)
+│   │                           #   conversionNode.py (ConversionNode), backdropNode.py, compatibilityNode.py (CompatibilityNode, CompatibilityIssue)
 │   ├── nodes/                  # Concrete node types, grouped by category (e.g. general/)
 │   ├── submitters/             # Built-in render-farm submitters (drive meshroom_submit; e.g. localFarm)
 │   ├── ui/                     # User Interface layer (PySide6 / QML-based components)

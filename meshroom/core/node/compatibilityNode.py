@@ -14,6 +14,7 @@ from meshroom.core.exception import NodeUpgradeError
 from meshroom.core.node.chunk import NodeChunk
 from meshroom.core.node.baseNode import BaseNode
 from meshroom.core.node.node import Node
+from meshroom.core.node.conversionNode import ConversionNode
 
 
 class CompatibilityIssue(Enum):
@@ -419,7 +420,8 @@ class CompatibilityNode(BaseNode):
                 # store internal attributes that could be used during node upgrade
                 commonInternalAttributes.append(attrName)
 
-        node = Node(self.nodeType, position=self.position)
+        nodeClass = ConversionNode if isinstance(self.nodeDesc, desc.ConversionNode) else Node
+        node = nodeClass(self.nodeType, position=self.position)
         # convert attributes from a list of tuples into a dict
         attrValues = {key: value for (key, value) in self.inputs.items()}
         intAttrValues = {key: value for (key, value) in self.internalInputs.items()}

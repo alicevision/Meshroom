@@ -1,8 +1,14 @@
 """Tests for the AnySet feature."""
 
+from types import SimpleNamespace
+
+import pytest
+
+from meshroom.core import desc
 from meshroom.core.attribute import AnySet, Attribute
 from meshroom.core.desc import AnySet as AnySetDesc
-from meshroom.core.graph import Graph
+from meshroom.core.graph import Graph, loadGraph
+from meshroom.core.node import CompatibilityNode
 
 
 def anyset_child(serializedAnySet, name):
@@ -570,3 +576,176 @@ def test_anyset_structural_changes_update_node_uid():
     uidBefore = dynamicNode._uid
     dynamicNode.ins.removeAttribute(dynamicNode.ins.floatParam)
     assert dynamicNode._uid != uidBefore, "Removing a child should update the node UID"
+
+
+# ---------------------------------------------------------------------------
+# Supported children types save/load tests
+# ---------------------------------------------------------------------------
+
+# Supported AnySet children types, along with a non-default value to set on each of them.
+SUPPORTED_ANYSET_CHILDREN = [
+    (desc.StringParam(name="stringChild", label="String Child", description="", value="defaultString"),
+     "someString"),
+    (desc.IntParam(name="intChild", label="Int Child", description="", value=1, range=(0, 100, 1)),
+     42),
+    (desc.FloatParam(name="floatChild", label="Float Child", description="", value=0.5, range=(0.0, 10.0, 0.1)),
+     3.25),
+    (desc.BoolParam(name="boolChild", label="Bool Child", description="", value=False),
+     True),
+    (desc.ChoiceParam(name="exclusiveChoiceChild", label="Exclusive Choice Child", description="", value="a",
+                      values=["a", "b", "c"], exclusive=True),
+     "b"),
+    (desc.ChoiceParam(name="multiChoiceChild", label="Multi Choice Child", description="", value=["a"],
+                      values=["a", "b", "c"], exclusive=False),
+     ["b", "c"]),
+    (desc.File(name="fileChild", label="File Child", description="", value="/default/path"),
+     "/some/other/path"),
+    (desc.ColorParam(name="colorChild", label="Color Child", description="", value="#000000"),
+     "#ff8000"),
+]
+
+
+def descSpecificArgs(attributeDesc):
+    """Return the description arguments specific to the supported AnySet children types (choices and ranges)."""
+    if isinstance(attributeDesc, desc.ChoiceParam):
+        return {"values": list(attributeDesc.values), "exclusive": attributeDesc.exclusive}
+    if isinstance(attributeDesc, (desc.IntParam, desc.FloatParam)):
+        return {"range": list(attributeDesc.range)}
+    return {}
+
+
+def addAnySetChild(anySet, attributeDesc):
+    """
+    Add a child to 'anySet' from the given description, through the same duplication path as the UI.
+
+    Args:
+        anySet: the AnySet attribute to add the child to.
+        attributeDesc: the description of the child to create.
+
+    Returns:
+        Attribute: the created child.
+    """
+    # duplicateAttribute only relies on the description of the source attribute
+    return anySet.duplicateAttribute(SimpleNamespace(desc=attributeDesc))
+
+
+def assertAnySetNodeRoundTrip(tmp_path, children, fileName="graph.mg"):
+    """
+    Create a DynamicNode whose input AnySet holds the given children, save the graph, reload it twice
+    (load, then save and reload the loaded graph) and check that the node, its children and its UID are preserved.
+
+    Args:
+        tmp_path: directory in which the graph files are saved.
+        children: list of (description, value) for the children to create; a None value keeps the default one.
+    """
+    graph, dynamicNode = initGraphAndNode()
+    for attributeDesc, value in children:
+        child = addAnySetChild(dynamicNode.ins, attributeDesc)
+        if value is not None:
+            child.value = value
+    graph.update()
+
+    expectedChildren = [(child.name, child.label, child.desc.type, descSpecificArgs(child.desc), child.value)
+                        for child in dynamicNode.ins.value]
+    # The type-specific description arguments (choices, ranges) are kept when duplicating the child
+    assert {name: args for name, _, _, args, _ in expectedChildren} == {attributeDesc.name: descSpecificArgs(attributeDesc)
+                                                                       for attributeDesc, _ in children}
+    expectedUid = dynamicNode._uid
+    assert len(expectedChildren) == len(children)
+
+    graphFile = str(tmp_path / fileName)
+    graph.save(graphFile)
+
+    for _ in range(2):
+        loadedGraph = loadGraph(graphFile)
+        loadedNode = loadedGraph.node(dynamicNode.name)
+
+        assert not isinstance(loadedNode, CompatibilityNode), loadedNode.issueDetails
+        assert [(child.name, child.label, child.desc.type, descSpecificArgs(child.desc), child.value)
+                for child in loadedNode.ins.value] == expectedChildren
+        assert loadedNode.ins.uid() == dynamicNode.ins.uid()
+        assert loadedNode._uid == expectedUid
+
+        # Save the loaded graph to check the next iteration against a resaved file
+        graphFile = str(tmp_path / f"resaved_{fileName}")
+        loadedGraph.save(graphFile)
+
+
+@pytest.mark.parametrize("attributeDesc,value", SUPPORTED_ANYSET_CHILDREN,
+                         ids=[attributeDesc.name for attributeDesc, _ in SUPPORTED_ANYSET_CHILDREN])
+def test_anyset_supported_child_type_save_load_preserves_uid(tmp_path, attributeDesc, value):
+    """An AnySet child of each supported type keeps its type, value and the node UID across save/load cycles."""
+    assertAnySetNodeRoundTrip(tmp_path, [(attributeDesc, value)])
+
+
+@pytest.mark.parametrize("attributeDesc", [attributeDesc for attributeDesc, _ in SUPPORTED_ANYSET_CHILDREN],
+                         ids=[attributeDesc.name for attributeDesc, _ in SUPPORTED_ANYSET_CHILDREN])
+def test_anyset_supported_child_type_default_value_save_load_preserves_uid(tmp_path, attributeDesc):
+    """An AnySet child of each supported type left at its default value is preserved across save/load cycles."""
+    assertAnySetNodeRoundTrip(tmp_path, [(attributeDesc, None)])
+
+
+def test_anyset_all_supported_child_types_save_load_preserves_uid(tmp_path):
+    """An AnySet holding children of all the supported types is preserved across save/load cycles."""
+    assertAnySetNodeRoundTrip(tmp_path, SUPPORTED_ANYSET_CHILDREN)
+
+
+def test_anyset_all_supported_child_types_template_save_load(tmp_path):
+    """An AnySet holding children of all the supported types is preserved when saved as a template."""
+    graph, dynamicNode = initGraphAndNode()
+    for attributeDesc, value in SUPPORTED_ANYSET_CHILDREN:
+        addAnySetChild(dynamicNode.ins, attributeDesc).value = value
+    graph.update()
+    expectedChildren = [(child.name, child.desc.type, descSpecificArgs(child.desc), child.value)
+                        for child in dynamicNode.ins.value]
+
+    templateFile = str(tmp_path / "template.mg")
+    graph.save(templateFile, template=True)
+
+    loadedNode = loadGraph(templateFile).node(dynamicNode.name)
+    assert not isinstance(loadedNode, CompatibilityNode), loadedNode.issueDetails
+    assert [(child.name, child.desc.type, descSpecificArgs(child.desc), child.value)
+            for child in loadedNode.ins.value] == expectedChildren
+    assert loadedNode._uid == dynamicNode._uid
+
+
+@pytest.mark.parametrize("attributeDesc", [attributeDesc for attributeDesc, _ in SUPPORTED_ANYSET_CHILDREN],
+                         ids=[attributeDesc.name for attributeDesc, _ in SUPPORTED_ANYSET_CHILDREN])
+def test_supported_child_type_desc_clone_keeps_type_specific_args(attributeDesc):
+    """Cloning a description keeps the arguments specific to its type (choices of a ChoiceParam, range of a numeric parameter)."""
+    clone = attributeDesc.clone()
+    assert descSpecificArgs(clone) == descSpecificArgs(attributeDesc)
+    if isinstance(attributeDesc, desc.ChoiceParam):
+        assert clone.values == attributeDesc.values and clone.values is not attributeDesc.values
+        assert clone.exclusive == attributeDesc.exclusive
+    elif isinstance(attributeDesc, (desc.IntParam, desc.FloatParam)):
+        assert list(clone.range) == list(attributeDesc.range) and clone.range
+
+
+def nonInvalidatingDesc(attributeDesc):
+    """Return a clone of 'attributeDesc' that does not invalidate the node UID."""
+    clone = attributeDesc.clone()
+    clone._invalidate = False
+    return clone
+
+
+@pytest.mark.parametrize("attributeDesc,value", SUPPORTED_ANYSET_CHILDREN,
+                         ids=[attributeDesc.name for attributeDesc, _ in SUPPORTED_ANYSET_CHILDREN])
+def test_anyset_child_duplicated_from_non_invalidating_attribute_save_load_preserves_uid(tmp_path, attributeDesc, value):
+    """A child duplicated from a non-invalidating attribute does not create a UID conflict when reloading the graph."""
+    assertAnySetNodeRoundTrip(tmp_path, [(nonInvalidatingDesc(attributeDesc), value)])
+
+
+def disabledDesc(attributeDesc, enabled):
+    """Return a clone of 'attributeDesc' with the given disabled 'enabled' state (False or a callable returning False)."""
+    clone = attributeDesc.clone()
+    clone._enabled = enabled
+    return clone
+
+
+@pytest.mark.parametrize("enabled", [False, lambda node: False], ids=["disabled", "disabledByCallable"])
+@pytest.mark.parametrize("attributeDesc,value", SUPPORTED_ANYSET_CHILDREN,
+                         ids=[attributeDesc.name for attributeDesc, _ in SUPPORTED_ANYSET_CHILDREN])
+def test_anyset_child_duplicated_from_disabled_attribute_save_load_preserves_uid(tmp_path, attributeDesc, value, enabled):
+    """A child duplicated from a disabled attribute does not create a UID conflict when reloading the graph."""
+    assertAnySetNodeRoundTrip(tmp_path, [(disabledDesc(attributeDesc, enabled), value)])

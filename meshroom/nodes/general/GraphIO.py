@@ -12,6 +12,10 @@ class GraphInput(desc.InitNode, desc.IONode):
     Its attributes are the entry points of the graph: they cannot be connected as destination.
     """
 
+    def __init_subclass__(cls, **kwargs):
+        # Identified by its node type, a graph having at most one of them
+        raise TypeError(f"'{cls.__name__}': GraphInput cannot be subclassed.")
+
     size = desc.StaticNodeSize(0)
     category = "Utils"
 
@@ -33,6 +37,10 @@ class GraphOutput(desc.InitNode, desc.IONode):
     An InitNode, as it has nothing to compute. Not an OutputNode, as output nodes are removed from the graphs
     created from a template.
     """
+
+    def __init_subclass__(cls, **kwargs):
+        # Identified by its node type, a graph having at most one of them
+        raise TypeError(f"'{cls.__name__}': GraphOutput cannot be subclassed.")
 
     size = desc.StaticNodeSize(0)
     category = "Utils"

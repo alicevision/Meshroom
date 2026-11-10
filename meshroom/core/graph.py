@@ -417,6 +417,12 @@ class Graph(BaseObject):
         if "version" not in nodeData:
             version = fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"])
             nodeData["version"] = version if version is not None else "0.0"
+        existingNode = self.findGraphIONode(nodeData["nodeType"])
+        if existingNode is not None:
+            # Should not happen as these nodes are converted when imported: the node and its connections are dropped
+            logging.error(f'The graph already has the {nodeData["nodeType"]} node "{existingNode.name}": '
+                          f'"{nodeName}" is removed with its connections.')
+            return None
         inTemplate = fromGraph.header.get(GraphIO.Keys.Template, False)
         nodeDescDict = {}
         if fromGraph.nodeDescriptions:
@@ -498,6 +504,7 @@ class Graph(BaseObject):
 
         Nodes are imported with their original names if possible, otherwise a new unique name is generated
         from their node type.
+        If this graph already has a GraphInput or GraphOutput node, the imported one is converted into an AnySetNode.
 
         Args:
             graph: The graph to import.
@@ -523,9 +530,16 @@ class Graph(BaseObject):
             with GraphModification(self):
                 for srcNode in nodes:
                     node = self._deserializeNode(srcNode.toDict(), srcNode.name, graph)
-                    importedNodes.append(node)
+                    if node is not None:
+                        importedNodes.append(node)
                 self._applyExpr()
             return importedNodes
+
+        # Converted in the imported graph, where they are unique and still connected
+        if graph is not self:
+            for nodeType in GRAPH_IO_ANYSETS:
+                if self.findGraphIONode(nodeType) and graph.findGraphIONode(nodeType):
+                    graph.convertToAnySetNode(graph.findGraphIONode(nodeType))
 
         _renameClashingNodes()
         importedNodes = _importNodesAndEdges()
@@ -555,6 +569,10 @@ class Graph(BaseObject):
                     node.nodeType, self.name, node.graph.name))
 
         assert uniqueName not in self._nodes.keys()
+        existingNode = self.findGraphIONode(node.nodeType)
+        if existingNode is not None and existingNode != node:
+            raise RuntimeError(f'Cannot add the {node.nodeType} node "{uniqueName}" to the Graph "{self.name}", '
+                               f'which already has the {node.nodeType} node "{existingNode.name}".')
         node._name = uniqueName
         node.graph = self
         self._nodes.add(node)
@@ -605,7 +623,8 @@ class Graph(BaseObject):
 
         Returns:
             The created node instance and the mapping of skipped edges per attribute
-            (always empty if `withEdges` is True)
+            (always empty if `withEdges` is True).
+            A GraphInput or GraphOutput node is copied as an AnySetNode, as a graph has at most one of each.
         """
         def _removeLinkExpressions(attribute: Attribute, removed: Dict[Attribute, str]):
             """ Recursively remove link expressions from the given root `attribute`. """
@@ -621,7 +640,8 @@ class Graph(BaseObject):
                     _removeLinkExpressions(child, removed)
 
         with GraphModification(self):
-            node = nodeFactory(srcNode.toDict(), name=srcNode.nodeType)
+            nodeData = self._anySetNodeData(srcNode) if srcNode.nodeType in GRAPH_IO_ANYSETS else srcNode.toDict()
+            node = nodeFactory(nodeData, name=nodeData["nodeType"])
 
             skippedEdges = {}
             if not withEdges:
@@ -708,6 +728,9 @@ class Graph(BaseObject):
                 # if the edge's source node has been duplicated (the key exists in the dictionary),
                 # use the duplicate; otherwise use the original node
                 if edgeSrcNode in duplicates:
+                    if edgeSrcNode.nodeType in GRAPH_IO_ANYSETS:
+                        # Duplicated as an AnySetNode
+                        edgeSrcAttrName = self._anySetNodeAttributeName(edgeSrcNode.nodeType, edgeSrcAttrName)
                     edgeSrcNode = duplicates.get(edgeSrcNode)[0]
                 if edgeSrcNode.hasAttribute(edgeSrcAttrName):
                     edgeSrcAttr = edgeSrcNode.attribute(edgeSrcAttrName)
@@ -1031,6 +1054,19 @@ class Graph(BaseObject):
         """
         nodes = [n for n in self._nodes.values() if n.nodeType == nodeType]
         return self.sortNodesByIndex(nodes) if sortedByIndex else nodes
+
+    def findGraphIONode(self, nodeType: str) -> Optional[Node]:
+        """
+        Args:
+            nodeType: the type of the node to find
+
+        Returns:
+            Node: the GraphInput or GraphOutput node of the graph if `nodeType` is one of these types and the graph
+            has one, None otherwise
+        """
+        if nodeType not in GRAPH_IO_ANYSETS:
+            return None
+        return next((n for n in self._nodes.values() if n.nodeType == nodeType), None)
 
     def findInputNodes(self):
         """

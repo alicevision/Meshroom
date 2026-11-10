@@ -7,6 +7,7 @@ class AnySetNode(desc.InitNode):
     """
     Hold a set of attributes, which can be connected on both sides: to drive the attributes of other nodes,
     or to gather their values.
+    GraphInput and GraphOutput nodes added to a graph that already has one become AnySetNode nodes.
     """
 
     size = desc.StaticNodeSize(0)

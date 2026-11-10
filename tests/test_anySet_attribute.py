@@ -591,6 +591,22 @@ def test_edit_anyset_attribute_ignores_default_value_that_is_not_editable():
     assert newAttr.value == 0.0
 
 
+def test_connected_edge_names_include_list_elements():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    dstNode = graph.addNewNode("DynamicNode")
+    elementDesc = {"name": "string", "label": "String", "type": "StringParam", "value": ""}
+    listAttr = dynamicNode.ins.insertAttribute({"name": "list", "label": "List", "type": "ListAttribute", "value": [], "elementDesc": elementDesc}, 0)
+    listAttr.extend(["a", "b"])
+    srcNode.code.connectTo(listAttr.at(0))
+    listAttr.at(1).connectTo(dstNode.code)
+
+    assert sorted(dynamicNode.ins.connectedEdgeNames(listAttr)) == sorted([
+        (srcNode.code.fullName, listAttr.at(0).fullName),
+        (listAttr.at(1).fullName, dstNode.code.fullName),
+    ])
+
+
 def test_duplicated_attributes_are_added_at_the_end():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("Position")

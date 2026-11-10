@@ -601,16 +601,8 @@ class RemoveAnySetAttributeCommand(GraphCommand):
         self.anySetAttrName = anySetAttribute.fullName
         self.index = list(anySetAttribute.value).index(attribute)
         self.value = attribute.asDict()
-        self.edges = self._connectedEdgeNames(attribute)
+        self.edges = anySetAttribute.connectedEdgeNames(attribute)
         self.setText(f"Remove {attribute.fullName}")
-
-    def _connectedEdgeNames(self, attribute):
-        attributes = [attribute] + attribute.flatStaticChildren
-        return [
-            (edge.src.fullName, edge.dst.fullName)
-            for edge in self.graph.edges.values()
-            if edge.src in attributes or edge.dst in attributes
-        ]
 
     def redoImpl(self):
         anySetAttribute = self.graph.attribute(self.anySetAttrName)

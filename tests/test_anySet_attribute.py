@@ -749,3 +749,129 @@ def disabledDesc(attributeDesc, enabled):
 def test_anyset_child_duplicated_from_disabled_attribute_save_load_preserves_uid(tmp_path, attributeDesc, value, enabled):
     """A child duplicated from a disabled attribute does not create a UID conflict when reloading the graph."""
     assertAnySetNodeRoundTrip(tmp_path, [(disabledDesc(attributeDesc, enabled), value)])
+
+
+# ---------------------------------------------------------------------------
+# Output AnySet tests
+# ---------------------------------------------------------------------------
+
+def intDesc(name):
+    """Return an IntParam description named 'name'."""
+    return desc.IntParam(name=name, label=name, description="", value=0, range=(0, 100, 1))
+
+
+def addOutputChild(anySet, attributeDesc):
+    """Add an output child to 'anySet' from the given description, through the same duplication path as the UI."""
+    return anySet.duplicateAttribute(SimpleNamespace(desc=attributeDesc), isOutput=True)
+
+
+def test_output_anyset_schema_contributes_to_node_uid():
+    """The names and types of the children of an output AnySet contribute to the node UID, but not their order or values."""
+    graph, dynamicNode = initGraphAndNode()
+
+    uidBefore = dynamicNode._uid
+    addOutputChild(dynamicNode.outs, intDesc("a"))
+    assert dynamicNode._uid != uidBefore, "Adding an output child should update the node UID"
+
+    addOutputChild(dynamicNode.outs, intDesc("b"))
+    uidBefore = dynamicNode._uid
+    dynamicNode.outs.moveAttribute(dynamicNode.outs.a, 1)
+    assert dynamicNode._uid == uidBefore, "Moving an output child should not update the node UID"
+
+    dynamicNode.outs.a.value = 42
+    graph.update()
+    assert dynamicNode._uid == uidBefore, "The value of an output child should not contribute to the node UID"
+
+    dynamicNode.outs.renameAttribute(dynamicNode.outs.a, "renamed", "Renamed")
+    assert dynamicNode._uid != uidBefore, "Renaming an output child should update the node UID"
+
+    uidBefore = dynamicNode._uid
+    dynamicNode.outs.removeAttribute(dynamicNode.outs.renamed)
+    addOutputChild(dynamicNode.outs, desc.FloatParam(name="renamed", label="renamed", description="", value=0.0,
+                                                     range=(0.0, 1.0, 0.1)))
+    assert dynamicNode._uid != uidBefore, "Changing the type of an output child should update the node UID"
+
+    uidBefore = dynamicNode._uid
+    dynamicNode.outs.removeAttribute(dynamicNode.outs.renamed)
+    assert dynamicNode._uid != uidBefore, "Removing an output child should update the node UID"
+
+
+def test_empty_output_anyset_does_not_contribute_to_node_uid():
+    """An empty output AnySet does not change the node UID, which is kept for existing projects."""
+    graph, dynamicNode = initGraphAndNode()
+    uidBefore = dynamicNode._uid
+
+    addOutputChild(dynamicNode.outs, intDesc("a"))
+    dynamicNode.outs.removeAttribute(dynamicNode.outs.a)
+    assert dynamicNode._uid == uidBefore
+
+
+def renameOutputChild(node):
+    node.outs.renameAttribute(node.outs.a, "b", "b")
+
+
+def removeOutputChild(node):
+    """Remove the output child 'a' of 'node' along with its edges, as the UI does."""
+    for edge in list(node.graph.edges.values()):
+        if edge.src is node.outs.a:
+            node.graph.removeEdge(edge.dst)
+    node.outs.removeAttribute(node.outs.a)
+
+
+def retypeOutputChild(node):
+    removeOutputChild(node)
+    addOutputChild(node.outs, desc.StringParam(name="a", label="a", description="", value=""))
+
+
+def addOtherOutputChild(node):
+    addOutputChild(node.outs, intDesc("b"))
+
+
+@pytest.mark.parametrize("editOutputs", [renameOutputChild, removeOutputChild, retypeOutputChild, addOtherOutputChild],
+                         ids=["rename", "remove", "retype", "add"])
+def test_output_anyset_schema_change_resets_computed_node(graphSavedOnDisk, editOutputs):
+    """Changing the names or types of the outputs of a computed node resets it, along with the nodes using its outputs."""
+    graph = graphSavedOnDisk
+    producer = graph.addNewNode("DynamicNode")
+    consumer = graph.addNewNode("DynamicNode")
+    addOutputChild(producer.outs, intDesc("a"))
+    producer.code.value = "node.outs.a.value = 7"
+    consumer.ins.duplicateAttribute(SimpleNamespace(desc=intDesc("x")))
+    graph.addEdge(producer.outs.a, consumer.ins.x)
+    graph.save()
+
+    producer.process(inCurrentEnv=True)
+    graph.update()
+    assert producer.globalStatus == "SUCCESS"
+    assert producer.outs.a.value == 7
+    producerUid, consumerUid = producer._uid, consumer._uid
+
+    # Without the output schema in the node UID, the node stayed computed and the computed values were reloaded
+    # into the edited outputs, raising an AttributeError for a renamed or removed output
+    editOutputs(producer)
+
+    assert producer._uid != producerUid
+    assert producer.globalStatus == "NONE"
+    if consumer.ins.x.isLink:
+        assert consumer._uid != consumerUid
+
+
+def test_output_anyset_schema_restored_finds_computed_results(graphSavedOnDisk):
+    """Restoring the outputs of a computed node to their computed names and types finds its computed results again."""
+    graph = graphSavedOnDisk
+    node = graph.addNewNode("DynamicNode")
+    addOutputChild(node.outs, intDesc("a"))
+    node.code.value = "node.outs.a.value = 7"
+    graph.save()
+
+    node.process(inCurrentEnv=True)
+    graph.update()
+    computedUid = node._uid
+
+    node.outs.renameAttribute(node.outs.a, "b", "b")
+    assert node.globalStatus == "NONE"
+
+    node.outs.renameAttribute(node.outs.b, "a", "a")
+    assert node._uid == computedUid
+    assert node.globalStatus == "SUCCESS"
+    assert node.outs.a.value == 7

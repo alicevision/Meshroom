@@ -3,7 +3,7 @@
 
 ## Node Creation
 
-This guide shows how to implement four common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, non-computational `InitNode`, and `OutputNode` for pipeline exports.
+This guide shows how to implement five common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, non-computational `InitNode`, `OutputNode` for pipeline exports, and `ConversionNode` for conversions between attribute types.
 
 ### 1. Node (Pure Python)
 
@@ -138,6 +138,41 @@ For compatibility with existing nodes, omit `outputAttributes` to expose the inp
 - `ExportResults:exportLabel=final` configures an exposed attribute on every output node of that type.
 
 Only attributes declared in `outputAttributes` can be set through these targeted forms.
+
+### 5. ConversionNode (attribute type conversion)
+
+Use `desc.ConversionNode` to convert a value from one attribute type to another.
+When an attribute is connected to an attribute of a different type in the Graph Editor, Meshroom looks for the conversion node types able to convert between them and inserts the first one (sorted by name) on the connection.
+The conversion node is displayed as a circle in the middle of the edge: it can be selected to edit its parameters, but it cannot be moved.
+If several conversion node types are valid for a connection, the Node Editor and the circle's context menu allow switching between them.
+
+A conversion node declares:
+- an input attribute named `input`, with the type to convert from,
+- a dynamic output attribute (`value=None`) named `output`, with the type to convert to,
+- optional parameters driving the conversion,
+- a `convert(self, node, value)` method returning the converted value of `input`.
+
+It is never computed: the output value is evaluated on-the-fly from the input value, so it is always up-to-date (it is `None` while a dynamic input value has not been computed). Changing a conversion parameter invalidates the downstream nodes.
+
+```python
+import math
+from meshroom.core import desc
+
+class FloatToInt(desc.ConversionNode):
+    inputs = [
+        desc.FloatParam(name="input", label="Input", description="", value=0.0),
+        desc.ChoiceParam(name="mode", label="Mode", description="", values=["round", "floor", "ceil", "trunc"], value="round"),
+    ]
+    outputs = [
+        desc.IntParam(name="output", label="Output", description="", value=None),
+    ]
+
+    def convert(self, node, value):
+        return {"floor": math.floor, "ceil": math.ceil, "trunc": math.trunc}.get(node.mode.value, round)(value)
+```
+
+By default, a conversion node type converts between attributes whose types match exactly the types of its `input` and `output` attributes (list attributes are compared with their element types). Override the `canConvert(cls, srcAttribute, dstAttribute)` class method to implement custom rules.
+From a script, `graph.connectWithConversion(srcAttr, dstAttr, nodeType=None)` connects two attributes through a new conversion node, and `graph.getConversionNodeTypes(srcAttr, dstAttr)` lists the available conversion node types.
 
 
 ## Attribute Types Available in Meshroom Nodes

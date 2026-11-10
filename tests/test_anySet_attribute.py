@@ -635,6 +635,40 @@ def test_anyset_shape_and_keyable_children_can_be_edited_and_loaded(attributeDes
     assert loadGraph(graphFile).node(dynamicNode.name).ins.child.asDict() == expected
 
 
+def test_changing_anyset_children_changes_node_uid():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    seenUids = [dynamicNode._uid]
+
+    def assertUidChanged():
+        assert dynamicNode._uid not in seenUids
+        seenUids.append(dynamicNode._uid)
+
+    child = anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 0)
+    assertUidChanged()
+
+    child.value = 5
+    assertUidChanged()
+
+    child = anySet.replaceAttributeWithEdges(child, anySet.getEditedAttributeData(child, {"name": "renamed"}))
+    assertUidChanged()
+
+    anySet.removeAttribute(child)
+    assert dynamicNode._uid == seenUids[0]
+
+
+def test_nodes_with_different_anyset_values_have_different_uids():
+    graph, node1 = initGraphAndNode()
+    node2 = graph.addNewNode("DynamicNode")
+    child1 = node1.ins.insertAttribute(node1.ins.getNewAttributeData("IntParam"), 0)
+    child2 = node2.ins.insertAttribute(node2.ins.getNewAttributeData("IntParam"), 0)
+    assert node1._uid == node2._uid
+
+    child1.value = 1
+    child2.value = 9
+    assert node1._uid != node2._uid
+
+
 def test_duplicated_attributes_are_added_at_the_end():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("Position")

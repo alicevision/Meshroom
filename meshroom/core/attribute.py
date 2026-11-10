@@ -2021,6 +2021,11 @@ class AnySet(GroupAttribute):
         "ColorParam": {"value": "#2a82da"},
     }
 
+    def _onChildrenChanged(self):
+        """ Notify that the children changed, and update the graph as they are part of the UID of the node. """
+        self.flatStaticChildrenChanged.emit()
+        self.requestGraphUpdate()
+
     def duplicateAttribute(self, attribute: Attribute, isOutput: bool|None=None) -> Attribute:
         """ Create an attribute as child of the current, with the same description as the given one.
             Duplicated name's are handled by _renameAttributeDescriptionInPlace()
@@ -2039,14 +2044,14 @@ class AnySet(GroupAttribute):
             newAttribute._desc._isDynamicValue = True
 
         self._value.insert(self._value.count, newAttribute)
-        self.flatStaticChildrenChanged.emit()
+        self._onChildrenChanged()
 
         return newAttribute
 
     def removeAttribute(self, attribute: Attribute):
         if attribute in self._value:
             self._value.remove(attribute)
-            self.flatStaticChildrenChanged.emit()
+            self._onChildrenChanged()
 
     def moveAttribute(self, attribute: Attribute, toIndex: int) -> None:
         if attribute not in self._value:
@@ -2058,7 +2063,7 @@ class AnySet(GroupAttribute):
             return
 
         self._value.move(fromIndex, toIndex)
-        self.flatStaticChildrenChanged.emit()
+        self._onChildrenChanged()
 
     def insertAttribute(self, serializedAttribute: dict, index: int) -> Attribute | None:
         """Restore a serialized child attribute at the requested position."""
@@ -2080,7 +2085,7 @@ class AnySet(GroupAttribute):
             restoredAttribute._isOutput = True
             restoredAttribute._desc._isDynamicValue = True
         self._value.insert(index, restoredAttribute)
-        self.flatStaticChildrenChanged.emit()
+        self._onChildrenChanged()
         return restoredAttribute
 
     @classmethod
@@ -2194,11 +2199,11 @@ class AnySet(GroupAttribute):
         except Exception:
             # Restore the original attribute if the new one could not be created
             self._value.insert(index, attribute)
-            self.flatStaticChildrenChanged.emit()
+            self._onChildrenChanged()
             raise
         if newAttribute is None:
             self._value.insert(index, attribute)
-            self.flatStaticChildrenChanged.emit()
+            self._onChildrenChanged()
         return newAttribute
 
     @staticmethod
@@ -2362,6 +2367,13 @@ class AnySet(GroupAttribute):
     def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
         """Accept connections of any type."""
         return True
+
+    # Override
+    def uid(self):
+        if self.isLink:
+            return super().uid()
+        # Children are defined by the user and accessed by their names: their names are part of the UID
+        return hashValue([(child.name, child.uid()) for child in self._value if child.enabled and child.invalidate])
 
     # Override
     # An AnySet's description has no predefined items: all its children are user-defined, so it is only

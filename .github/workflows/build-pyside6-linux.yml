@@ -220,11 +220,17 @@ jobs:
           # Build tools only: no numpy (numpy support disabled), no mypy (test skipped)
           grep -vE '^\s*(numpy|mypy)\b' requirements.txt > "${RUNNER_TEMP}/pyside-build-requirements.txt"
           python -m pip install -r "${RUNNER_TEMP}/pyside-build-requirements.txt"
-          # Run with the base interpreter, the build tools coming from the venv: the sysconfig LIBDIR / INCLUDEPY of the
-          # relocated /opt/python point to its build prefix (/install), so pyside-setup falls back to <base>/lib and
-          # <base>/include, which in a venv is the venv itself (no libpython nor headers there).
-          export PYTHONPATH="$(python -c 'import sysconfig; print(sysconfig.get_path("purelib"))')"
-          /opt/python/bin/python3 setup.py bdist_wheel \
+          # The sysconfig LIBDIR / INCLUDEPY of the relocated /opt/python (python-build-standalone) point to its build
+          # prefix (/install), which pyside-setup passes to CMake (Python_LIBRARY / Python_INCLUDE_DIR): make that
+          # prefix point to /opt/python (the container is discarded).
+          BUILD_LIBDIR=$(python -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR"))')
+          BUILD_PREFIX=$(dirname "$BUILD_LIBDIR")
+          if [ ! -e "$BUILD_LIBDIR" ]; then
+            echo "Python build prefix ${BUILD_PREFIX} -> /opt/python"
+            ln -sT /opt/python "$BUILD_PREFIX"
+          fi
+          test -f "$(python -c 'import sysconfig; print(sysconfig.get_config_var("INCLUDEPY"))')/Python.h"
+          python setup.py bdist_wheel \
             --qtpaths="${QT_ROOT}/bin/qtpaths" \
             --standalone \
             --limited-api=no \

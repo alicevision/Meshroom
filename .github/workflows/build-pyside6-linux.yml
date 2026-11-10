@@ -1,0 +1,256 @@
+# .github/workflows/build-pyside6-linux.yml
+# Reusable workflow – called by nightly.yml
+#
+# Builds PySide6 from source for the Linux binaries: the PyPI wheels crash on signal emission with the Python
+# interpreter of the AliceVision nightly bundle. PySide6 is built:
+#  - with that interpreter: the bundle embeds /opt/python of the AliceVision deps docker image, so the build runs
+#    in the image the AliceVision nightly was built in (as QtAliceVision), with its toolchain;
+#  - against the Qt used by QtAliceVision (aqtinstall, same version as PySide6), bundled in the wheel
+#    (--standalone, same PySide6/Qt/{lib,plugins,qml} layout as the PyPI wheels);
+#  - without the limited API (cp311 wheel, for this interpreter only), with the modules Meshroom uses.
+#
+# Caching, from the cheapest to the most expensive miss:
+#  - wheels: keyed on the PySide6 version, the deps image (interpreter and toolchain) and this file (recipe). The
+#    "prepare" job only looks the key up: on a hit, the build job is skipped (no image pull, no Qt) and
+#    build-binary.yml restores the wheels. On a miss, the "build" job uploads the wheels as the "pyside6-linux"
+#    artifact, and build-binary.yml saves them in the cache (on the runner, not in the container, so that the
+#    restore in build-binary.yml finds them under the same path);
+#  - Qt (aqtinstall), keyed on its version and modules;
+#  - ccache, restored from the latest build of the same PySide6 version: a rebuild for a new deps image or a
+#    change of this file mostly hits the cache.
+
+name: Build PySide6 (Linux)
+
+on:
+  workflow_call:
+    inputs:
+      av_archive:
+        description: "AliceVision nightly archive for Linux (as listed in the Meshroom nightly notes), to find its deps docker image"
+        type: string
+        required: true
+    outputs:
+      cache_key:
+        description: "Cache key of the PySide6 wheels (restored by build-binary.yml, or saved from the pyside6-linux artifact)"
+        value: ${{ jobs.prepare.outputs.cache_key }}
+
+env:
+  # Qt modules installed with aqtinstall, bundled in the wheel: the PySide6 modules and the QML modules Meshroom
+  # uses (QtCharts, Qt5Compat.GraphicalEffects, QtPositioning, QtLocation), and the ones QtAliceVision is built with
+  QT_ARCH: linux_gcc_64
+  QT_MODULES: qtcharts qt3d qtshadertools qt5compat qtpositioning qtlocation qtimageformats
+  # PySide6 modules built: the ones Meshroom imports, and their dependencies
+  PYSIDE_MODULES: Core,Gui,Widgets,Network,OpenGL,Qml,Quick,QuickControls2,Charts,3DCore,3DRender
+
+jobs:
+  # ────────────────────────────────────────────────────────────
+  # Resolve the PySide6 version and the deps image, look the wheels up in the cache
+  # ────────────────────────────────────────────────────────────
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      pyside_version: ${{ steps.resolve.outputs.pyside_version }}
+      deps_image:     ${{ steps.resolve.outputs.deps_image }}
+      cache_key:      ${{ steps.resolve.outputs.cache_key }}
+      cache_hit:      ${{ steps.lookup.outputs.cache-hit }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github
+
+      # PySide6 version: the requirements.txt pin for Python >= 3.10 (the Python of the AliceVision bundle is 3.11).
+      # Deps image: the one AliceVision's build-linux.yml used at the commit of the nightly archive
+      # (AliceVision-nightly-<date>-<short sha>-linux.tar.gz).
+      - name: Resolve PySide6 version and deps image
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AV_ARCHIVE: ${{ inputs.av_archive }}
+          RECIPE_HASH: ${{ hashFiles('.github/workflows/build-pyside6-linux.yml') }}
+        run: |
+          set -euo pipefail
+          PYSIDE_VERSION=$(sed -nE 's/^PySide6==([0-9.]+) *; *python_version *>= *"3\.10".*/\1/p' requirements.txt)
+          if [ -z "$PYSIDE_VERSION" ]; then
+            echo "::error title=Build PySide6::No 'PySide6==<version>; python_version >= \"3.10\"' line in requirements.txt"
+            exit 1
+          fi
+          AV_SHORT_SHA=$(sed -nE 's/^AliceVision-nightly-[0-9.]+-([0-9a-f]+)-linux\.tar\.gz$/\1/p' <<< "$AV_ARCHIVE")
+          if [ -z "$AV_SHORT_SHA" ]; then
+            echo "::error title=Build PySide6::Unexpected AliceVision nightly archive name: '${AV_ARCHIVE}'"
+            exit 1
+          fi
+          AV_SHA=$(gh api "repos/alicevision/AliceVision/commits/${AV_SHORT_SHA}" --jq '.sha')
+          DEPS_IMAGE=$(gh api "repos/alicevision/AliceVision/contents/.github/workflows/build-linux.yml?ref=${AV_SHA}" \
+                       -H "Accept: application/vnd.github.raw" \
+                       | sed -nE 's/^\s*image:\s*"?([^"]*alicevision-deps[^"]*)"?\s*$/\1/p' | head -n1)
+          if [ -z "$DEPS_IMAGE" ]; then
+            echo "::error title=Build PySide6::No deps image in AliceVision build-linux.yml at ${AV_SHA}"
+            exit 1
+          fi
+          CACHE_KEY="pyside6-linux-${PYSIDE_VERSION}-${DEPS_IMAGE//[\/:]/_}-${RECIPE_HASH}"
+          echo "PySide6:    ${PYSIDE_VERSION}"
+          echo "AliceVision commit: ${AV_SHA}"
+          echo "Deps image: ${DEPS_IMAGE}"
+          echo "Cache key:  ${CACHE_KEY}"
+          {
+            echo "pyside_version=${PYSIDE_VERSION}"
+            echo "deps_image=${DEPS_IMAGE}"
+            echo "cache_key=${CACHE_KEY}"
+          } >> "$GITHUB_OUTPUT"
+
+      # Same path as in build-binary.yml: it is part of the cache version
+      - name: Look up the PySide6 wheels in the cache
+        id: lookup
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/pyside6-wheels
+          key: ${{ steps.resolve.outputs.cache_key }}
+          lookup-only: true
+
+  # ────────────────────────────────────────────────────────────
+  # Build the wheels (cache miss only)
+  # ────────────────────────────────────────────────────────────
+  build:
+    name: Build PySide6 ${{ needs.prepare.outputs.pyside_version }}
+    needs: prepare
+    if: needs.prepare.outputs.cache_hit != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    container:
+      image: ${{ needs.prepare.outputs.deps_image }}
+
+    env:
+      PYSIDE_VERSION: ${{ needs.prepare.outputs.pyside_version }}
+      QT_DIR: /opt/Qt
+      PYSIDE_SRC: /opt/pyside-setup
+      WHEELS_DIR: /opt/pyside6-wheels
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # Qt build dependencies (as in the QtAliceVision CI), libclang for the shiboken generator, ccache
+      - name: Install system dependencies
+        run: |
+          set -euo pipefail
+          dnf install -y 'dnf-command(config-manager)' epel-release
+          dnf config-manager --set-enabled crb
+          dnf install -y \
+            git tar gzip xz zstd ccache \
+            clang-devel llvm-devel \
+            mesa-libGL-devel mesa-libEGL-devel \
+            libxkbcommon-devel libxkbcommon-x11 \
+            fontconfig-devel freetype-devel \
+            libX11-devel libXext-devel libXrender-devel libxcb-devel \
+            xcb-util-renderutil-devel xcb-util-image-devel xcb-util-cursor xcb-util-keysyms \
+            libXi-devel libXcomposite-devel libXcursor-devel libXdamage-devel \
+            libXfixes-devel libXrandr-devel libXtst-devel \
+            dbus-devel glib2-devel wayland-devel
+          dnf clean all
+          echo "libclang: $(rpm -q clang-devel)"
+
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github
+
+      # Build tools go to the build venv of the image (on /opt/python, the interpreter of the AliceVision bundle):
+      # the wheels are the only output of this job
+      - name: Check the Python interpreter
+        run: |
+          set -euo pipefail
+          "${PYTHON_BUILD_VENV}/bin/python" -c "import os, sys; assert os.path.samefile(sys.base_prefix, '/opt/python'), sys.base_prefix; print(sys.version, sys.base_prefix)"
+
+      # ── Qt ───────────────────────────────────────────────────
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v6
+        with:
+          path: /opt/Qt
+          key: qt-${{ env.PYSIDE_VERSION }}-${{ env.QT_ARCH }}-${{ env.QT_MODULES }}
+
+      - name: Install Qt
+        if: steps.cache-qt.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          "${PYTHON_BUILD_VENV}/bin/python" -m pip install aqtinstall
+          "${PYTHON_BUILD_VENV}/bin/python" -m aqt install-qt --outputdir "${QT_DIR}" \
+            linux desktop "${PYSIDE_VERSION}" "${QT_ARCH}" -m ${QT_MODULES}
+
+      # PySide6 X.Y.Z is built against Qt X.Y.Z
+      - name: Setup Qt environment
+        run: |
+          set -euo pipefail
+          QT_ROOT=$(dirname "$(dirname "$(find "${QT_DIR}/${PYSIDE_VERSION}" -maxdepth 3 -path "*/bin/qtpaths" | head -n1)")")
+          QT_VERSION=$("${QT_ROOT}/bin/qtpaths" --qt-query QT_VERSION)
+          echo "Qt ${QT_VERSION}: ${QT_ROOT}"
+          if [ "$QT_VERSION" != "$PYSIDE_VERSION" ]; then
+            echo "::error title=Build PySide6::Qt ${QT_VERSION} does not match PySide6 ${PYSIDE_VERSION}"
+            exit 1
+          fi
+          echo "QT_ROOT=${QT_ROOT}" >> "$GITHUB_ENV"
+
+      # ── PySide6 ──────────────────────────────────────────────
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          key: ccache-pyside6-linux-${{ env.PYSIDE_VERSION }}
+          max-size: "1500M"
+
+      - name: Fetch PySide6 sources
+        run: |
+          set -euo pipefail
+          URL="https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-${PYSIDE_VERSION}-src/pyside-setup-everywhere-src-${PYSIDE_VERSION}.tar.xz"
+          echo "Downloading: ${URL}"
+          mkdir -p "$PYSIDE_SRC"
+          curl -fsSL --retry 3 "$URL" | tar -xJ -C "$PYSIDE_SRC" --strip-components=1
+
+      # Wheels in dist/: shiboken6, PySide6 (with Qt) and shiboken6_generator (not needed at runtime)
+      - name: Build PySide6
+        working-directory: ${{ env.PYSIDE_SRC }}
+        run: |
+          set -euo pipefail
+          # patchelf (pip package) must be found in PATH
+          export PATH="${PYTHON_BUILD_VENV}/bin:${PATH}"
+          export LLVM_INSTALL_DIR=/usr
+          # Build tools only: no numpy (numpy support disabled), no mypy (test skipped)
+          grep -vE '^\s*(numpy|mypy)\b' requirements.txt > "${RUNNER_TEMP}/pyside-build-requirements.txt"
+          python -m pip install -r "${RUNNER_TEMP}/pyside-build-requirements.txt"
+          python setup.py bdist_wheel \
+            --qtpaths="${QT_ROOT}/bin/qtpaths" \
+            --standalone \
+            --limited-api=no \
+            --disable-numpy-support \
+            --module-subset="${PYSIDE_MODULES}" \
+            --parallel="$(nproc)" \
+            --compiler-launcher=ccache \
+            --ignore-git \
+            --no-qt-tools \
+            --skip-mypy-test
+          ccache -s
+          mkdir -p "$WHEELS_DIR"
+          cp dist/shiboken6-"${PYSIDE_VERSION}"-*.whl dist/PySide6-"${PYSIDE_VERSION}"-*.whl "$WHEELS_DIR/"
+          ls -la "$WHEELS_DIR"
+
+      # Installed in the build venv only (the container is discarded). The smoke test runs before the upload:
+      # a broken build is neither used nor cached.
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          "${PYTHON_BUILD_VENV}/bin/python" -m pip install --no-index --no-deps "$WHEELS_DIR"/*.whl
+          "${PYTHON_BUILD_VENV}/bin/python" -I .github/scripts/pyside6-smoke-test.py
+          # Interpreter the wheels are built for, checked against the AliceVision bundle by build-binary.yml
+          /opt/python/bin/python3 -I .github/scripts/pyside6-smoke-test.py --python-info > "${WHEELS_DIR}/python-info.txt"
+          cat "${WHEELS_DIR}/python-info.txt"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v7
+        with:
+          name: pyside6-linux
+          path: ${{ env.WHEELS_DIR }}
+          retention-days: 1
+          if-no-files-found: error

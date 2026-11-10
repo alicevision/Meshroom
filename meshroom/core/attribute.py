@@ -2182,14 +2182,34 @@ class AnySet(GroupAttribute):
             the names and structures of its items for a group, or the structure of its elements for a list.
         """
         if isinstance(attributeDesc, desc.AnySet):
-            # The items of an AnySet description are only its initial children: its structure is defined by its
-            # actual children
+            # AnySet inherits from GroupAttribute
+            # but its structure is defined by its actual children (see _childSchemaKey)
             return attributeDesc.type
         if isinstance(attributeDesc, desc.GroupAttribute):
             return (attributeDesc.type, [(item.name, AnySet._schemaKey(item)) for item in attributeDesc.items])
         if isinstance(attributeDesc, desc.ListAttribute):
             return (attributeDesc.type, AnySet._schemaKey(attributeDesc.elementDesc))
         return attributeDesc.type
+
+    @staticmethod
+    def _childSchemaKey(child: Attribute):
+        """ Return a key describing the structure of a child attribute: the names and structures of its own children
+            for a nested AnySet, regardless of their order, the names and structures of its items for a group
+            (to take into account the AnySets nested in the group), or the structure of its description otherwise.
+            The elements of a list are values (computed for an output), so only the description of a list is used.
+        """
+        if isinstance(child, AnySet):
+            return (child.desc.type, sorted((nestedChild.name, AnySet._childSchemaKey(nestedChild)) for nestedChild in child._value))
+        if isinstance(child, GroupAttribute):
+            # Same key as _schemaKey(child.desc) when the group does not hold any AnySet
+            return (child.desc.type, [(item.name, AnySet._childSchemaKey(item)) for item in child._value])
+        return AnySet._schemaKey(child.desc)
+
+    def schemaUid(self) -> str:
+        """ Return a hash of the user-defined structure of the AnySet: the names and types of its children,
+            regardless of their order and values.
+        """
+        return hashValue(sorted((child.name, AnySet._childSchemaKey(child)) for child in self._value))
 
     # Override
     def uid(self):

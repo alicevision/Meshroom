@@ -390,7 +390,8 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             logger.exception(f"The scene '{node.scene.value}' is not readable by Meshroom")
             return
 
-        inputNodes = graph.nodesOfType('GraphInput')
+        graphInputNode = graph.findGraphInputNode()
+        inputNodes = [graphInputNode] if graphInputNode else []
         if not node.useOnlyGraphIONodes.value:
             inputNodes += graph.findInputNodes()
 
@@ -401,5 +402,6 @@ class ComputeMeshroomScene(desc.CommandLineNode):
 
         # Only GraphOutput nodes are exposed: the output nodes are removed from the scene computed by meshroom_batch
         # (without -o), and their attributes are export settings rather than results
-        for outputNode in graph.nodesOfType('GraphOutput'):
-            self._exposeAttributes(node.outputs, flattenAttributes(outputNode.getAttributes()))
+        graphOutputNode = graph.findGraphOutputNode()
+        if graphOutputNode:
+            self._exposeAttributes(node.outputs, flattenAttributes(graphOutputNode.getAttributes()))

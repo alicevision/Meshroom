@@ -1068,6 +1068,22 @@ class Graph(BaseObject):
             return None
         return next((n for n in self._nodes.values() if n.nodeType == nodeType), None)
 
+    def findGraphInputNode(self) -> Optional[Node]:
+        return self.findGraphIONode(GRAPH_INPUT_NODE_TYPE)
+
+    def findGraphOutputNode(self) -> Optional[Node]:
+        return self.findGraphIONode(GRAPH_OUTPUT_NODE_TYPE)
+
+    def findGraphInputAttributes(self) -> Dict[str, Attribute]:
+        """
+        Returns:
+            dict[str, Attribute]: the graph inputs of the GraphInput node, by name
+        """
+        graphInputNode = self.findGraphInputNode()
+        if graphInputNode is None:
+            return {}
+        return {attr.name: attr for attr in graphInputNode.ins.value}
+
     def findInputNodes(self):
         """
         Returns:

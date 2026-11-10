@@ -25,6 +25,9 @@ from .baseNode import (
 from .node import (
     Node,
 )
+from .conversionNode import (
+    ConversionNode,
+)
 from .backdropNode import (
     BackdropNode,
 )

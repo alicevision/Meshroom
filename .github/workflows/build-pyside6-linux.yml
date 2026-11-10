@@ -220,7 +220,11 @@ jobs:
           # Build tools only: no numpy (numpy support disabled), no mypy (test skipped)
           grep -vE '^\s*(numpy|mypy)\b' requirements.txt > "${RUNNER_TEMP}/pyside-build-requirements.txt"
           python -m pip install -r "${RUNNER_TEMP}/pyside-build-requirements.txt"
-          python setup.py bdist_wheel \
+          # Run with the base interpreter, the build tools coming from the venv: the sysconfig LIBDIR / INCLUDEPY of the
+          # relocated /opt/python point to its build prefix (/install), so pyside-setup falls back to <base>/lib and
+          # <base>/include, which in a venv is the venv itself (no libpython nor headers there).
+          export PYTHONPATH="$(python -c 'import sysconfig; print(sysconfig.get_path("purelib"))')"
+          /opt/python/bin/python3 setup.py bdist_wheel \
             --qtpaths="${QT_ROOT}/bin/qtpaths" \
             --standalone \
             --limited-api=no \
@@ -228,7 +232,6 @@ jobs:
             --module-subset="${PYSIDE_MODULES}" \
             --parallel="$(nproc)" \
             --compiler-launcher=ccache \
-            --ignore-git \
             --no-qt-tools \
             --skip-mypy-test
           ccache -s

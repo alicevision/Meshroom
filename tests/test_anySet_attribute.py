@@ -578,6 +578,14 @@ def test_edit_anyset_attribute_keeps_link_of_whole_group():
     assert [item.name for item in newGroup.value] == ["x", "y", "z"]
 
 
+def test_duplicated_attributes_are_added_at_the_end():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Position")
+    for attribute in (srcNode.xyz.x, srcNode.xyz.y, srcNode.xyz.z):
+        dynamicNode.ins.duplicateAttribute(attribute)
+    assert [attribute.name for attribute in dynamicNode.ins.value] == ["x", "y", "z"]
+
+
 def test_dynamic_inputs_serialized_in_todict():
     """Dynamic inputs are included in the node's serialized form."""
 

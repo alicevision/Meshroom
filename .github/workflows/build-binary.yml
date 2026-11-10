@@ -227,7 +227,7 @@ jobs:
             echo "::error title=Build binary::PySide6 was built for another Python interpreter than the AliceVision one"
             exit 1
           fi
-          python -m pip install --no-index --no-deps "$PYSIDE6_WHEELS"/shiboken6-*.whl "$PYSIDE6_WHEELS"/PySide6-*.whl
+          python -m pip install --no-index --no-deps "$PYSIDE6_WHEELS"/shiboken6-*.whl "$PYSIDE6_WHEELS"/[Pp]y[Ss]ide6-*.whl
           # Other requirements, without PySide6: nothing may pull the PyPI wheels
           grep -viE '^\s*pyside6\b' requirements.txt > "${RUNNER_TEMP}/requirements-linux.txt"
           python -m pip install -r "${RUNNER_TEMP}/requirements-linux.txt" -r dev_requirements.txt

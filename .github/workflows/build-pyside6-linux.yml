@@ -241,8 +241,9 @@ jobs:
             --no-qt-tools \
             --skip-mypy-test
           ccache -s
+          # Wheel names: normalized to lowercase by recent setuptools (pyside6-...)
           mkdir -p "$WHEELS_DIR"
-          cp dist/shiboken6-"${PYSIDE_VERSION}"-*.whl dist/PySide6-"${PYSIDE_VERSION}"-*.whl "$WHEELS_DIR/"
+          cp dist/shiboken6-"${PYSIDE_VERSION}"-*.whl dist/[Pp]y[Ss]ide6-"${PYSIDE_VERSION}"-*.whl "$WHEELS_DIR/"
           ls -la "$WHEELS_DIR"
 
       # Installed in the build venv only (the container is discarded). The smoke test runs before the upload:

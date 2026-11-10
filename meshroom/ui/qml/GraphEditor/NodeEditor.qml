@@ -426,6 +426,34 @@ Panel {
             }
         }
 
+        // Selection of the conversion type for conversion nodes
+        Loader {
+            active: root.node !== null && root.node.isConversionNode === true
+            Layout.fillWidth: true
+            visible: active  // For layout update
+
+            sourceComponent: RowLayout {
+                Label {
+                    text: "Conversion"
+                    leftPadding: 6
+                }
+                ComboBox {
+                    id: conversionTypeComboBox
+                    Layout.fillWidth: true
+                    // All the conversion types available between the attributes connected by the node
+                    model: _currentScene.getConversionNodeTypes(root.node)
+                    currentIndex: model.indexOf(root.node.nodeType)
+                    displayText: root.node.nodeType
+                    enabled: !root.readOnly && model.length > 1
+                    ToolTip.visible: hovered
+                    ToolTip.text: model.length > 1 ? "Switch to another conversion between these attributes"
+                                                   : "No other conversion available between these attributes"
+                    // The new conversion node replaces the current one in the selection
+                    onActivated: function(index) { _currentScene.replaceConversionNode(root.node, model[index]) }
+                }
+            }
+        }
+
         Loader {
             Layout.fillHeight: true
             Layout.fillWidth: true

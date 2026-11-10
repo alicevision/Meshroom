@@ -52,8 +52,6 @@ jobs:
       ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
       QTALICEVISION_BUNDLE: ${{ github.workspace }}/../QTAV_bundle
       PYTHON_VENV: ${{ github.workspace }}/../pyenv
-      # Same path as in build-pyside6-linux.yml: it is part of the cache version
-      PYSIDE6_WHEELS: ${{ runner.temp }}/pyside6-wheels
 
     # bash -eo pipefail on every OS: a failing command, including inside a pipe, fails the step
     defaults:
@@ -202,7 +200,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: actions/cache/restore@v6
         with:
-          path: ${{ env.PYSIDE6_WHEELS }}
+          path: ${{ runner.temp }}/pyside6-wheels  # same path as in build-pyside6-linux.yml: part of the cache version
           key: ${{ inputs.pyside6_cache_key }}
 
       - name: Download PySide6 wheels (Linux)
@@ -210,7 +208,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: pyside6-linux
-          path: ${{ env.PYSIDE6_WHEELS }}
+          path: ${{ runner.temp }}/pyside6-wheels
 
       - name: Install Python dependencies
         run: |
@@ -224,6 +222,7 @@ jobs:
           fi
 
           # Linux: PySide6 built from source, for this interpreter (same version, ABI and build configuration)
+          PYSIDE6_WHEELS="${RUNNER_TEMP}/pyside6-wheels"
           if ! diff <(python -I .github/scripts/pyside6-smoke-test.py --python-info) "${PYSIDE6_WHEELS}/python-info.txt"; then
             echo "::error title=Build binary::PySide6 was built for another Python interpreter than the AliceVision one"
             exit 1
@@ -251,7 +250,7 @@ jobs:
         if: runner.os == 'Linux' && steps.pyside6-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
-          path: ${{ env.PYSIDE6_WHEELS }}
+          path: ${{ runner.temp }}/pyside6-wheels  # same path as in build-pyside6-linux.yml: part of the cache version
           key: ${{ inputs.pyside6_cache_key }}
 
       - name: Build executable

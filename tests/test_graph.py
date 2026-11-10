@@ -1,4 +1,5 @@
 from meshroom.core.graph import Graph
+from meshroom.core.node import Status
 
 
 def test_depth():
@@ -130,8 +131,31 @@ def test_rename_nodes():
 
     # Check we cannot rename in locked mode
     ls0.setLocked(True)
-    graph.renameNode(ls0, "lockedLs")
+    assert not graph.renameNode(ls0, "lockedLs")
     assert ls0.name == "nodels"
+    ls0.setLocked(False)
+
+    # Check the returned value
+    assert graph.renameNode(ls0, "renamedLs")
+    assert ls0.name == "renamedLs"
+    assert not graph.renameNode(ls0, "")
+    assert ls0.name == "renamedLs"
+
+
+def test_rename_node_with_cache():
+    """
+    Test that a node with a cache cannot be renamed.
+    """
+    graph = Graph("")
+    ls = graph.addNewNode("Ls")
+    assert not ls.hasCache()
+
+    for chunk in ls.getAllChunks():
+        chunk._status.status = Status.SUCCESS
+    ls._nodeStatus.status = Status.SUCCESS
+    assert ls.hasCache()
+    assert not graph.renameNode(ls, "cachedLs")
+    assert ls.name == "Ls"
 
 
 def test_rename_node_updates_label():

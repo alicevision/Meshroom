@@ -161,7 +161,7 @@ Panel {
                     anchors.fill: parent
                     enabled: nodeNameField.readOnly
                     onDoubleClicked: {
-                        if (root.node && !root.node.locked) {
+                        if (root.node && !root.node.locked && !root.node.hasCacheData) {
                             nodeNameField.readOnly = false
                             nodeNameField.selectByMouse = true
                             nodeNameField.forceActiveFocus()

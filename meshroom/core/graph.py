@@ -565,20 +565,27 @@ class Graph(BaseObject):
             node._applyExpr()
         return node
 
-    def renameNode(self, node: Node, newName: str):
+    def renameNode(self, node: Node, newName: str) -> bool:
         """ Rename a node in the Node Graph.
-        If the proposed name is already assigned to a node then it will create a unique name
+        If the proposed name is already assigned to a node then it will create a unique name.
+        A node that is locked or has a cache cannot be renamed.
 
         Args:
             node (Node): Node to rename.
             newName (str): New name of the node.
+
+        Returns:
+            bool: True if the node has been renamed, False otherwise.
         """
         # Handle empty string
         if not newName:
-            return
+            return False
         if node.getLocked():
             logging.warning(f"Cannot rename node {node} because of the locked status")
-            return
+            return False
+        if node.hasCache():
+            logging.warning(f"Cannot rename node {node} because it has a cache")
+            return False
         usedNames = {n._name for n in self._nodes if n != node}
         # Make sure we rename to an available name
         if newName in usedNames:
@@ -587,6 +594,7 @@ class Graph(BaseObject):
         self._nodes.rename(node._name, newName)
         # Finally rename the node name property and notify Qt
         node.name = newName
+        return True
 
     def copyNode(self, srcNode: Node, withEdges: bool=False):
         """

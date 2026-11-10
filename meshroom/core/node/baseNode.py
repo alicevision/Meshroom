@@ -566,6 +566,17 @@ class BaseNode(BaseObject):
             return True
         return self.hasStatus(Status.SUCCESS)
 
+    def hasCache(self) -> bool:
+        """
+        Returns:
+            True if this node has data in its cache (computed, running, submitted, failed...), False otherwise.
+        """
+        if not self._isComputableType() or self.isInitNode:
+            return False
+        if self._chunksCreated:
+            return any(chunk._status.status != Status.NONE for chunk in self.getAllChunks())
+        return self._nodeStatus.status != Status.NONE
+
     def _isComputableType(self):
         """ Return True if this node type is computable, False otherwise.
         A computable node type can be in a context that does not allow computation.
@@ -1584,6 +1595,7 @@ class BaseNode(BaseObject):
     jobName = Property(str, lambda self: self._getJobName(), notify=globalStatusChanged)
     isExternal = Property(bool, isExtern, notify=globalStatusChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
+    hasCacheData = Property(bool, hasCache, notify=globalStatusChanged)
     isComputableType = Property(bool, _isComputableType, notify=globalStatusChanged)
     aliveChanged = Signal()
     alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)

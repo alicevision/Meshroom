@@ -1016,8 +1016,12 @@ class UIGraph(QObject):
             newName (str): New name to set.
 
         Returns:
-            str: The final name of the node.
+            str: The final name of the node, or an empty string if the node has not been renamed.
         """
+        # Nodes in the Task Manager are referenced by name
+        if node.hasCache() or self._taskManager.contains(node):
+            self.parent().showMessage(f"Cannot rename node {node.name}: it has computed data or is in the Task Manager", "warning")
+            return ""
         if not newName:
             # Empty string -> reset to default
             newName = node.defaultLabel
@@ -1029,7 +1033,7 @@ class UIGraph(QObject):
         newName = self._graph._createUniqueNodeName(newName, {n._name for n in self._graph._nodes if n != node})
         if newName == node._name:
             return ""
-        return self.push(commands.RenameNodeCommand(self._graph, node, newName))
+        return self.push(commands.RenameNodeCommand(self._graph, node, newName)) or ""
 
     def moveNode(self, node: Node, position: Position):
         """

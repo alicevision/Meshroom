@@ -2214,6 +2214,51 @@ class AnySet(GroupAttribute):
             self.flatStaticChildrenChanged.emit()
         return newAttribute
 
+    def replaceAttributeWithEdges(self, attribute: Attribute, serializedAttribute: dict) -> Attribute | None:
+        """
+        Replace a child attribute like replaceAttribute(), and reconnect the edges of the child and of its own
+        children to the new attribute, following its new name.
+        If the new attribute cannot be created, the original attribute is kept with its edges.
+
+        Returns:
+            The new attribute, or None if it could not be created.
+        """
+        graph = self.node.graph
+        oldPrefix = attribute.fullName
+
+        def isReplaced(attributeName):
+            return attributeName == oldPrefix or attributeName.startswith((oldPrefix + ".", oldPrefix + "["))
+
+        def renamed(attributeName, newPrefix):
+            return newPrefix + attributeName[len(oldPrefix):] if isReplaced(attributeName) else attributeName
+
+        edgeNames = [
+            (edge.src.fullName, edge.dst.fullName)
+            for edge in graph.edges.values()
+            if isReplaced(edge.src.fullName) or isReplaced(edge.dst.fullName)
+        ]
+
+        # A restored attribute only holds its link expression: keep the value it had before being linked
+        linkedValues = {dstName: graph.anyAttribute(dstName)._value for _, dstName in edgeNames if isReplaced(dstName)}
+
+        # The edges are removed from the replaced attribute, and restored even if the replacement fails
+        for _, dstName in edgeNames:
+            graph.removeEdge(graph.anyAttribute(dstName))
+        newAttribute = None
+        try:
+            newAttribute = self.replaceAttribute(attribute, serializedAttribute)
+        finally:
+            newPrefix = newAttribute.fullName if newAttribute is not None else oldPrefix
+            for srcName, dstName in edgeNames:
+                srcAttr = graph.anyAttribute(renamed(srcName, newPrefix))
+                dstAttr = graph.anyAttribute(renamed(dstName, newPrefix))
+                if srcAttr is not None and dstAttr is not None:
+                    graph.addEdge(srcAttr, dstAttr)
+                    if dstName in linkedValues and not isinstance(dstAttr, (GroupAttribute, ListAttribute)):
+                        dstAttr._value = linkedValues[dstName]
+                        dstAttr._linkExpression = None
+        return newAttribute
+
     def _renameAttributeDescriptionInPlace(self, attributeDesc: AttributeDescription, indexPattern:str="{name}_{index}"):
         """ If an attribute already exists with the same name,
             the attributeDescription name and label are indexed with a suffix using the givnen pattern "{name}_{index}" by default"

@@ -1024,13 +1024,12 @@ class Graph(BaseObject):
 
             nodeName, separator, attributeName, value = result.groups()
             outputNode = next((n for n in outputNodes if n.name == nodeName), None)
-            if separator == ':' and outputNode is None:
-                targetNodes = [n for n in outputNodes if n.nodeType == nodeName]
-                if not targetNodes:
-                    raise RuntimeError(f'Unknown output node type "{nodeName}".')
-            elif outputNode is None:
-                raise RuntimeError(f'Unknown output node "{nodeName}".')
-            else:
+            # With ":", the node type takes precedence over the node name, as the first node
+            # of a type is named after it
+            targetNodes = [n for n in outputNodes if n.nodeType == nodeName] if separator == ':' else []
+            if not targetNodes:
+                if outputNode is None:
+                    raise RuntimeError(f'Unknown output node {"type " if separator == ":" else ""}"{nodeName}".')
                 targetNodes = [outputNode]
 
             outputFolderSet = False

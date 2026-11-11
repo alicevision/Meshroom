@@ -237,7 +237,9 @@ jobs:
             echo "::error title=Build binary::PySide6 wheels from PyPI installed"
             exit 1
           fi
-          if ! python -m pip show -f PySide6 | grep -qE '^\s*PySide6/QtCore\.'; then
+          # Output captured first: "pip ... | grep -q" fails with pipefail (grep exits at the first match, pip gets SIGPIPE)
+          PYSIDE6_FILES=$(python -m pip show -f PySide6)
+          if ! grep -qE '^\s*PySide6/QtCore\.' <<< "$PYSIDE6_FILES"; then
             echo "::error title=Build binary::The installed PySide6 is not the source build"
             exit 1
           fi

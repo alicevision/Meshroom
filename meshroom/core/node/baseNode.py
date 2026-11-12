@@ -967,6 +967,21 @@ class BaseNode(BaseObject):
         self._nodeStatus.setJob(jid, submitterName)
         self.upgradeStatusFile()
 
+    def createStatusFileIfMissing(self):
+        """
+        Write the node status file if it does not exist yet.
+
+        Nodes whose chunks exist before the computation (static size or not parallelized) do not write
+        their status file when their chunks are computed, and can be computed without a prior submission
+        or local compute initialization. This method ensures that all computed nodes have a status file.
+        An existing file is never overwritten, as it may contain information unknown to the current process
+        (job, submitter session).
+        """
+        if os.path.exists(self.nodeStatusFile):
+            return
+        self._nodeStatus.setNode(self)
+        self.upgradeStatusFile()
+
     def initStatusOnSubmit(self, forceCompute=False):
         """ Prepare chunks status when the node is in a graph that was submitted """
         hasChunkToLaunch = False
@@ -1041,6 +1056,7 @@ class BaseNode(BaseObject):
         Invoke the pre process command on Client Node to execute before
         we start the processing on the node
         """
+        self.createStatusFileIfMissing()
         if self.hasPreprocessChunk:
             if not self._preprocessChunk:
                 raise RuntimeError("Trying to process preprocess chunk but it doesn't exist")
@@ -1049,6 +1065,7 @@ class BaseNode(BaseObject):
             self.restoreLogger()
 
     def process(self, forceCompute=False, inCurrentEnv=False):
+        self.createStatusFileIfMissing()
         for chunk in self._chunks:
             chunk.process(forceCompute, inCurrentEnv)
 

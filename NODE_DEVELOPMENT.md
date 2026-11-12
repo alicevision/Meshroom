@@ -3,7 +3,7 @@
 
 ## Node Creation
 
-This guide shows how to implement four common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, non-computational `InitNode`, and `OutputNode` for pipeline exports.
+This guide shows how to implement five common Meshroom node types: Python-based `Node`, external-executable `CommandLineNode`, non-computational `InitNode`, `OutputNode` for pipeline exports, and lightweight `InlineNode`.
 
 ### 1. Node (Pure Python)
 
@@ -138,6 +138,30 @@ For compatibility with existing nodes, omit `outputAttributes` to expose the inp
 - `ExportResults:exportLabel=final` configures an exposed attribute on every output node of that type.
 
 Only attributes declared in `outputAttributes` can be set through these targeted forms.
+
+### 5. InlineNode (lightweight evaluation)
+
+Use `desc.InlineNode` for cheap, side-effect-free Python logic, such as string or path manipulation. An inline node is not scheduled: it has no chunks, status, logs or cache folder, and no job on the farm. Its `process` method runs in the process of each downstream node, right before that node computes.
+
+Its dynamic output values are not persisted, so they are only available to the downstream nodes during their computation. Its `process` method must only rely on the current environment, and it must not produce files.
+
+```python
+import os
+from meshroom.core import desc
+
+
+class GetBaseName(desc.InlineNode):
+    inputs = [
+        desc.File(name="path", label="Path", description="", value=""),
+    ]
+
+    outputs = [
+        desc.StringParam(name="baseName", label="Base Name", description="", value=None),
+    ]
+
+    def process(self, node):
+        node.baseName.value = os.path.basename(node.path.value)
+```
 
 
 ## Attribute Types Available in Meshroom Nodes

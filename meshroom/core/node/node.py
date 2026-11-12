@@ -253,6 +253,7 @@ class Node(BaseNode):
         # Grab current chunk information
         logging.debug(f"Creating chunks for node: {self.name}")
         try:
+            self.processInlineInputs()
             size = self.evaluateSize()
             self.setSize(size)
             ranges = self.nodeDesc.parallelization.getRanges(self)

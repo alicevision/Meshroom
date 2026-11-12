@@ -48,9 +48,23 @@ class ParallelAppend(desc.BaseNode):
         chunk.node.output.value = chunk.node.input.value + "p"
 
 
+class SizedInlineAppend(InlineAppend):
+    size = desc.DynamicNodeSize("input")
+
+
+class ParallelCount(desc.BaseNode):
+    size = desc.DynamicNodeSize("count")
+    parallelization = desc.Parallelization(blockSize=1)
+    inputs = [desc.IntParam(name="count", label="Count", description="", value=3, range=None)]
+    outputs = _OUTPUTS
+
+    def processChunk(self, chunk):
+        chunk.node.output.value = "c"
+
+
 @pytest.fixture(autouse=True)
 def nodeTypes():
-    with registeredNodeTypes([InlineAppend, InlineFail, RegularAppend, ParallelAppend]):
+    with registeredNodeTypes([InlineAppend, InlineFail, SizedInlineAppend, RegularAppend, ParallelAppend, ParallelCount]):
         yield
 
 
@@ -147,6 +161,22 @@ def test_parallelNodeSizedByInlineNode(graphSavedOnDisk):
 
     assert len(downstream.chunks) == 1
     assert downstream.output.value == "ip"
+
+
+def test_inlineNodeSizeIsUpdatedBeforeDownstreamChunks(graphSavedOnDisk):
+    """ The size of an inline node must follow its upstream node, only sized during the compute. """
+    graph = graphSavedOnDisk
+    upstream = graph.addNewNode("ParallelCount")
+    inline = graph.addNewNode("SizedInlineAppend")
+    downstream = graph.addNewNode("ParallelAppend")
+    upstream.output.connectTo(inline.input)
+    inline.output.connectTo(downstream.input)
+    graph.save()
+
+    executeGraph(graph)
+
+    assert len(upstream.chunks) == 3
+    assert len(downstream.chunks) == 3
 
 
 def test_inlineOutputIsResetWhenInvalidated(graphSavedOnDisk):

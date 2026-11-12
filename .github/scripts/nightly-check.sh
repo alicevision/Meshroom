@@ -12,6 +12,8 @@
 #    AliceVision nightly at 02:00 and the QtAliceVision one it triggers) and develop changed since
 #    the last nightly. A nightly built earlier the same day, for instance for a new AliceVision or
 #    QtAliceVision nightly, counts as the daily build: merges made after it wait for the next day.
+# At most one failed attempt per day: after a failed scheduled run today (UTC), they wait for the next
+# day (a broken build, e.g. for a broken dependency nightly, would otherwise be retried every hour).
 # They never build while the AliceVision or QtAliceVision nightly is being published, nor while
 # the QtAliceVision nightly is not built against the current AliceVision one: it will be rebuilt,
 # and building once afterwards bundles consistent binaries.
@@ -375,6 +377,21 @@ checkDailyBuild() {
   fi
 }
 
+# Limit automatic builds to one failed attempt per day: skip when a scheduled Nightly run already failed
+# today (UTC). A manual run retries at once.
+# Globals read: GITHUB_REPOSITORY.
+# Exits: skip after a failed run today; warnSkip if the runs cannot be listed.
+checkFailedToday() {
+  local failed
+  failed=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/nightly.yml/runs" \
+             -f event=schedule -f status=failure -f created=">=$(date -u +%F)" -f per_page=1 \
+             --jq '.total_count') || warnSkip "Cannot list the failed Nightly runs"
+  [[ "$failed" =~ ^[0-9]+$ ]] || warnSkip "Unexpected count of failed Nightly runs: '${failed}'"
+  if [ "$failed" -ne 0 ]; then
+    skip "A scheduled Nightly run already failed today (UTC): next automatic attempt tomorrow, or run the workflow manually"
+  fi
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────────────────────────
@@ -402,7 +419,9 @@ main() {
 
   echo "Last nightly: ${LAST_BUILD:-none} (${LAST_SHA:-unknown commit}), develop: ${GITHUB_SHA}"
   [ -n "$REASON" ] || skip "Nothing changed since the last nightly"
-  echo "Building: ${REASON}."
+  echo "Reasons to build: ${REASON}."
+  checkFailedToday
+  echo "Building."
   SHOULD_BUILD=true
   exit 0
 }

@@ -29,6 +29,9 @@ jobs:
   check-changes:
     name: Check whether a nightly build is needed
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read  # to list the failed Nightly runs of the day
     outputs:
       should_build: ${{ steps.check.outputs.should_build }}
       av_linux:     ${{ steps.check.outputs.av_linux }}

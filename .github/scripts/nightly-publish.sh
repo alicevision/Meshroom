@@ -3,8 +3,9 @@
 # GitHub allows it: the previous nightly stays published until the new archives are fully uploaded.
 #
 # Steps (any error stops the script with a failure, see each function):
-#   1. preflight:       validate the environment and the four local archives (integrity, expected content),
-#                       read the current assets. Nothing is modified on GitHub before this succeeds.
+#   1. preflight:       validate the environment, check that the four local archives are present (their
+#                       content is verified by build-binary.yml), read the current assets. Nothing is
+#                       modified on GitHub before this succeeds.
 #   2. uploadAssets:    upload the new archives next to the old ones; on failure, remove what was uploaded
 #                       so that the previous nightly is left intact.
 #   3. deleteOldAssets: remove the previous archives.
@@ -22,7 +23,7 @@
 # Environment: GH_TOKEN, GITHUB_REPOSITORY, GITHUB_SHA, BUILD_LABEL, SHORT_SHA,
 #              AV_LINUX, AV_WINDOWS, QTAV_LINUX, QTAV_WINDOWS (may be empty: "unknown" in the notes),
 #              DIST_DIR (folder of the downloaded build artifacts, default "dist").
-# Requires: gh, jq, tar, unzip (preinstalled on the GitHub-hosted Ubuntu runners).
+# Requires: gh, jq (preinstalled on the GitHub-hosted Ubuntu runners).
 set -euo pipefail
 
 DIST_DIR="${DIST_DIR:-dist}"
@@ -61,39 +62,6 @@ inList() {
   grep -qxF -- "$2" <<< "$1"
 }
 
-# Check a local archive: present, non-empty, readable to the end, with a single top-level folder named
-# after the build, containing the GUI executable (and, for a full archive, AliceVision and QtAliceVision).
-# Arguments: $1 - archive path,
-#            $2 - expected top-level folder,
-#            $3 - "full" if the archive must bundle AliceVision, QtAliceVision and Python (non-empty
-#                 aliceVision/, qtPlugins/ and python/ folders), "meshroom" if it must not contain them,
-#            $4... - paths that must be in the archive, relative to the top-level folder
-#                    (e.g. the GUI executable).
-# Exits: fail on any problem.
-checkArchive() {
-  local archive="$1" top="$2" kind="$3" listing topLevel entry dir
-  shift 3
-  [ -s "$archive" ] || fail "Archive missing or empty: $archive"
-  case "$archive" in
-    *.tar.gz) listing=$(tar -tzf "$archive") || fail "Corrupt archive: $archive" ;;
-    *.zip)    unzip -tq "$archive" > /dev/null || fail "Corrupt archive: $archive"
-              listing=$(unzip -Z1 "$archive") || fail "Cannot list archive: $archive" ;;
-    *)        fail "Unexpected archive type: $archive" ;;
-  esac
-  topLevel=$(cut -d/ -f1 <<< "$listing" | sort -u)
-  [ "$topLevel" = "$top" ] || fail "Unexpected top-level content in $archive: ${topLevel//$'\n'/ }"
-  for entry in "$@"; do
-    inList "$listing" "${top}/${entry}" || fail "${top}/${entry} missing from $archive"
-  done
-  for dir in aliceVision qtPlugins python; do
-    case "$kind" in
-      full)     grep -q "^${top}/${dir}/." <<< "$listing" || fail "${top}/${dir}/ missing or empty in $archive" ;;
-      meshroom) if grep -q "^${top}/${dir}/" <<< "$listing"; then fail "$archive must not contain ${top}/${dir}/"; fi ;;
-      *)        fail "checkArchive: unexpected kind '$kind'" ;;
-    esac
-  done
-}
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Steps
 # ──────────────────────────────────────────────────────────────────────────────
@@ -105,7 +73,6 @@ checkArchive() {
 # Exits: fail on any problem.
 preflight() {
   local release rc linuxTop windowsTop file
-  local bundled=()
   REPO="${GITHUB_REPOSITORY:-}"
   [ -n "$REPO" ] || fail "GITHUB_REPOSITORY is not set"
   [[ "${GITHUB_SHA:-}" =~ ^[0-9a-f]{40}$ ]] || fail "Invalid GITHUB_SHA '${GITHUB_SHA:-}'"
@@ -128,13 +95,10 @@ preflight() {
   )
   NEW_NAMES=$(for file in "${NEW_FILES[@]}"; do basename "$file"; done)
 
-  # Key files of the bundled dependencies: AliceVision data, QtAliceVision QML module
-  bundled=("aliceVision/share/aliceVision/cameraSensors.db" "qtPlugins/qml/AliceVision/qmldir")
-  checkArchive "${NEW_FILES[0]}" "$linuxTop" meshroom "Meshroom"
-  checkArchive "${NEW_FILES[1]}" "$windowsTop" meshroom "Meshroom.exe"
-  checkArchive "${NEW_FILES[2]}" "$linuxTop" full "Meshroom" "${bundled[@]}" "python/bin/python3"
-  checkArchive "${NEW_FILES[3]}" "$windowsTop" full "Meshroom.exe" "${bundled[@]}" "python/python.exe"
-  echo "Archives checked: ${NEW_NAMES//$'\n'/, }"
+  # Content and integrity verified by build-binary.yml ("Verify archives"), and by the artifact transfer
+  for file in "${NEW_FILES[@]}"; do
+    [ -s "$file" ] || fail "Archive missing or empty: $file"
+  done
 
   release=$(fetchNightly "$REPO") && rc=0 || rc=$?
   if [ $rc -eq 2 ]; then

@@ -733,6 +733,67 @@ class TestStatusFromChunks:
             registerNodeDesc(TestNode_SizeA)
 
 
+class TestStatusFileCreation:
+    """
+    Test that the node status file exists for all computed nodes, including the ones with static chunks
+    which do not write it when their chunks are created.
+    """
+    @classmethod
+    def setup_class(cls):
+        registerNodeDesc(TestNodeA)
+
+    @classmethod
+    def teardown_class(cls):
+        unregisterNodeDesc(TestNodeA)
+
+    def test_statusFileCreatedForStaticChunks(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNodeA.__name__)
+        graph.save()
+
+        # Static chunks exist without any status file (e.g. "meshroom_compute --node" without submission)
+        computeNode = loadGraph(graph.filepath).node(node.name)
+        assert computeNode._chunksCreated
+        computeNode.createChunks()
+        assert not os.path.exists(computeNode.nodeStatusFile)
+
+        computeNode.createStatusFileIfMissing()
+        statusData = TestDynamicChunksStatusFile.readStatusFile(computeNode)
+        assert statusData["nodeName"] == node.name
+        assert statusData["chunksNbBlocks"] == 2
+        assert "status" not in statusData
+
+    def test_statusFileCreatedOnProcess(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNodeA.__name__)
+        graph.save()
+
+        # Process the node in the current process, without any submission or compute initialization
+        computeNode = loadGraph(graph.filepath).node(node.name)
+        assert not os.path.exists(computeNode.nodeStatusFile)
+        computeNode.process(inCurrentEnv=True)
+        assert os.path.exists(computeNode.nodeStatusFile)
+
+        # Cleanup: Close all logging handlers to release file locks (Windows fix)
+        for handler in logging.root.handlers[:]:
+            handler.close()
+            logging.root.removeHandler(handler)
+
+    def test_existingStatusFileNotOverwritten(self, graphSavedOnDisk):
+        graph: Graph = graphSavedOnDisk
+        node = graph.addNewNode(TestNodeA.__name__)
+        graph.save()
+        node.initStatusOnSubmit()
+        node.setJobId("1", "TestSubmitter")
+        statusData = TestDynamicChunksStatusFile.readStatusFile(node)
+
+        # A process which does not know about the job must not erase it
+        computeNode = loadGraph(graph.filepath).node(node.name)
+        computeNode._nodeStatus.reset()
+        computeNode.createStatusFileIfMissing()
+        assert TestDynamicChunksStatusFile.readStatusFile(computeNode) == statusData
+
+
 class TestPrePostProcess:
     """
     Test that preprocess and postprocess are correctly executed

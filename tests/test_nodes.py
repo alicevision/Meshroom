@@ -912,8 +912,6 @@ class TestGenerateMgScene:
         graphFile = tmpdir / "test_scene_generatemgscene.mg"
         graph.save(graphFile)
         # Execute graph
-        for node in [nodeA, nodeB, nodeC, nodeD, nodeE]:
-            processNode(node)
         processNode(testNode)
         # Check output scene
         scene = Path(testNode.internalFolder) / "scene.mg"

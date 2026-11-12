@@ -109,6 +109,9 @@ if not node._chunksCreated:
                 logging.warning(f"Chunk {chunk} status is {chunk._status.status}.")
                 logging.warning(f"The status file has not been updated for this chunk.")
 
+# Nodes with static chunks do not write their status file when creating chunks
+node.createStatusFileIfMissing()
+
 # Get chunks to process in the current process
 chunksToProcess = []
 if submitter:

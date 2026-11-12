@@ -252,6 +252,7 @@ class NodeChunk(BaseObject):
         self.statThread.start()
 
         try:
+            self.node.processInlineInputs()
             if self.isPreprocess:
                 self.node.nodeDesc.preprocess(self.node)
             elif self.isPostprocess:

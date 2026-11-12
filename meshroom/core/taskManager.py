@@ -127,6 +127,7 @@ class TaskThread(QThread):
                 # Wait for chunk creation to complete
                 if not self.waitForChunkCreation(node):
                     logging.error(f"Failed to create chunks for {node.name}, stopping the process")
+                    self.clearNodes(node)
                     break
             else:
                 node._updateNodeSize()

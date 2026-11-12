@@ -30,6 +30,34 @@ Item {
         [Qt.Key_6]: "viewRight"
     })
 
+    // Mouse and keyboard interactions, as [section, [[input, action], ...]]: keep in sync with
+    // Keys.onPressed below, FreeViewMouseArea, SfmViewMouseArea, BoxControlMouseArea and handlePickingLayerChanged
+    readonly property var interactions: [
+        ["Navigation", [
+            ["Alt + Left drag", "Rotate"],
+            ["Alt + Middle drag", "Pan"],
+            ["Alt + Right drag / Wheel", "Zoom"],
+            ["Ctrl + Click", "Select survey point (mesh) / camera"],
+            ["Ctrl + Shift + Click", "Center on point (mesh) / go to camera"]
+        ]],
+        ["Keyboard (click in the viewer first)", [
+            ["Numpad 8 / 2", "Top / Bottom view"],
+            ["Numpad 5 / 7", "Front / Back view"],
+            ["Numpad 4 / 6", "Left / Right view"],
+            ["Numpad .", "Toggle perspective / orthographic"],
+            ["K", "Fit to scene"],
+            ["Z", "Reset zoom"]
+        ]],
+        ["Looking through a camera", [
+            ["Shift + Left drag", "Pan image"],
+            ["Shift + Wheel", "Zoom image"]
+        ]],
+        ["Bounding box (when displayed)", [
+            ["Left drag on a handle", "Move / rotate / scale / move a face"],
+            ["Right click on a handle", "Reset menu"]
+        ]]
+    ]
+
     // LayerList receiving each supported file extension
     readonly property var layerListByExtension: ({
         ".abc": collection.sfmData,

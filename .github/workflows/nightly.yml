@@ -15,8 +15,9 @@ permissions:
 
 # Queue (do not cancel) a nightly triggered while another one is running: cancelling a build
 # could leave the release half published. GitHub keeps a single pending run per group and
-# replaces it with the newest one: this is harmless, as every scheduled run decides whether
-# to build from the published state, not from what triggered it.
+# replaces it with the newest one: this is harmless between scheduled runs, as each decides whether
+# to build from the published state, not from what triggered it. A pending manual run can however be
+# replaced by the next scheduled one, which may skip: dispatch it again once the current run is over.
 concurrency:
   group: nightly
   cancel-in-progress: false
@@ -99,12 +100,15 @@ jobs:
   # (see .github/scripts/nightly-publish.sh): only when both builds
   # succeeded, and the previous nightly stays published until the new
   # archives are fully uploaded.
+  # Only from the default branch: a manual run on another branch builds
+  # (to test it) but never replaces the nightly.
   # ────────────────────────────────────────────────────────────
   release:
     name: Update nightly release
     needs: [check-changes, build-windows, build-linux]
     if: >-
-      needs.check-changes.outputs.should_build == 'true'
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      && needs.check-changes.outputs.should_build == 'true'
       && needs.build-windows.result == 'success'
       && needs.build-linux.result == 'success'
     runs-on: ubuntu-latest

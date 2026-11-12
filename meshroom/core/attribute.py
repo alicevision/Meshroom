@@ -64,6 +64,7 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     exclusive = descType.get('exclusive')
     keyable = descType.get('keyable')
     shape = descType.get('shape')
+    valueRange = descType.get('range')
 
     kwargs = {'name': name, 'label': label, 'description': description}
 
@@ -87,6 +88,9 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
 
     if keyable is not None:
         kwargs['keyable'] = keyable
+
+    if valueRange is not None:
+        kwargs['range'] = valueRange
 
     if shape is not None:
         kwargs['shape'] = attributeDescriptionFactory(shape)
@@ -442,6 +446,8 @@ class Attribute(BaseObject):
             "type": self.desc.__class__.__name__,
             "value": self.getSerializedValue()
         }
+        if hasattr(self.desc, "range"):
+            serializedData["range"] = list(self.desc.range)
 
         return serializedData
 
@@ -974,6 +980,13 @@ class ChoiceParam(Attribute):
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUE: self._value,
             self._desc._OVERRIDE_SERIALIZATION_KEY_VALUES: self._values,
         }
+
+    # Override
+    def asDict(self) -> dict:
+        serializedData = super().asDict()
+        serializedData["values"] = list(self.desc.values)
+        serializedData["exclusive"] = self.desc.exclusive
+        return serializedData
 
     # Override
     def shortDesc(self) -> dict:
@@ -1963,12 +1976,22 @@ class AnySet(GroupAttribute):
 
     _attributeNameRegex = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
+    def _onChildrenChanged(self):
+        """ Notify that the list of children has changed.
+            As the children contribute to the UID of the node (input AnySet) or of the connected nodes
+            (output AnySet), a graph update is requested.
+        """
+        self.flatStaticChildrenChanged.emit()
+        self.requestGraphUpdate()
+
     def duplicateAttribute(self, attribute: Attribute, isOutput: bool|None=None) -> Attribute:
         """ Create an attribute as child of the current, with the same description as the given one.
             Duplicated name's are handled by _renameAttributeDescriptionInPlace()
         """
 
         newDesc = attribute.desc.clone()
+        newDesc._invalidate = True
+        newDesc._enabled = True
         self._renameAttributeDescriptionInPlace(newDesc)
         newAttribute = attributeFactory(newDesc,
                                         value=None,
@@ -1982,14 +2005,14 @@ class AnySet(GroupAttribute):
 
         lastIndex = self._value.count - 1
         self._value.insert(lastIndex, newAttribute)
-        self.flatStaticChildrenChanged.emit()
+        self._onChildrenChanged()
 
         return newAttribute
 
     def removeAttribute(self, attribute: Attribute):
         if attribute in self._value:
             self._value.remove(attribute)
-            self.flatStaticChildrenChanged.emit()
+            self._onChildrenChanged()
 
     def renameAttribute(self, attribute: Attribute, name: str, label: str) -> None:
         if attribute not in self._value:
@@ -2017,7 +2040,7 @@ class AnySet(GroupAttribute):
         attribute.fullNameChanged.emit()
         for child in attribute.flatStaticChildren:
             child.fullNameChanged.emit()
-        self.flatStaticChildrenChanged.emit()
+        self._onChildrenChanged()
 
     def moveAttribute(self, attribute: Attribute, toIndex: int) -> None:
         if attribute not in self._value:
@@ -2029,7 +2052,7 @@ class AnySet(GroupAttribute):
             return
 
         self._value.move(fromIndex, toIndex)
-        self.flatStaticChildrenChanged.emit()
+        self._onChildrenChanged()
 
     def insertAttribute(self, serializedAttribute: dict, index: int) -> Attribute | None:
         """Restore a serialized child attribute at the requested position."""
@@ -2048,7 +2071,7 @@ class AnySet(GroupAttribute):
             restoredAttribute._isOutput = True
             restoredAttribute._desc._isDynamicValue = True
         self._value.insert(index, restoredAttribute)
-        self.flatStaticChildrenChanged.emit()
+        self._onChildrenChanged()
         return restoredAttribute
 
     def _renameAttributeDescriptionInPlace(self, attributeDesc: AttributeDescription, indexPattern:str="{name}_{index}"):
@@ -2148,6 +2171,39 @@ class AnySet(GroupAttribute):
     # Override
     def _populateFromDynamicValue(self, exportedValue):
         super()._setValue(exportedValue)  # Use the GroupAttribute usual setValue to restore values.json data
+
+    @staticmethod
+    def _schemaKey(attributeDesc: AttributeDescription):
+        """ Return a key describing the structure of an attribute description: its type, along with
+            the names and structures of its items for a group, or the structure of its elements for a list.
+        """
+        if isinstance(attributeDesc, desc.GroupAttribute):
+            return (attributeDesc.type, [(item.name, AnySet._schemaKey(item)) for item in attributeDesc.items])
+        if isinstance(attributeDesc, desc.ListAttribute):
+            return (attributeDesc.type, AnySet._schemaKey(attributeDesc.elementDesc))
+        return attributeDesc.type
+
+    def schemaUid(self) -> str:
+        """ Return a hash of the user-defined structure of the AnySet: the names and types of its children,
+            regardless of their order and values.
+        """
+        return hashValue(sorted((child.name, AnySet._schemaKey(child.desc)) for child in self._value))
+
+    # Override
+    def uid(self):
+        if self.isOutput:
+            # The output children are dynamic outputs, which do not contribute to the UID:
+            # like a dynamic output, the UID is derived from the node UID.
+            return hashValue((self.name, self.node._uid))
+        if self.isLink:
+            return super().uid()
+
+        # The children are user-defined: their names and structures are part of the AnySet definition,
+        # so they contribute to the UID along with the children values
+        uids = []
+        for child in self._value:
+            uids.append((child.name, AnySet._schemaKey(child.desc), child.uid()))
+        return hashValue(uids)
 
     # Override
     def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:

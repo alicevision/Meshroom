@@ -386,6 +386,13 @@ class BaseNode(BaseObject):
             if not dynamicOutputAttr and not attr.keyable and attr.desc.checkUidIgnoreValue(attr.value):
                 continue  # For non-dynamic attributes, check if the value should be ignored
             uidAttributes.append((attr.name, attr.uid()))
+
+        # The children of an output AnySet are user-defined outputs written by the computation: their names
+        # and types are part of the node definition, so changing them invalidates the computed results.
+        # An empty output AnySet does not contribute, to keep the UID of the nodes that do not use it.
+        for attr in self._attributes:
+            if attr.isOutput and isinstance(attr.desc, AnySetDescription) and len(attr.value) > 0:
+                uidAttributes.append((attr.name, attr.schemaUid()))
         uidAttributes.sort()
 
         # Adding the node type prevents ending up with two identical UIDs for different node types

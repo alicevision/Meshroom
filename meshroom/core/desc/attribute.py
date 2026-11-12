@@ -602,6 +602,18 @@ class IntParam(Param):
             return self.name, ValueTypeErrors.RANGE
         return "", ValueTypeErrors.NONE
 
+    # Override
+    def clone(self):
+        clone = super().clone()
+        clone._range = list(self._range)
+        return clone
+
+    # Override
+    def asDict(self):
+        serializedData = super().asDict()
+        serializedData['range'] = list(self._range)
+        return serializedData
+
     range = Property(VariantList, lambda self: self._range, constant=True)
 
 
@@ -638,6 +650,18 @@ class FloatParam(Param):
         if (self.range and not all([isinstance(r, float) for r in self.range])):
             return self.name, ValueTypeErrors.RANGE
         return "", ValueTypeErrors.NONE
+
+    # Override
+    def clone(self):
+        clone = super().clone()
+        clone._range = list(self._range)
+        return clone
+
+    # Override
+    def asDict(self):
+        serializedData = super().asDict()
+        serializedData['range'] = list(self._range)
+        return serializedData
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
@@ -783,7 +807,18 @@ class ChoiceParam(Param):
         return "", ValueTypeErrors.NONE
 
     def clone(self):
-        return Attribute.clone(self)
+        clone = Attribute.clone(self)
+        clone._values = list(self._values)
+        clone._exclusive = self._exclusive
+        clone._valueType = self._valueType
+        return clone
+
+    # Override
+    def asDict(self):
+        serializedData = super().asDict()
+        serializedData['values'] = list(self._values)
+        serializedData['exclusive'] = self._exclusive
+        return serializedData
 
     # Override
     def shortDesc(self) -> dict:

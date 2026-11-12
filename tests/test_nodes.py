@@ -33,12 +33,15 @@ def processNode(node: BaseNode):
     logFile.touch()
     node.prepareLogger(-1)
     node.preprocess()
-    node.process(True, True)
+    node.process(forceCompute=True, inCurrentEnv=True)
     node.postprocess()
     node.restoreLogger()
     # Check output: the global status is read back from the chunks' status files
     node.updateStatusFromCache()
     assert node.getGlobalStatus().name == "SUCCESS"
+
+    nodeStatusFile = cache / "nodeStatus"
+    assert nodeStatusFile.exists()
     return True
 
 

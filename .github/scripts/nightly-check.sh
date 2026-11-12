@@ -129,36 +129,9 @@ addReason() {
 # GitHub release helpers (no exit: safe to call in a subshell)
 # ──────────────────────────────────────────────────────────────────────────────
 
-# Fetch the "nightly" release of a repository as raw JSON (GitHub REST API), and check its structure
-# once, so that the extraction helpers below can rely on it.
-# Arguments: $1 - repository, "owner/name".
-# Output: the release JSON on stdout (only on success); gh error messages on stderr.
-# Returns: 0 on success,
-#          2 if the release does not exist (HTTP 404),
-#          1 on any other error (network, authentication, rate limit) or malformed answer (not JSON, not
-#            an object, "assets" not an array, or an asset not an object with a string "name").
-fetchNightly() {
-  local errFile json rc
-  errFile=$(mktemp)
-  json=$(gh api "repos/$1/releases/tags/nightly" 2> "$errFile")
-  rc=$?
-  if [ $rc -ne 0 ]; then
-    if grep -q "HTTP 404" "$errFile"; then
-      rm -f "$errFile"
-      return 2
-    fi
-    sed "s|^|  $1: |" "$errFile" >&2
-    rm -f "$errFile"
-    return 1
-  fi
-  rm -f "$errFile"
-  if ! jq -e 'type == "object" and (.assets | type == "array")
-              and (.assets | all(type == "object" and (.name | type == "string")))' > /dev/null 2>&1 <<< "$json"; then
-    echo "  $1: unexpected answer for the nightly release" >&2
-    return 1
-  fi
-  printf '%s\n' "$json"
-}
+# fetchNightly (release JSON, structure checked once: the extraction helpers below rely on it)
+# shellcheck source=nightly-common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/nightly-common.sh" || exit 1
 
 # Extract the release notes from a release JSON.
 # Arguments: $1 - release JSON (see fetchNightly).

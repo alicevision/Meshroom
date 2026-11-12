@@ -27,6 +27,10 @@ set -euo pipefail
 
 DIST_DIR="${DIST_DIR:-dist}"
 
+# fetchNightly
+# shellcheck source=nightly-common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/nightly-common.sh"
+
 # Set by preflight
 REPO=""
 LINUX_NAME=""
@@ -48,27 +52,6 @@ OLD_ASSETS=""
 fail() {
   echo "::error title=Nightly publication::$1"
   exit 1
-}
-
-# Print the JSON of the "nightly" release of the repository.
-# Output: the release JSON on stdout.
-# Returns: 0 on success, 2 if the release does not exist (HTTP 404), 1 on any other error or if the answer
-#          is not a release object with an "assets" array.
-fetchRelease() {
-  local errFile json
-  errFile=$(mktemp)
-  if ! json=$(gh api "repos/${REPO}/releases/tags/nightly" 2> "$errFile"); then
-    if grep -q "HTTP 404" "$errFile"; then
-      rm -f "$errFile"
-      return 2
-    fi
-    cat "$errFile" >&2
-    rm -f "$errFile"
-    return 1
-  fi
-  rm -f "$errFile"
-  jq -e 'type == "object" and (.assets | type == "array")' > /dev/null 2>&1 <<< "$json" || return 1
-  printf '%s\n' "$json"
 }
 
 # Check whether a name is in a newline-separated list.
@@ -153,12 +136,12 @@ preflight() {
   checkArchive "${NEW_FILES[3]}" "$windowsTop" full "Meshroom.exe" "${bundled[@]}" "python/python.exe"
   echo "Archives checked: ${NEW_NAMES//$'\n'/, }"
 
-  release=$(fetchRelease) && rc=0 || rc=$?
+  release=$(fetchNightly "$REPO") && rc=0 || rc=$?
   if [ $rc -eq 2 ]; then
     echo "Creating the nightly release"
     gh release create nightly --repo "$REPO" --title "Nightly build (develop)" \
       --notes "_(first build)_" --prerelease || fail "Cannot create the nightly release"
-    release=$(fetchRelease) || fail "Cannot read the nightly release after creating it"
+    release=$(fetchNightly "$REPO") || fail "Cannot read the nightly release after creating it"
   elif [ $rc -ne 0 ]; then
     fail "Cannot read the nightly release"
   fi
@@ -246,7 +229,7 @@ EOF
 # Exits: fail on any mismatch.
 verifyRelease() {
   local release names name file expected actual notes
-  release=$(fetchRelease) || fail "Cannot read the nightly release for verification"
+  release=$(fetchNightly "$REPO") || fail "Cannot read the nightly release for verification"
   names=$(jq -r '.assets[].name' <<< "$release" | sort)
   [ "$names" = "$(sort <<< "$NEW_NAMES")" ] \
     || fail "Unexpected assets after publication: ${names//$'\n'/ }"

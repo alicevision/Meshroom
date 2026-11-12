@@ -8,8 +8,10 @@ on:
   # Allow manual trigger from the Actions tab
   workflow_dispatch:
 
+# Read-only by default: the build jobs run third-party code (actions, PyPI packages, docker image).
+# Only the "release" job gets write access (see its permissions).
 permissions:
-  contents: write  # needed to edit releases, upload/delete assets and update "nightly" tag
+  contents: read
 
 # Queue (do not cancel) a nightly triggered while another one is running: cancelling a build
 # could leave the release half published. GitHub keeps a single pending run per group and
@@ -105,7 +107,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # to push git tag nightly
+      contents: write  # needed to edit releases, upload/delete assets and update "nightly" tag
 
     env:
       SHORT_SHA:    ${{ needs.check-changes.outputs.short_sha }}

@@ -19,10 +19,16 @@ from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttri
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
 from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
-from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode
+from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode, GRAPH_INPUT_NODE_TYPE, GRAPH_OUTPUT_NODE_TYPE
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
 from meshroom.core.submitter import BaseSubmittedJob, jobManager
+
+# AnySetNode replacing the GraphInput and GraphOutput nodes added to a graph that already has one
+ANYSET_NODE_TYPE = "AnySetNode"
+ANYSET_NODE_ATTRIBUTE = "attributes"
+# AnySet of the GraphInput and GraphOutput nodes, and label of the AnySetNode replacing them
+GRAPH_IO_ANYSETS = {GRAPH_INPUT_NODE_TYPE: ("ins", "Inputs"), GRAPH_OUTPUT_NODE_TYPE: ("outs", "Outputs")}
 
 # Replace default encoder to support Enums
 
@@ -411,6 +417,12 @@ class Graph(BaseObject):
         if "version" not in nodeData:
             version = fromGraph._getNodeTypeVersionFromHeader(nodeData["nodeType"])
             nodeData["version"] = version if version is not None else "0.0"
+        existingNode = self.findGraphIONode(nodeData["nodeType"])
+        if existingNode is not None:
+            # Should not happen as these nodes are converted when imported: the node and its connections are dropped
+            logging.error(f'The graph already has the {nodeData["nodeType"]} node "{existingNode.name}": '
+                          f'"{nodeName}" is removed with its connections.')
+            return None
         inTemplate = fromGraph.header.get(GraphIO.Keys.Template, False)
         nodeDescDict = {}
         if fromGraph.nodeDescriptions:
@@ -492,6 +504,7 @@ class Graph(BaseObject):
 
         Nodes are imported with their original names if possible, otherwise a new unique name is generated
         from their node type.
+        If this graph already has a GraphInput or GraphOutput node, the imported one is converted into an AnySetNode.
 
         Args:
             graph: The graph to import.
@@ -517,9 +530,16 @@ class Graph(BaseObject):
             with GraphModification(self):
                 for srcNode in nodes:
                     node = self._deserializeNode(srcNode.toDict(), srcNode.name, graph)
-                    importedNodes.append(node)
+                    if node is not None:
+                        importedNodes.append(node)
                 self._applyExpr()
             return importedNodes
+
+        # Converted in the imported graph, where they are unique and still connected
+        if graph is not self:
+            for nodeType in GRAPH_IO_ANYSETS:
+                if self.findGraphIONode(nodeType) and graph.findGraphIONode(nodeType):
+                    graph.convertToAnySetNode(graph.findGraphIONode(nodeType))
 
         _renameClashingNodes()
         importedNodes = _importNodesAndEdges()
@@ -549,6 +569,10 @@ class Graph(BaseObject):
                     node.nodeType, self.name, node.graph.name))
 
         assert uniqueName not in self._nodes.keys()
+        existingNode = self.findGraphIONode(node.nodeType)
+        if existingNode is not None and existingNode != node:
+            raise RuntimeError(f'Cannot add the {node.nodeType} node "{uniqueName}" to the Graph "{self.name}", '
+                               f'which already has the {node.nodeType} node "{existingNode.name}".')
         node._name = uniqueName
         node.graph = self
         self._nodes.add(node)
@@ -599,7 +623,8 @@ class Graph(BaseObject):
 
         Returns:
             The created node instance and the mapping of skipped edges per attribute
-            (always empty if `withEdges` is True)
+            (always empty if `withEdges` is True).
+            A GraphInput or GraphOutput node is copied as an AnySetNode, as a graph has at most one of each.
         """
         def _removeLinkExpressions(attribute: Attribute, removed: Dict[Attribute, str]):
             """ Recursively remove link expressions from the given root `attribute`. """
@@ -615,7 +640,8 @@ class Graph(BaseObject):
                     _removeLinkExpressions(child, removed)
 
         with GraphModification(self):
-            node = nodeFactory(srcNode.toDict(), name=srcNode.nodeType)
+            nodeData = self._anySetNodeData(srcNode) if srcNode.nodeType in GRAPH_IO_ANYSETS else srcNode.toDict()
+            node = nodeFactory(nodeData, name=nodeData["nodeType"])
 
             skippedEdges = {}
             if not withEdges:
@@ -624,6 +650,51 @@ class Graph(BaseObject):
                 for _, attr in node.internalAttributes.items():
                     _removeLinkExpressions(attr, skippedEdges)
         return node, skippedEdges
+
+    @staticmethod
+    def _anySetNodeAttributeName(nodeType: str, attributeName: str) -> str:
+        """
+        Args:
+            nodeType: GraphInput or GraphOutput
+            attributeName: the name of an attribute of this node type, relative to the node (e.g. "ins.path")
+
+        Returns:
+            The name of this attribute in the AnySetNode replacing the node (e.g. "attributes.path").
+        """
+        anySetName, _ = GRAPH_IO_ANYSETS[nodeType]
+        return ANYSET_NODE_ATTRIBUTE + attributeName[len(anySetName):]
+
+    @staticmethod
+    def _anySetNodeData(node: Node) -> dict:
+        """
+        Returns:
+            The serialized AnySetNode replacing the GraphInput or GraphOutput `node`, with the same attributes,
+            values and incoming links.
+        """
+        anySetName, label = GRAPH_IO_ANYSETS[node.nodeType]
+        return {
+            "nodeType": ANYSET_NODE_TYPE,
+            "position": node.position,
+            "inputs": {ANYSET_NODE_ATTRIBUTE: node.attribute(anySetName).getSerializedValue()},
+            "internalInputs": {"label": label},
+        }
+
+    def convertToAnySetNode(self, node: Node) -> Node:
+        """
+        Replace the GraphInput or GraphOutput `node` with an AnySetNode holding the same attributes and connections.
+
+        Returns:
+            The created AnySetNode.
+        """
+        nodeData = self._anySetNodeData(node)
+        with GraphModification(self):
+            _, outEdges, outListAttributes = self.removeNode(node.name)
+            # Incoming edges are restored from the links serialized in the attributes
+            newNode = self.addNode(nodeFactory(nodeData, ANYSET_NODE_TYPE))
+            outEdges = {dst: f"{newNode.name}.{self._anySetNodeAttributeName(node.nodeType, src.split('.', 1)[1])}"
+                        for dst, src in outEdges.items()}
+            self._restoreOutEdges(outEdges, outListAttributes)
+        return newNode
 
     def duplicateNodes(self, srcNodes):
         """ Duplicate nodes in the graph with their connections.
@@ -657,6 +728,9 @@ class Graph(BaseObject):
                 # if the edge's source node has been duplicated (the key exists in the dictionary),
                 # use the duplicate; otherwise use the original node
                 if edgeSrcNode in duplicates:
+                    if edgeSrcNode.nodeType in GRAPH_IO_ANYSETS:
+                        # Duplicated as an AnySetNode
+                        edgeSrcAttrName = self._anySetNodeAttributeName(edgeSrcNode.nodeType, edgeSrcAttrName)
                     edgeSrcNode = duplicates.get(edgeSrcNode)[0]
                 if edgeSrcNode.hasAttribute(edgeSrcAttrName):
                     edgeSrcAttr = edgeSrcNode.attribute(edgeSrcAttrName)
@@ -981,6 +1055,35 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if n.nodeType == nodeType]
         return self.sortNodesByIndex(nodes) if sortedByIndex else nodes
 
+    def findGraphIONode(self, nodeType: str) -> Optional[Node]:
+        """
+        Args:
+            nodeType: the type of the node to find
+
+        Returns:
+            Node: the GraphInput or GraphOutput node of the graph if `nodeType` is one of these types and the graph
+            has one, None otherwise
+        """
+        if nodeType not in GRAPH_IO_ANYSETS:
+            return None
+        return next((n for n in self._nodes.values() if n.nodeType == nodeType), None)
+
+    def findGraphInputNode(self) -> Optional[Node]:
+        return self.findGraphIONode(GRAPH_INPUT_NODE_TYPE)
+
+    def findGraphOutputNode(self) -> Optional[Node]:
+        return self.findGraphIONode(GRAPH_OUTPUT_NODE_TYPE)
+
+    def findGraphInputAttributes(self) -> Dict[str, Attribute]:
+        """
+        Returns:
+            dict[str, Attribute]: the graph inputs of the GraphInput node, by name
+        """
+        graphInputNode = self.findGraphInputNode()
+        if graphInputNode is None:
+            return {}
+        return {attr.name: attr for attr in graphInputNode.ins.value}
+
     def findInputNodes(self):
         """
         Returns:
@@ -1090,6 +1193,10 @@ class Graph(BaseObject):
         if not srcAttr.node.graph == dstAttr.node.graph == self:
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
                                    "Attributes do not belong to this graph.")
+
+        if dstAttr.node.isGraphInputNode:
+            raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,
+                                   "GraphInput attributes cannot be connected as destination.")
 
         if not isinstance(srcAttr, AnySet) and not dstAttr.validateIncomingConnection(srcAttr):
             raise InvalidEdgeError(srcAttr.fullName, dstAttr.fullName,

@@ -998,8 +998,13 @@ class UIGraph(QObject):
             **kwargs: optional node attributes values
 
         Returns:
-            Node: the created node
+            Node: the created node, or the existing node when creating a second GraphInput or GraphOutput node
         """
+        # A graph has at most one node of these types
+        existingNode = self._graph.findGraphIONode(nodeType)
+        if existingNode is not None:
+            logging.warning(f'The graph already has the {nodeType} node "{existingNode.name}".')
+            return existingNode
         if isinstance(position, QPoint):
             position = Position(position.x(), position.y())
         return self.push(commands.AddNodeCommand(self._graph, nodeType, position=position, **kwargs))
@@ -1308,7 +1313,7 @@ class UIGraph(QObject):
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(src, AnySet):
-            self.push(commands.ConnectAnySetCommand(self._graph, src=dst, anySetAttribute=src))
+            self.push(commands.ConnectAnySetCommand(self._graph, src=dst, anySetAttribute=src, isSource=True))
         elif isinstance(dst, AnySet):
             self.push(commands.ConnectAnySetCommand(self._graph, src=src, anySetAttribute=dst))
         elif isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):

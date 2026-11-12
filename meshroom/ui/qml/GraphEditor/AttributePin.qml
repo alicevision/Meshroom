@@ -194,7 +194,8 @@ RowLayout {
 
         Rectangle {
             id: inputAnchor
-            visible: !root.attribute.isOutput
+            // GraphInput attributes are the entry points of the graph and cannot be connected as destination
+            visible: !root.attribute.isOutput && !(root.attribute.node && root.attribute.node.isGraphInputNode)
 
             width: 8
             height: width

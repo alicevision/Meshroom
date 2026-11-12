@@ -3,11 +3,18 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class GraphInput(desc.InitNode, desc.InputNode):
+class GraphInput(desc.InitNode, desc.IONode):
     """
     Expose attributes as the inputs of the scene.
     When the scene is computed by another graph (e.g. with ComputeMeshroomScene), these attributes can be set from it.
+
+    Connect the "Input attributes" pin to the input attributes of other nodes to create one graph input per connection.
+    Its attributes are the entry points of the graph: they cannot be connected as destination.
     """
+
+    def __init_subclass__(cls, **kwargs):
+        # Identified by its node type, a graph having at most one of them
+        raise TypeError(f"'{cls.__name__}': GraphInput cannot be subclassed.")
 
     size = desc.StaticNodeSize(0)
     category = "Utils"
@@ -22,7 +29,7 @@ class GraphInput(desc.InitNode, desc.InputNode):
     ]
 
 
-class GraphOutput(desc.InitNode):
+class GraphOutput(desc.InitNode, desc.IONode):
     """
     Expose attributes as the outputs of the scene.
     When the scene is computed by another graph (e.g. with ComputeMeshroomScene), these attributes can be read from it.
@@ -30,6 +37,10 @@ class GraphOutput(desc.InitNode):
     An InitNode, as it has nothing to compute. Not an OutputNode, as output nodes are removed from the graphs
     created from a template.
     """
+
+    def __init_subclass__(cls, **kwargs):
+        # Identified by its node type, a graph having at most one of them
+        raise TypeError(f"'{cls.__name__}': GraphOutput cannot be subclassed.")
 
     size = desc.StaticNodeSize(0)
     category = "Utils"

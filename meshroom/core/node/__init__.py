@@ -18,6 +18,8 @@ from .chunk import (
     runningProcesses,
 )
 from .baseNode import (
+    GRAPH_INPUT_NODE_TYPE,
+    GRAPH_OUTPUT_NODE_TYPE,
     BaseNode,
     Position,
     hasADynamicValue,

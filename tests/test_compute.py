@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 import shlex
+import time
 from types import SimpleNamespace
 from pathlib import Path
 import logging
@@ -257,13 +258,23 @@ class TestLockUpdates:
         assert node.globalStatus == expectedStatus.name
         assert node.locked == expectedLock
 
+    @staticmethod
+    def waitForLock(node, timeout=10):
+        """
+        Wait for a node computed in a thread to be locked, which happens once its status file is written.
+        This duration depends on the filesystem so a fixed delay is not reliable (especially on Windows).
+        The node stays locked for as long as it is processing, so the checks that follow do not depend on timing.
+        """
+        endTime = time.time() + timeout
+        while not node.locked and time.time() < endTime:
+            time.sleep(0.01)
+
     def test_lockDuringComputation(self, graphSavedOnDisk):
         """
         Test that a node is properly locked during the execution of its "process()" method and unlocked once the process
         is finished. Both the global status and the lock status should be updated throughout the process.
         """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -275,7 +286,7 @@ class TestLockUpdates:
         thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
         thread.start()
 
-        time.sleep(0.5)  # Wait for the process to start and update the status
+        self.waitForLock(node)  # Wait for the process to start and update the status
         self.checkNodeStatusAndLock(node, Status.RUNNING, True)
 
         # Wait for the process to finish and update the status
@@ -307,7 +318,6 @@ class TestLockUpdates:
         node's status and lock.
         """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -318,7 +328,7 @@ class TestLockUpdates:
         thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
         thread.start()
 
-        time.sleep(0.5)
+        self.waitForLock(node)
         self.checkNodeStatusAndLock(node, Status.RUNNING, True)
 
         # Duplicate the running & locked node
@@ -353,7 +363,6 @@ class TestLockUpdates:
         Test that when a graph is loaded while a node is running, the node's status and lock are not reset and that
         the node is still locked. """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -362,7 +371,7 @@ class TestLockUpdates:
 
         thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
         thread.start()
-        time.sleep(0.5)
+        self.waitForLock(node)
         self.checkNodeStatusAndLock(node, Status.RUNNING, True)
 
         # Load the graph while the node is running and check that the node's status and lock are not reset
@@ -380,7 +389,6 @@ class TestLockUpdates:
         Test that when a node is running, its downstream nodes are not locked, and their status is not updated.
         """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -394,7 +402,7 @@ class TestLockUpdates:
         thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
         thread.start()
 
-        time.sleep(0.5)
+        self.waitForLock(node)
         self.checkNodeStatusAndLock(node, Status.RUNNING, True)
         self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
 
@@ -407,7 +415,6 @@ class TestLockUpdates:
         Test that when a node is running, its upstream nodes are locked and their status remains unchanged.
         """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -424,7 +431,7 @@ class TestLockUpdates:
 
         thread = threading.Thread(target=downstreamNode.process, kwargs={"inCurrentEnv": True})
         thread.start()
-        time.sleep(0.5)
+        self.waitForLock(node)  # Upstream nodes are locked after the running node
         self.checkNodeStatusAndLock(node, Status.SUCCESS, True)
         self.checkNodeStatusAndLock(downstreamNode, Status.RUNNING, True)
 

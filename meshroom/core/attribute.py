@@ -2028,9 +2028,7 @@ class AnySet(GroupAttribute):
         attributeDesc._invalidate = True
         attributeDesc._enabled = True
         if isinstance(attributeDesc, desc.ListAttribute):
-            # The clone of a list shares its element description with the source one: clone it before modifying it
-            attributeDesc._elementDesc = attributeDesc.elementDesc.clone()
-            AnySet._makeInvalidatingAndEnabled(attributeDesc._elementDesc)
+            AnySet._makeInvalidatingAndEnabled(attributeDesc.elementDesc)
         elif isinstance(attributeDesc, desc.GroupAttribute):
             for item in attributeDesc.items:
                 AnySet._makeInvalidatingAndEnabled(item)

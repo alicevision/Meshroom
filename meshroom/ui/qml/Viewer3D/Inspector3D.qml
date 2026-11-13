@@ -6,11 +6,10 @@ import Controls 1.0
 import MaterialIcons 2.2
 import Utils 1.0
 
-FloatingPane {
+Pane {
     id: root
 
     implicitWidth: 200
-    opaque: true
     property var collection: null
     readonly property bool hasImageContent: root.collection && root.collection.sceneView && root.collection.sceneView.imageLayerRef
                                           && root.collection.sceneView.imageLayerRef.source !== undefined
@@ -126,7 +125,7 @@ FloatingPane {
         Label {
             visible: root.collection && !hasAnyContent
             text: "No 3D content"
-            color: palette.mid
+            color: Qt.darker(palette.text, 1.4)
             horizontalAlignment: Text.AlignHCenter
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -136,7 +135,7 @@ FloatingPane {
         Label {
             visible: !root.collection
             text: "Waiting for Viewer3D collection..."
-            color: palette.mid
+            color: Qt.darker(palette.text, 1.4)
             horizontalAlignment: Text.AlignHCenter
             Layout.fillWidth: true
             Layout.fillHeight: true

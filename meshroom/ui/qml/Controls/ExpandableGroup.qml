@@ -37,12 +37,36 @@ GroupBox {
 
         background: Rectangle {
             id: labelBg
-            color: palette.base
+            color: palette.window
             opacity: 0.8
         }
 
         RowLayout {
             width: parent.width
+            MaterialToolButton {
+                id: expandButton
+                ToolTip.text: "Expand More"
+                text: MaterialIcons.expand_more
+                font.pointSize: 10
+                Layout.fillHeight: true
+                checkable: true
+                checked: false
+                // The icon already shows the expanded state: no checked styling
+                textColor: palette.text
+                background: Rectangle {
+                    color: !expandButton.enabled ? "transparent" : expandButton.pressed ? Qt.darker(expandButton.palette.base, 1.3) : expandButton.hovered ? Qt.darker(expandButton.palette.base, 0.6) : "transparent"
+                }
+
+                onCheckedChanged: {
+                    if (checked) {
+                        ToolTip.text = "Expand Less"
+                        text = MaterialIcons.expand_less
+                    } else {
+                        ToolTip.text = "Expand More"
+                        text = MaterialIcons.expand_more
+                    }
+                }
+            }
             Label {
                 text: root.title
                 Layout.fillWidth: true
@@ -54,26 +78,6 @@ GroupBox {
             RowLayout {
                 id: toolBar
                 height: parent.height
-
-                MaterialToolButton {
-                    id: expandButton
-                    ToolTip.text: "Expand More"
-                    text: MaterialIcons.expand_more
-                    font.pointSize: 10
-                    implicitHeight: parent.height
-                    checkable: true
-                    checked: false
-
-                    onCheckedChanged: {
-                        if (checked) {
-                            ToolTip.text = "Expand Less"
-                            text = MaterialIcons.expand_less
-                        } else {
-                            ToolTip.text = "Expand More"
-                            text = MaterialIcons.expand_more
-                        }
-                    }
-                }
             }
         }
     }

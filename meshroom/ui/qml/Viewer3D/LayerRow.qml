@@ -7,8 +7,8 @@ import "Inspector3DUtils.js" as Inspector3DUtils
 import MaterialIcons 2.2
 
 /**
- * ListView delegate for one entry of a LayerList: selection bar, loading/remove button, label,
- * visibility / picking toggles and an optional expandable advanced section.
+ * ListView delegate for one entry of a LayerList: selection bar, visibility toggle, advanced toggle, label,
+ * fit / picking buttons, loading/remove button and an optional expandable advanced section.
  *
  * @p advancedComponent root item must declare `property var entry`; it is bound to this row's entry.
  */
@@ -62,9 +62,35 @@ MouseArea {
                      : "transparent"
             }
 
-            LoadingRemoveButton {
-                loading: root.loading
-                onRemoveRequested: root.layerList.remove(root.index)
+            // Visibility first, so that it is aligned in all the groups (like a layer editor)
+            ToggleIconButton {
+                enabled: root.entryLayer !== null
+                active: root.entryLayer ? root.entryLayer.visible : true
+                activeIcon: MaterialIcons.visibility
+                inactiveIcon: MaterialIcons.visibility_off
+                activeToolTip: "Visible"
+                inactiveToolTip: "Hidden"
+                onClicked: root.entryLayer.visible = !root.entryLayer.visible
+            }
+
+            // The space of the advanced toggle is kept without advanced settings, to align the labels
+            Item {
+                implicitWidth: advancedButton.implicitWidth
+                implicitHeight: advancedButton.implicitHeight
+
+                ToggleIconButton {
+                    id: advancedButton
+                    anchors.fill: parent
+                    visible: root.advancedComponent !== null
+                    enabled: !root.loading
+                    active: root.expanded
+                    inactiveOpacity: 1.0
+                    activeIcon: MaterialIcons.keyboard_arrow_down
+                    inactiveIcon: MaterialIcons.keyboard_arrow_right
+                    activeToolTip: "Hide Advanced"
+                    inactiveToolTip: "Show Advanced"
+                    onClicked: root.expanded = !root.expanded
+                }
             }
 
             Label {
@@ -93,16 +119,6 @@ MouseArea {
             }
 
             ToggleIconButton {
-                enabled: root.entryLayer !== null
-                active: root.entryLayer ? root.entryLayer.visible : true
-                activeIcon: MaterialIcons.visibility
-                inactiveIcon: MaterialIcons.visibility_off
-                activeToolTip: "Visible"
-                inactiveToolTip: "Hidden"
-                onClicked: root.entryLayer.visible = !root.entryLayer.visible
-            }
-
-            ToggleIconButton {
                 visible: root.showPicking
                 enabled: root.entryLayer !== null
                 active: root.entryLayer ? root.entryLayer.picking : true
@@ -112,16 +128,9 @@ MouseArea {
                 onClicked: root.entryLayer.picking = !root.entryLayer.picking
             }
 
-            ToggleIconButton {
-                visible: root.advancedComponent !== null
-                enabled: !root.loading
-                active: root.expanded
-                inactiveOpacity: 1.0
-                activeIcon: MaterialIcons.keyboard_arrow_down
-                inactiveIcon: MaterialIcons.keyboard_arrow_right
-                activeToolTip: "Hide Advanced"
-                inactiveToolTip: "Show Advanced"
-                onClicked: root.expanded = !root.expanded
+            LoadingRemoveButton {
+                loading: root.loading
+                onRemoveRequested: root.layerList.remove(root.index)
             }
         }
 

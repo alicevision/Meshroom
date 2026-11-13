@@ -287,6 +287,30 @@ class SampleNode(desc.Node):
 The resolved value for a node instance is accessible via the `cpu`, `gpu`, and `ram` properties
 on the node object (e.g. `node.cpu`, `node.gpu`, `node.ram`).
 
+### Submission Settings
+
+When a node is submitted to a render farm, the submitter reads its `desc.SubmissionSettings` 
+which hold one `desc.StageSettings` per stage: `preprocess`, `process` and `postprocess`.
+Each `StageSettings` can contain settings that will be used to setup the submitted job.
+By default, the `process` stage is initialized with the node's `cpu`, `ram`, `gpu`, 
+while the `preprocess` and `postprocess` stages use the default levels.
+
+Override `getSubmissionSettings` to customize them:
+
+```python
+class SampleNode(desc.Node):
+    cpu = desc.Level.INTENSIVE
+
+    def getSubmissionSettings(self, node):
+        settings = super().getSubmissionSettings(node)
+        settings.preprocess.ram = desc.Level.EXTREME
+        return settings
+```
+
+Submitters retrieve the settings of a stage with `settings.getStageSettings("preprocess")`.
+The `_cuda_tag` and `_service_key` class attributes are deprecated: set them on the `process`
+stage from `getSubmissionSettings` instead (`settings.process.cuda_tag`, `settings.process.service_key`) if the submitter you use supports them.
+
 
 ## Parallelizing a Node
 

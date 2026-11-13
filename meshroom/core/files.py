@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import tempfile
+import uuid
 
 from pathlib import Path
 from typing import Dict, Tuple
@@ -69,13 +70,15 @@ def atomicOpen(path: Path, mode: str = "w", prefix: str = tempfile.gettempprefix
         the open temporary file.
     """
     path = Path(path)
-    fd, tmpPath = tempfile.mkstemp(dir=path.parent, prefix=prefix)
+    tmpPath = path.parent / f"{prefix}{uuid.uuid4().hex}"
     try:
-        with os.fdopen(fd, mode) as f:
+        # Exclusive creation with "open()", unlike "mkstemp" which restricts the file to its owner: the file gets
+        # the permissions of a new regular file. The umask must not be read for that: it is shared by all the threads.
+        with open(tmpPath, mode.replace("w", "x")) as f:
             yield f
         os.replace(tmpPath, path)
     except BaseException:
-        os.remove(tmpPath)
+        tmpPath.unlink(missing_ok=True)
         raise
 
 

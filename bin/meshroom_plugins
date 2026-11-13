@@ -270,8 +270,9 @@ def handleUpdate(args):
         if not plugin:
             success = False
             continue
-        # Resolve the provider and record to update from
-        resolved = resolveInstallSource(name, version)
+        # Resolve the provider and record to update from: the record may describe the plugin under a new name
+        renamedRecord = pluginManager.getRenamedRecord(plugin) if not findRecord(name) else None
+        resolved = resolveInstallSource(renamedRecord.name if renamedRecord else name, version)
         if not resolved:
             success = False
             continue
@@ -282,12 +283,12 @@ def handleUpdate(args):
                   f"not by '{plugin.publisher}'.")
             success = False
             continue
-        if (version or record.version) == plugin.version:
+        if pluginManager.isInstalledVersion(plugin, version or record.version):
             print(f"Plugin {name} is already at version {plugin.version}.")
             continue
-        # Update plugin
+        # Update plugin, in place of its installed folder
         try:
-            PluginUpdater(provider, record, version).execute()
+            PluginUpdater(provider, record, version, installedName=Path(plugin.rootPath).name).execute()
         except PluginServiceError as exc:
             print(exc)
             success = False

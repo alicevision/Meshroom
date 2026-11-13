@@ -175,7 +175,7 @@ class Attribute(BaseObject):
             )
 
     def asDict(self):
-        return {
+        serializedData = {
             'type': self.__class__.__name__,
             'name':self.name,
             'label':self.label,
@@ -189,6 +189,12 @@ class Attribute(BaseObject):
             'keyType':self.keyType,
             'invalidate':self.invalidate
         }
+        # A value or an enabled state defined by a function (e.g. lambda node: ...) cannot be serialized:
+        # the restored description gets the default ones
+        for key in ('value', 'enabled'):
+            if callable(serializedData[key]):
+                del serializedData[key]
+        return serializedData
 
     def shortDesc(self) -> dict:
         serializedData = {

@@ -130,7 +130,8 @@ FloatingPane {
             if (playing && (frame + 1 >= frameRange.max + 1)) {
                 frame = frameRange.min
             }
-            viewer.playback(playing)
+            if (viewer)
+                viewer.playback(playing)
         }
     }
 
@@ -154,6 +155,11 @@ FloatingPane {
         interval: 1000 / m.fps
 
         onTriggered: {
+            if (!viewer) {
+                // No HDR viewer (e.g. 8-bit viewer): it cannot report the image status, stop the playback
+                m.playing = false
+                return
+            }
             if (viewer.imageStatus !== Image.Ready) {
                 // Wait for current image to be displayed before switching to next image
                 return

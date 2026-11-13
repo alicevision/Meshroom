@@ -381,14 +381,22 @@ FocusScope {
                 enableSequencePlayerAction.checked = true
             }
         } else {
+            // Sort like the ImageGallery (by file basename, full path as tie-breaker)
+            // so that the frame index matches the order of the images in the gallery
             let objs = []
             for (let i = 0; i < _currentScene.viewpoints.count; i++) {
-                objs.push(_currentScene.viewpoints.at(i))
+                let vp = _currentScene.viewpoints.at(i)
+                let path = vp.childAttribute("path").value
+                objs.push({ "vp": vp, "path": path, "basename": Filepath.basename(path) })
             }
-            objs.sort((a, b) => { return a.childAttribute("path").value < b.childAttribute("path").value ? -1 : 1; })
-            
+            objs.sort((a, b) => {
+                if (a.basename !== b.basename)
+                    return a.basename < b.basename ? -1 : 1
+                return a.path < b.path ? -1 : (a.path > b.path ? 1 : 0)
+            })
+
             for (let i = 0; i < objs.length; i++) {
-                outputFiles.push(Filepath.resolve(pathTemplate, objs[i]))
+                outputFiles.push(Filepath.resolve(pathTemplate, objs[i].vp))
             }
 
             frameRange.min = 0

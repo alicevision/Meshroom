@@ -23,8 +23,25 @@ ExpandableGroup {
         width: parent.width
         spacing: 4
 
-        LoadingRemoveButton {
+        ToggleIconButton {
             Layout.leftMargin: 6
+            enabled: root.imageLayer !== null
+            active: root.imageLayer ? root.imageLayer.visible : false
+            activeIcon: MaterialIcons.visibility
+            inactiveIcon: MaterialIcons.visibility_off
+            activeToolTip: "Visible"
+            inactiveToolTip: "Hidden"
+            onClicked: root.imageLayer.visible = !root.imageLayer.visible
+        }
+
+        // Empty space of the advanced toggle of the LayerRow, to align the labels
+        ToggleIconButton {
+            opacity: 0
+            enabled: false
+            activeIcon: MaterialIcons.keyboard_arrow_right
+        }
+
+        LoadingRemoveButton {
             loading: root.imageLayer ? root.imageLayer.loading === true : false
             toolTip: "Close"
             onRemoveRequested: {
@@ -50,16 +67,6 @@ ExpandableGroup {
                 hoverEnabled: true
                 acceptedButtons: Qt.NoButton
             }
-        }
-
-        ToggleIconButton {
-            enabled: root.imageLayer !== null
-            active: root.imageLayer ? root.imageLayer.visible : false
-            activeIcon: MaterialIcons.visibility
-            inactiveIcon: MaterialIcons.visibility_off
-            activeToolTip: "Visible"
-            inactiveToolTip: "Hidden"
-            onClicked: root.imageLayer.visible = !root.imageLayer.visible
         }
     }
 }

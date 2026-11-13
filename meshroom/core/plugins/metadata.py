@@ -67,12 +67,21 @@ class PluginMetadata:
         license: a human-readable description of the plugin's license (if provided and valid).
         env: the list of environment variable entries declared in the file (if provided and valid).
         assets: the list of external assets declared in the file (valid entries only).
+
+    Members only found in a "plugin.lock", describing how the plugin was installed:
+        sourceUrl: the url of the plugin source (the url of its registry record), or None if unknown.
+        sourceVersion: the version requested from the plugin source, or None if unknown.
+        installedAssets: the list of the assets installed in the plugin folder, or None if unknown.
+        files: the list of the files extracted from the plugin archive, relative to the plugin folder
+               (POSIX separators), or None if unknown.
     """
     def __init__(self, name: Optional[str] = None, version: Optional[str] = None,
                  publisher: Optional[str] = None, authors: Optional[list[str]] = None,
                  description: Optional[str] = None, requirements: Optional[str] = None,
                  license: Optional[str] = None, env: Optional[list[dict]] = None,
-                 assets: Optional[list[PluginAsset]] = None):
+                 assets: Optional[list[PluginAsset]] = None, sourceUrl: Optional[str] = None,
+                 sourceVersion: Optional[str] = None, installedAssets: Optional[list[PluginInstalledAsset]] = None,
+                 files: Optional[list[str]] = None):
         self.name = name
         self.version = version
         self.publisher = publisher
@@ -82,6 +91,10 @@ class PluginMetadata:
         self.license = license
         self.env = env if env is not None else []
         self.assets = assets if assets is not None else []
+        self.sourceUrl = sourceUrl
+        self.sourceVersion = sourceVersion
+        self.installedAssets = installedAssets
+        self.files = files
 
     @staticmethod
     def loadJson(path: Path) -> Optional[PluginMetadata]:
@@ -121,6 +134,10 @@ class PluginMetadata:
                             f"got {type(env).__name__}. Ignoring it.")
             env = []
 
+        source = content.get("source")
+        if not isinstance(source, dict):
+            source = {}
+
         return PluginMetadata(
             PluginMetadata._sanitizeName(content.get("name"), path),
             PluginMetadata._sanitizeVersion(content.get("version"), path),
@@ -130,7 +147,11 @@ class PluginMetadata:
             PluginMetadata._sanitizeText(content.get("requirements"), "requirements", path),
             PluginMetadata._sanitizeText(content.get("license"), "license", path),
             env,
-            PluginMetadata._sanitizeAssets(content.get("assets"), path)
+            PluginMetadata._sanitizeAssets(content.get("assets"), path),
+            PluginMetadata._sanitizeText(source.get("url"), "source.url", path),
+            PluginMetadata._sanitizeText(source.get("version"), "source.version", path),
+            PluginMetadata._sanitizeInstalledAssets(content.get("installedAssets"), path),
+            PluginMetadata._sanitizeFiles(content.get("files"), path)
         )
 
     @staticmethod
@@ -480,6 +501,50 @@ class PluginMetadata:
         sha256 = sha256.lower() if sha256 else None
         return PluginAsset(name, entry["category"], url, PurePosixPath(assetPath).as_posix(), sha256, release, executable)
 
+    @staticmethod
+    def _sanitizeInstalledAssets(installedAssets, path: Path) -> Optional[list[PluginInstalledAsset]]:
+        """
+        Return the "installedAssets" of a "plugin.lock" parsed into PluginInstalledAssets, dropping invalid
+        entries and logging a warning. None if "installedAssets" is missing or is not a list.
+
+        Each entry is expected to be formatted as follows:
+        { "name": "...", "path": "...", "url": "...", "sha256": "...", "extracted": false }
+        """
+        if installedAssets is None:
+            return None
+        if not isinstance(installedAssets, list):
+            logging.warning(f"'installedAssets' in metadata file '{path}' must be a list, "
+                            f"got {type(installedAssets).__name__}. Ignoring it.")
+            return None
+
+        validAssets: list[PluginInstalledAsset] = []
+        for entry in installedAssets:
+            if (not isinstance(entry, dict)
+                    or not isinstance(entry.get("name"), str)
+                    or not isinstance(entry.get("path"), str) or not _isRelativePluginPath(entry["path"])
+                    or not isinstance(entry.get("url"), str)
+                    or not isinstance(entry.get("sha256"), str) or not _PLUGIN_SHA256_PATTERN.match(entry["sha256"])
+                    or not isinstance(entry.get("extracted", False), bool)):
+                logging.warning(f"Invalid entry in 'installedAssets' in metadata file '{path}': {entry!r}. Ignoring it.")
+                continue
+            validAssets.append(PluginInstalledAsset(entry["name"], PurePosixPath(entry["path"]).as_posix(),
+                                                    entry["url"], entry["sha256"].lower(), entry.get("extracted", False)))
+        return validAssets
+
+    @staticmethod
+    def _sanitizeFiles(files, path: Path) -> Optional[list[str]]:
+        """
+        Return the "files" of a "plugin.lock": the files extracted from the plugin archive. None if "files" is
+        missing, or if it is not a list of relative paths inside of the plugin folder: the files are then unknown.
+        """
+        if files is None:
+            return None
+        if not isinstance(files, list) or not all(isinstance(file, str) and _isRelativePluginPath(file) for file in files):
+            logging.warning(f"'files' in metadata file '{path}' must be a list of relative paths inside of the "
+                            f"plugin folder. Ignoring it.")
+            return None
+        return [PurePosixPath(file).as_posix() for file in files]
+
     def resolveEnv(self, basePath: Path) -> dict[str, str]:
         """
         Resolve "env" into a dictionary of environment variable names to values.
@@ -535,6 +600,10 @@ class PluginMetadata:
             "license": self.license,
             "env": self.env,
             "assets": [asset.toDict() for asset in self.assets],
+            "source": {"url": self.sourceUrl, "version": self.sourceVersion},
+            "installedAssets": (None if self.installedAssets is None
+                                else [asset.toDict() for asset in self.installedAssets]),
+            "files": self.files,
             "createdAt": datetime.now(timezone.utc).isoformat(),
         }, indent=4)
         atomicWriteFile(path, content)
@@ -587,3 +656,37 @@ class PluginAsset:
     def resolvePath(self, pluginFolder: Path) -> Path:
         """ Return the absolute path of the asset within "pluginFolder". """
         return Path(pluginFolder).joinpath(*PurePosixPath(self.path).parts)
+
+
+class PluginInstalledAsset:
+    """
+    An asset installed in a plugin folder, as recorded in the "plugin.lock" of the plugin.
+
+    Members:
+        name: the name of the asset.
+        path: the path of the asset, relative to the plugin folder (POSIX separators).
+        url: the url the asset was downloaded from.
+        sha256: the SHA-256 hexdigest (lowercase) of the downloaded file.
+        extracted: whether the downloaded file is an archive that was extracted in "path".
+    """
+    def __init__(self, name: str, path: str, url: str, sha256: str, extracted: bool = False):
+        self.name = name
+        self.path = path
+        self.url = url
+        self.sha256 = sha256
+        self.extracted = extracted
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, PluginInstalledAsset) and self.toDict() == other.toDict()
+
+    def __repr__(self) -> str:
+        return f"PluginInstalledAsset({self.toDict()!r})"
+
+    def toDict(self) -> dict:
+        return {
+            "name": self.name,
+            "path": self.path,
+            "url": self.url,
+            "sha256": self.sha256,
+            "extracted": self.extracted,
+        }

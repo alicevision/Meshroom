@@ -428,9 +428,50 @@ Item {
 
         if (attribute.desc.type === "File" && attribute.node.isComputed)
         {
-            viewed = view(attribute.value, `${attribute.node.label}.${attribute.label}`, attribute) || viewed
+            const source = resolveViewTemplate(attribute.value)
+            if (source)
+            {
+                const layerList = layerListByExtension[Filepath.extension(source)]
+                viewed = view(source, `${attribute.node.label}.${attribute.label}`, attribute) || viewed
+                // A templated attribute shows one view at a time: drop the mesh of the previous view
+                if (layerList && source !== attribute.value)
+                {
+                    layerList.removeAttributeSourcesLater(attribute, source)
+                }
+            }
         }
 
         return viewed
+    }
+
+    /**
+     * Resolve the view placeholders (<VIEW_ID>, <FILENAME>, ...) of @p path with the view picked in
+     * the 2D viewer, as Viewer2D does.
+     * Returns @p path unchanged if it has no placeholder, and "" if it has one but no view is picked
+     * or the resolved file does not exist.
+     */
+    function resolveViewTemplate(path)
+    {
+        if (!/<\w+>/.test(path))
+        {
+            return path
+        }
+
+        if (!root.scene || !root.scene.viewpoints)
+        {
+            return ""
+        }
+
+        for (let i = 0; i < root.scene.viewpoints.count; i++)
+        {
+            const vp = root.scene.viewpoints.at(i)
+            if (vp.childAttribute("viewId").value == root.scene.pickedViewId)
+            {
+                const resolved = Filepath.resolve(path, vp)
+                return Filepath.exists(resolved) ? resolved : ""
+            }
+        }
+
+        return ""
     }
 }

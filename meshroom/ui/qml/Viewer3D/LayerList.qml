@@ -83,6 +83,21 @@ QtObject {
         Qt.callLater(() => removeSource(source))
     }
 
+    /**
+     * Remove (on the next event loop iteration) the entries added from @p attribute, except the one
+     * loaded from @p keepSource. Used when a templated attribute is resolved for another view.
+     */
+    function removeAttributeSourcesLater(attribute, keepSource) {
+        keepSource = String(keepSource)
+        for (const source in attributeBySource)
+        {
+            if (source !== keepSource && attributeBySource[source] === attribute)
+            {
+                removeSourceLater(source)
+            }
+        }
+    }
+
     /** Remove @p entry if its file failed to load. */
     function handleEntryError(entry) {
         if (!entry.errorString)

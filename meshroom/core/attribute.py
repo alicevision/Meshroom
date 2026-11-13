@@ -2207,6 +2207,17 @@ class AnySet(GroupAttribute):
         }
 
     # Override
+    def asDict(self) -> dict:
+        # The children are user-defined: they are serialized as the value, from which they are restored,
+        # rather than as the items of a group description
+        return {
+            "name": self.name,
+            "label": self.label,
+            "type": self.desc.__class__.__name__,
+            "value": self.getSerializedValue()
+        }
+
+    # Override
     def shortDesc(self) -> dict:
         serializedData = {
             "type": self.desc.__class__.__name__,

@@ -39,7 +39,7 @@ ExpandableGroup {
         model: root.layerList ? root.layerList.model : null
 
         delegate: LayerRow {
-            width: listView.width - scrollBar.width
+            width: listView.width - (scrollBar.visible ? scrollBar.width : 0)
             layerList: root.layerList
             showPicking: root.showPicking
             advancedComponent: root.advancedComponent

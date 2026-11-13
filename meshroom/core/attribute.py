@@ -47,6 +47,31 @@ def _captureExpressionTemplates(attr, value):
             except (KeyError, AttributeError):
                 logging.debug(f"Skipping expression template capture for {key} on {attr}.")
 
+
+def removeLegacyFlattenedItems(items: list) -> list:
+    """ Remove the copies of the descendants of the group items from the serialized items of a group.
+        Older versions serialized the items of a group flattened: each group item was followed by a copy
+        of all its descendants, which are already serialized as the (also flattened) items of this group item.
+
+    Args:
+        items: the serialized items of a group.
+
+    Returns:
+        The serialized direct items of the group.
+    """
+    directItems = []
+    index = 0
+    while index < len(items):
+        item = items[index]
+        directItems.append(item)
+        index += 1
+        descendants = item.get("items") if isinstance(item, dict) else None
+        # Only skip exact copies of the descendants, so that the items serialized by the current version are kept
+        if isinstance(descendants, list) and descendants and items[index:index + len(descendants)] == descendants:
+            index += len(descendants)
+    return directItems
+
+
 def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     """ Retrieve the corresponding Attribute Description from the given dictionary
     """
@@ -63,6 +88,7 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     values = descType.get('values')
     exclusive = descType.get('exclusive')
     keyable = descType.get('keyable')
+    keyType = descType.get('keyType')
     shape = descType.get('shape')
     valueRange = descType.get('range')
 
@@ -78,7 +104,7 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
         kwargs['elementDesc'] = attributeDescriptionFactory(elementDesc)
 
     if items is not None:
-        kwargs['items'] = [attributeDescriptionFactory(item) for item in items]
+        kwargs['items'] = [attributeDescriptionFactory(item) for item in removeLegacyFlattenedItems(items)]
 
     if values is not None:
         kwargs['values'] = values
@@ -86,8 +112,12 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     if exclusive is not None:
         kwargs['exclusive'] = exclusive
 
-    if keyable is not None:
+    # Only the keyable attributes accept the keyable arguments: as the attributes are not keyable by default,
+    # they are only passed for a keyable description
+    if keyable:
         kwargs['keyable'] = keyable
+        if keyType is not None:
+            kwargs['keyType'] = keyType
 
     if valueRange is not None:
         kwargs['range'] = valueRange
@@ -2089,7 +2119,7 @@ class AnySet(GroupAttribute):
         if "value" in serializedAttribute or not isinstance(serializedAttribute.get("items"), list):
             return serializedAttribute.get("value", None)
         return {item["name"]: AnySet._serializedAttributeValue(item)
-                for item in serializedAttribute["items"] if isinstance(item, dict) and "name" in item}
+                for item in removeLegacyFlattenedItems(serializedAttribute["items"]) if isinstance(item, dict) and "name" in item}
 
     def insertAttribute(self, serializedAttribute: dict, index: int) -> Attribute | None:
         """Restore a serialized child attribute at the requested position."""

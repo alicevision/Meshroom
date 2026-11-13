@@ -84,6 +84,13 @@ class ShapeList(ListAttribute):
                               exposed=self.exposed)
 
     # Override
+    def asDict(self):
+        serializedData = super().asDict()
+        # The element description is given to the constructor as the shape
+        serializedData["shape"] = serializedData.pop("elementDesc")
+        return serializedData
+
+    # Override
     def shortDesc(self) -> dict:
         serializedData = {
             "type": self.__class__.__name__,

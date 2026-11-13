@@ -504,6 +504,69 @@ def test_anyset_uid_depends_on_children_types():
     assert intNode.ins.uid() != stringNode.ins.uid()
 
 
+def compoundChildrenWithDifferentStructures():
+    """
+    Return pairs of compound child descriptions with the same name and the same value,
+    but with a different structure (types or names of their descendants).
+    """
+    def intParam(name):
+        return desc.IntParam(name=name, label=name, description="", value=1, range=(0, 100, 1))
+
+    def floatParam(name):
+        return desc.FloatParam(name=name, label=name, description="", value=1.0, range=(0.0, 100.0, 1.0))
+
+    def listOf(elementDesc):
+        return desc.ListAttribute(name="param", label="param", description="", elementDesc=elementDesc)
+
+    def groupOf(items, name="param"):
+        return desc.GroupAttribute(name=name, label=name, description="", items=items)
+
+    return [
+        # Empty lists, whose elements have different types
+        (listOf(intParam("element")), listOf(floatParam("element"))),
+        # Groups whose items have different names but the same values
+        (groupOf([intParam("a")]), groupOf([intParam("b")])),
+        # Groups whose items have different types but the same values
+        (groupOf([intParam("a")]), groupOf([floatParam("a")])),
+        # Empty lists of groups, whose items have different names
+        (listOf(groupOf([intParam("a")], "group")), listOf(groupOf([intParam("b")], "group"))),
+        # Groups holding empty lists, whose elements have different types
+        (groupOf([desc.ListAttribute(name="list", label="list", description="", elementDesc=intParam("element"))]),
+         groupOf([desc.ListAttribute(name="list", label="list", description="", elementDesc=floatParam("element"))])),
+    ]
+
+
+COMPOUND_CHILDREN_WITH_DIFFERENT_STRUCTURES = compoundChildrenWithDifferentStructures()
+
+
+@pytest.mark.parametrize("firstDesc,secondDesc", COMPOUND_CHILDREN_WITH_DIFFERENT_STRUCTURES,
+                         ids=["emptyListElementType", "groupItemName", "groupItemType", "emptyListOfGroupsItemName",
+                              "groupOfEmptyListElementType"])
+def test_anyset_uid_depends_on_compound_children_structure(firstDesc, secondDesc):
+    """
+    AnySets with compound children (groups, lists) of the same name and value, but with a different structure
+    (types or names of their descendants), have different UIDs.
+    """
+    graph = Graph("test")
+    firstNode = graph.addNewNode("DynamicNode")
+    secondNode = graph.addNewNode("DynamicNode")
+    firstNode.ins.duplicateAttribute(SimpleNamespace(desc=firstDesc))
+    secondNode.ins.duplicateAttribute(SimpleNamespace(desc=secondDesc))
+    graph.update()
+
+    def valuesOnly(value):
+        """Return the values held by 'value', without the names of the group items."""
+        if isinstance(value, dict):
+            return [valuesOnly(itemValue) for itemValue in value.values()]
+        if isinstance(value, list):
+            return [valuesOnly(elementValue) for elementValue in value]
+        return value
+
+    assert valuesOnly(firstNode.ins.param.getPrimitiveValue()) == valuesOnly(secondNode.ins.param.getPrimitiveValue())
+    assert firstNode.ins.uid() != secondNode.ins.uid()
+    assert firstNode._uid != secondNode._uid
+
+
 def test_anyset_child_duplicated_from_non_invalidating_attribute_contributes_to_uid():
     """
     A child duplicated into an input AnySet from a non-invalidating attribute contributes to the node UID:
@@ -624,6 +687,27 @@ def test_empty_output_anyset_does_not_contribute_to_node_uid():
     assert dynamicNode._uid == uidBefore
 
 
+def test_input_linked_to_output_anyset_depends_on_producer_uid():
+    """
+    An input linked to a whole output AnySet gets the UID of the producer: changing an input of the producer updates
+    the UID of the consumer, so that the consumer does not reuse results computed from other outputs.
+    """
+    graph = Graph("test")
+    producer = graph.addNewNode("DynamicNode")
+    consumer = graph.addNewNode("DynamicNode")
+    addOutputChild(producer.outs, intDesc("a"))
+    linkedAnySet = consumer.ins.duplicateAttribute(SimpleNamespace(desc=desc.AnySet(name="linked", label="linked", description="")))
+    graph.addEdge(producer.outs, linkedAnySet)
+    graph.update()
+    producerUid, consumerUid = producer._uid, consumer._uid
+
+    producer.code.value = "node.outs.a.value = 7"
+    graph.update()
+
+    assert producer._uid != producerUid
+    assert consumer._uid != consumerUid
+
+
 def renameOutputChild(node):
     node.outs.renameAttribute(node.outs.a, "b", "b")
 
@@ -643,6 +727,93 @@ def retypeOutputChild(node):
 
 def addOtherOutputChild(node):
     addOutputChild(node.outs, intDesc("b"))
+
+
+def renameNestedOutputChild(anySet):
+    anySet.renameAttribute(anySet.a, "b", "b")
+
+
+def removeNestedOutputChild(anySet):
+    anySet.removeAttribute(anySet.a)
+
+
+def retypeNestedOutputChild(anySet):
+    anySet.removeAttribute(anySet.a)
+    addOutputChild(anySet, desc.StringParam(name="a", label="a", description="", value=""))
+
+
+def addOtherNestedOutputChild(anySet):
+    addOutputChild(anySet, intDesc("b"))
+
+
+def nestedAnySetDesc():
+    return desc.AnySet(name="nested", label="nested", description="")
+
+
+def addNestedAnySet(outputs):
+    """Add an AnySet as a direct child of the output AnySet 'outputs' and return it."""
+    return addOutputChild(outputs, nestedAnySetDesc())
+
+
+def addNestedAnySetInGroup(outputs):
+    """Add a group holding an AnySet to the output AnySet 'outputs' and return the AnySet."""
+    group = addOutputChild(outputs, desc.GroupAttribute(name="group", label="group", description="",
+                                                        items=[intDesc("value"), nestedAnySetDesc()]))
+    return group.childAttribute("nested")
+
+
+def addNestedAnySetInNestedGroup(outputs):
+    """Add a group holding a group holding an AnySet to the output AnySet 'outputs' and return the AnySet."""
+    innerGroup = desc.GroupAttribute(name="innerGroup", label="innerGroup", description="", items=[nestedAnySetDesc()])
+    group = addOutputChild(outputs, desc.GroupAttribute(name="group", label="group", description="", items=[innerGroup]))
+    return group.childAttribute("innerGroup").childAttribute("nested")
+
+
+@pytest.mark.parametrize("addNestedOutputAnySet", [addNestedAnySet, addNestedAnySetInGroup, addNestedAnySetInNestedGroup],
+                         ids=["anySet", "anySetInGroup", "anySetInNestedGroup"])
+@pytest.mark.parametrize("editOutputs", [renameNestedOutputChild, removeNestedOutputChild, retypeNestedOutputChild,
+                                         addOtherNestedOutputChild],
+                         ids=["rename", "remove", "retype", "add"])
+def test_nested_output_anyset_schema_change_updates_node_uid(editOutputs, addNestedOutputAnySet):
+    """
+    Changing the names or types of the children of an AnySet nested in an output AnySet, directly or through groups,
+    updates the node UID.
+    """
+    graph, dynamicNode = initGraphAndNode()
+    nestedAnySet = addNestedOutputAnySet(dynamicNode.outs)
+    addOutputChild(nestedAnySet, intDesc("a"))
+    graph.update()
+    uidBefore = dynamicNode._uid
+
+    editOutputs(nestedAnySet)
+    graph.update()
+    assert dynamicNode._uid != uidBefore
+
+
+def test_output_list_elements_do_not_contribute_to_node_uid():
+    """
+    The elements of an output list are computed values: neither their number nor the children of the AnySets
+    nested in them contribute to the node UID, which only depends on the description of the list.
+    """
+    graph, dynamicNode = initGraphAndNode()
+    group = desc.GroupAttribute(name="group", label="group", description="", items=[intDesc("value"), nestedAnySetDesc()])
+    outputList = addOutputChild(dynamicNode.outs, desc.ListAttribute(name="list", label="list", description="", elementDesc=group))
+    graph.update()
+    uidBefore = dynamicNode._uid
+
+    outputList.append({"value": 1})
+    addOutputChild(outputList.at(0).childAttribute("nested"), intDesc("a"))
+    graph.update()
+    assert dynamicNode._uid == uidBefore
+
+
+@pytest.mark.parametrize("attributeDesc",
+                         [attributeDesc for pair in COMPOUND_CHILDREN_WITH_DIFFERENT_STRUCTURES for attributeDesc in pair])
+def test_output_child_schema_key_without_nested_anyset_matches_desc_schema_key(attributeDesc):
+    """The schema key of an output child that does not hold any AnySet is the one of its description, keeping the existing UIDs."""
+    _, dynamicNode = initGraphAndNode()
+    child = addOutputChild(dynamicNode.outs, attributeDesc)
+    assert AnySet._childSchemaKey(child) == AnySet._schemaKey(child.desc)
 
 
 @pytest.mark.parametrize("editOutputs", [renameOutputChild, removeOutputChild, retypeOutputChild, addOtherOutputChild],

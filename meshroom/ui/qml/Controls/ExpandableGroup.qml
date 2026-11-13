@@ -63,6 +63,11 @@ GroupBox {
                     implicitHeight: parent.height
                     checkable: true
                     checked: false
+                    // The icon already shows the expanded state: no checked styling
+                    textColor: palette.text
+                    background: Rectangle {
+                        color: !expandButton.enabled ? "transparent" : expandButton.pressed ? Qt.darker(expandButton.palette.base, 1.3) : expandButton.hovered ? Qt.darker(expandButton.palette.base, 0.6) : "transparent"
+                    }
 
                     onCheckedChanged: {
                         if (checked) {

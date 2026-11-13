@@ -1,5 +1,6 @@
 """Tests for the serialization of the attribute descriptions (desc.Attribute.asDict / attributeDescriptionFactory)."""
 
+import json
 import math
 
 import pytest
@@ -223,8 +224,6 @@ def test_legacy_flattened_group_anyset_child_loads(tmp_path):
     A group with compound descendants saved as an AnySet child by older versions, which serialized the items of
     a group flattened, is restored with its direct items only, along with its value.
     """
-    import json
-
     attributeDesc = groupDesc("groupOfGroups", [
         intDesc("a"),
         groupDesc("inner", [intDesc("b"), groupDesc("innerMost", [stringDesc()])]),
@@ -272,3 +271,49 @@ def test_desc_factory_accepts_legacy_non_keyable_serialization():
     assert isinstance(rebuiltDesc, desc.ListAttribute)
     assert [(type(item).__name__, item.name) for item in rebuiltDesc.elementDesc.items] == \
         [("StringParam", "string"), ("ChoiceParam", "choice"), ("ListAttribute", "stringList")]
+
+
+def callableDescs():
+    """
+    Return descriptions whose enabled state or value is defined by a function, directly or on one of their descendants
+    (group items, list elements), along with the description holding the function.
+    """
+    disabledString = desc.StringParam(name="string", label="string", description="", value="", enabled=lambda node: False)
+    expressionFile = desc.File(name="file", label="file", description="", value=lambda attr: "/some/path")
+    disabledInt = desc.IntParam(name="int", label="int", description="", value=1, range=(0, 10, 1), enabled=lambda node: False)
+    return [
+        (disabledString, disabledString),
+        (expressionFile, expressionFile),
+        (listDesc("disabledElementList", disabledString), disabledString),
+        (listDesc("expressionElementList", expressionFile), expressionFile),
+        (groupDesc("disabledItemGroup", [stringDesc(), disabledInt]), disabledInt),
+        (listDesc("disabledNestedList", groupDesc("group", [listDesc("intList", disabledInt)])), disabledInt),
+    ]
+
+
+CALLABLE_DESCRIPTIONS = callableDescs()
+
+
+@pytest.mark.parametrize("attributeDesc,callableDesc", CALLABLE_DESCRIPTIONS,
+                         ids=[attributeDesc.name for attributeDesc, _ in CALLABLE_DESCRIPTIONS])
+def test_desc_with_callable_serialization(attributeDesc, callableDesc):
+    """
+    A description whose enabled state or value is defined by a function, directly or on one of its descendants,
+    can be serialized as JSON (e.g. in a graph file): the function is not serialized, and the restored description
+    gets the default enabled state and value instead.
+    """
+    serializedData = json.loads(json.dumps(attributeDesc.asDict()))
+    rebuiltDesc = attributeDescriptionFactory(serializedData)
+
+    # Look the description holding the function up in the rebuilt description
+    def findDesc(currentDesc):
+        if currentDesc.name == callableDesc.name and type(currentDesc) is type(callableDesc):
+            return currentDesc
+        children = [currentDesc.elementDesc] if isinstance(currentDesc, desc.ListAttribute) else \
+            currentDesc.items if isinstance(currentDesc, desc.GroupAttribute) else []
+        return next((found for found in map(findDesc, children) if found is not None), None)
+
+    rebuiltCallableDesc = findDesc(rebuiltDesc)
+    assert rebuiltCallableDesc is not None
+    assert rebuiltCallableDesc.enabled is True
+    assert not callable(rebuiltCallableDesc.value)

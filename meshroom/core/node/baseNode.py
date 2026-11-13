@@ -612,13 +612,15 @@ class BaseNode(BaseObject):
         if self._chunksCreated:
             return any(c.isAlreadySubmitted() for c in self.getAllChunks())
         else:
-            return self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING)
+            # The global status also accounts for the preprocess chunk, whose status changes are
+            # not reported in the node status file
+            return self.getGlobalStatus() in (Status.SUBMITTED, Status.RUNNING)
 
     def isAlreadySubmittedOrFinished(self):
         if self._chunksCreated:
             return all(c.isAlreadySubmittedOrFinished() for c in self.getAllChunks())
         else:
-            return self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS)
+            return self.getGlobalStatus() in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS)
 
     @Slot(result=bool)
     def isSubmittedOrRunning(self):
@@ -670,7 +672,7 @@ class BaseNode(BaseObject):
         if not self._chunksCreated:
             if self._nodeStatus.execMode == ExecMode.EXTERN:
                 return True
-            elif self._nodeStatus.execMode == ExecMode.LOCAL and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING):
+            elif self._nodeStatus.execMode == ExecMode.LOCAL and self.getGlobalStatus() in (Status.SUBMITTED, Status.RUNNING):
                 return meshroom.core.sessionUid != self._nodeStatus.submitterSessionUid
             return False
         return any(chunk.isExtern() for chunk in self.getAllChunks())
@@ -705,6 +707,10 @@ class BaseNode(BaseObject):
 
     def upgradeStatusTo(self, newStatus, execMode=None):
         """ Upgrade node to the given status and save it on disk. """
+        if not self._chunksCreated:
+            # The chunks may have been created by another process (e.g. on a render farm) since the status
+            # was last loaded: reload it so that the new status is applied to them instead of erasing them
+            self.updateStatusFromCache()
         if self._preprocessChunk:
             self._preprocessChunk.upgradeStatusTo(newStatus)
         if self._postprocessChunk:
@@ -872,8 +878,9 @@ class BaseNode(BaseObject):
         if self._chunksCreated:
             # Only monitor when chunks are not created (in this case monitor chunk status files instead)
             return False
-        return (self.isExtern() and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or \
-               (self.getMrNodeType() == MrNodeType.NODE and self._nodeStatus.status in (Status.SUBMITTED, Status.RUNNING))
+        status = self.getGlobalStatus()
+        return (self.isExtern() and status in (Status.SUBMITTED, Status.RUNNING, Status.ERROR)) or \
+               (self.getMrNodeType() == MrNodeType.NODE and status in (Status.SUBMITTED, Status.RUNNING))
 
     def updateNodeStatusFromCache(self):
         """
@@ -930,9 +937,10 @@ class BaseNode(BaseObject):
             # Restore placeholder chunk if needed
             chunkPlaceholder = NodeChunk(self, desc.computation.Range(), placeholder=True)
             chunkPlaceholder._status.execMode = self._nodeStatus.execMode
-            if self._nodeStatus.status in (Status.NONE, Status.SUBMITTED):
-                chunkPlaceholder._status.status = self._nodeStatus.status
-            elif self._nodeStatus.status in (Status.RUNNING,):
+            globalStatus = self.getGlobalStatus()
+            if globalStatus in (Status.NONE, Status.SUBMITTED):
+                chunkPlaceholder._status.status = globalStatus
+            elif globalStatus in (Status.RUNNING,):
                 chunkPlaceholder._status.status = Status.SUBMITTED
             else:
                 chunkPlaceholder._status.status = Status.NONE
@@ -940,15 +948,21 @@ class BaseNode(BaseObject):
         self.updateOutputAttr()
 
     def upgradeStatusFile(self):
-        """ Write node status on disk. """
-        # Make sure the node has the globalStatus before saving it
-        self._nodeStatus.status = self.getGlobalStatus()
+        """
+        Write node status on disk.
+
+        The status is only written while the chunks are not created: it is then the node-level status
+        (e.g. submitted, stopped before the chunks creation). Once the chunks are created, the status of
+        the node is the aggregation of the statuses of its chunks, which are stored in their own files.
+        """
         # Ensure chunk info is always in sync with the actual chunks before writing,
         # as _nodeStatus.chunks can be cleared by _resetChunks/loadFromCache and may not
         # have been restored (e.g. after createChunksFromCache which does not call setChunks).
         if self._chunksCreated and self._chunks:
             self._nodeStatus.setChunks(self._chunks)
         data = self._nodeStatus.toDict()
+        if self._chunksCreated:
+            data.pop("status", None)
         statusFilepath = self.nodeStatusFile
         folder = os.path.dirname(statusFilepath)
         os.makedirs(folder, exist_ok=True)
@@ -958,7 +972,26 @@ class BaseNode(BaseObject):
         renameWritingToFinalPath(statusFilepathWriting, statusFilepath)
 
     def setJobId(self, jid, submitterName):
+        if not self._chunksCreated:
+            # The chunks may have been created by another process (e.g. on a render farm) since the status
+            # was last loaded: reload it before setting the job so that the chunks are not erased upon writing
+            self.updateStatusFromCache()
         self._nodeStatus.setJob(jid, submitterName)
+        self.upgradeStatusFile()
+
+    def createStatusFileIfMissing(self):
+        """
+        Write the node status file if it does not exist yet.
+
+        Nodes whose chunks exist before the computation (static size or not parallelized) do not write
+        their status file when their chunks are computed, and can be computed without a prior submission
+        or local compute initialization. This method ensures that all computed nodes have a status file.
+        An existing file is never overwritten, as it may contain information unknown to the current process
+        (job, submitter session).
+        """
+        if os.path.exists(self.nodeStatusFile):
+            return
+        self._nodeStatus.setNode(self)
         self.upgradeStatusFile()
 
     def initStatusOnSubmit(self, forceCompute=False):
@@ -1035,6 +1068,7 @@ class BaseNode(BaseObject):
         Invoke the pre process command on Client Node to execute before
         we start the processing on the node
         """
+        self.createStatusFileIfMissing()
         if self.hasPreprocessChunk:
             if not self._preprocessChunk:
                 raise RuntimeError("Trying to process preprocess chunk but it doesn't exist")
@@ -1043,6 +1077,7 @@ class BaseNode(BaseObject):
             self.restoreLogger()
 
     def process(self, forceCompute=False, inCurrentEnv=False):
+        self.createStatusFileIfMissing()
         for chunk in self._chunks:
             chunk.process(forceCompute, inCurrentEnv)
 
@@ -1190,33 +1225,39 @@ class BaseNode(BaseObject):
         Returns:
             Status: the node global status
         """
-        anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
-                 Status.RUNNING, Status.SUBMITTED)
-        allOf = (Status.SUCCESS,)
-
         if self.isInitNode:
             return Status.INIT
         if not self._chunksCreated:
             # If the preprocess chunk failed we might not reach the chunk creation part
-            if self.hasPreprocessChunk and self._preprocessChunk._status.status in anyOf:
+            if self.hasPreprocessChunk and self._preprocessChunk._status.status in self.dominantChunkStatuses:
                 return self._preprocessChunk._status.status
             # Get status from nodeStatus
             return self._nodeStatus.status
-        allChunks = self.getAllChunks()
-        if not allChunks:
-            return Status.NONE
+        return self.aggregateChunksStatus([chunk._status.status for chunk in self.getAllChunks()])
 
-        chunksStatus = [chunk._status.status for chunk in allChunks]
+    # Statuses that define the global status of a node as soon as one of its chunks has them, by priority
+    dominantChunkStatuses = (Status.ERROR, Status.STOPPED, Status.KILLED, Status.RUNNING, Status.SUBMITTED)
+
+    @classmethod
+    def aggregateChunksStatus(cls, chunksStatus):
+        """
+        Get a node global status from the statuses of its chunks.
+
+        Args:
+            chunksStatus (list[Status]): the statuses of all the chunks of the node.
+
+        Returns:
+            Status: the node global status
+        """
+        if not chunksStatus:
+            return Status.NONE
         if len(chunksStatus) == 1:
             return chunksStatus[0]
-
-        for status in anyOf:
-            if any(s == status for s in chunksStatus):
+        for status in cls.dominantChunkStatuses:
+            if status in chunksStatus:
                 return status
-        for status in allOf:
-            if all(s == status for s in chunksStatus):
-                return status
-
+        if all(s == Status.SUCCESS for s in chunksStatus):
+            return Status.SUCCESS
         return Status.NONE
 
     @Slot(result=ChunkStatusData)

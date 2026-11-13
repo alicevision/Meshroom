@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 """
-This is a script used to wrap the process of processing a node on the farm
-It will handle chunk creation and create all the jobs for these chunks
-If the submitter cannot create chunks, then it will process the chunks serially
-in the current process
+This is a script used on a render farm for nodes with a dynamic size.
+It creates the chunks of the node, then requests the submitter to create a task for each chunk
+in the current job. The submitter must be able to edit the tasks of a job.
 """
 
 import argparse
@@ -28,19 +27,15 @@ from meshroom.core.submitter import SubmitterOptionsEnum
 from meshroom.core.node import Status
 
 
-parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
+parser = argparse.ArgumentParser(description='Create the chunks of a node and the tasks to compute them on a render farm.')
 parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,
                     help='Filepath to a graph file.')
 
 parser.add_argument('--submitter', type=str, required=True,
                     help='Name of the submitter used to create the job.')
 parser.add_argument('--node', metavar='NODE_NAME', type=str, required=True,
-                    help='Process the node. It will generate an error if the dependencies are not already computed.')
-parser.add_argument('--inCurrentEnv', help='Execute process in current env without creating a dedicated runtime environment.',
-                    action='store_true')
-parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
-                    action='store_true')
-parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
+                    help='Name of the node to create the chunks for.')
+parser.add_argument('--forceCompute', help='Submit all the chunks even if they are already computed.',
                     action='store_true')
 parser.add_argument('--extern', help='Use this option when you compute externally after submission to a render farm from meshroom.',
                     action='store_true')
@@ -66,86 +61,42 @@ logging.getLogger().setLevel(level=logging.INFO)
 
 meshroom.core.initPlugins()
 meshroom.core.initNodes()
-meshroom.core.initSubmitters()  # Required to spool child job
+meshroom.core.initSubmitters()  # Required to create the chunk tasks
 
 graph = meshroom.core.graph.loadGraph(args.graphFile)
 if args.cache:
     graph.cacheDir = args.cache
 graph.update()
 
-# Execute the node
 node = graph.findNode(args.node)
-submittedStatuses = [Status.RUNNING]
 
-# Find submitter
-submitter = None
-# It's required if we want to spool chunks on different machines
-for subName, sub in submitters.items():
-    if args.submitter == subName:
-        submitter = sub
-        break
+# The submitter creates the chunk tasks in the current job, so it must be available and able to edit tasks
+submitter = submitters.get(args.submitter)
+if not submitter:
+    logging.error(f"Submitter \"{args.submitter}\" is not available: cannot create the chunk tasks of node {node.name}.")
+    sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)
+if not submitter._options.includes(SubmitterOptionsEnum.EDIT_TASKS):
+    logging.error(f"Submitter \"{args.submitter}\" cannot edit tasks: cannot create the chunk tasks of node {node.name}.")
+    sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)
 
-if node._nodeStatus.status in (Status.STOPPED, Status.KILLED):
+if node.getGlobalStatus() in (Status.STOPPED, Status.KILLED):
     logging.error("Node status is STOPPED or KILLED.")
-    if submitter:
-        submitter.killRunningJob()
+    submitter.killRunningJob()
     sys.exit(meshroom.MeshroomExitStatus.ERROR_NO_RETRY)
 
 if not node._chunksCreated:
     # Create node chunks
     # Once created we don't have to do it again even if we relaunch the job
     node.createChunks()
-    if not node._chunksCreated:
-        logging.error(f"Failed to create chunks for node {node.name}.")
     # Set the chunks statuses
     for chunk in node._chunks:
         if args.forceCompute or chunk._status.status != Status.SUCCESS:
-            hasChunkToLaunch = True
             chunk._status.setNode(node)
             chunk._status.initExternSubmit()
             chunk.upgradeStatusFile()
         else:
-            if not args.forceCompute:
-                logging.warning(f"Chunk {chunk} status is {chunk._status.status}.")
-                logging.warning(f"The status file has not been updated for this chunk.")
+            logging.warning(f"Chunk {chunk} status is {chunk._status.status}.")
+            logging.warning(f"The status file has not been updated for this chunk.")
 
-# Get chunks to process in the current process
-chunksToProcess = []
-if submitter:
-    if not submitter._options.includes(SubmitterOptionsEnum.EDIT_TASKS):
-        chunksToProcess = node.chunks
-else:
-    # Cannot retrieve job -> execute process serially
-    chunksToProcess = node.chunks
-
-logging.info(f"[MeshroomCreateChunks] Chunks to process here : {chunksToProcess}")
-
-if not args.forceStatus and not args.forceCompute:
-    for chunk in chunksToProcess:
-        if chunk.status.status in submittedStatuses:
-            # Particular case for the local isolated, the node status is set to RUNNING by the submitter directly.
-            # We ensure that no other instance has started to compute, by checking that the sessicomputeSessionUidonUid is empty.
-            if chunk.node.getMrNodeType() == meshroom.core.MrNodeType.NODE and \
-                not chunk.status.computeSessionUid and node._nodeStatus.submitterSessionUid:
-                continue
-            logging.warning(
-                f"[MeshroomCreateChunks] Node is already submitted with status " \
-                f"\"{chunk.status.status.name}\". See file: \"{chunk.statusFile}\". " \
-                f"ExecMode: {chunk.status.execMode.name}, computeSessionUid: {chunk.status.computeSessionUid}, " \
-                f"submitterSessionUid: {node._nodeStatus.submitterSessionUid}")
-
-if chunksToProcess:
-    node.preprocess()
-    node.prepareLogger()
-    for chunk in chunksToProcess:
-        logging.info(f"[MeshroomCreateChunks] process chunk {chunk}")
-        chunk.process(args.forceCompute, args.inCurrentEnv)
-    node.restoreLogger()
-    node.postprocess()
-else:
-    logging.info(f"[MeshroomCreateChunks] -> create job to process chunks {[c for c in node.chunks]}")
-    submitter.createChunkTask(node, graphFile=args.graphFile, cache=args.cache, 
-                              forceStatus=args.forceStatus, forceCompute=args.forceCompute)
-
-# Restore the log level
-logging.getLogger().setLevel(meshroom.logStringToPython[args.verbose])
+logging.info(f"[MeshroomCreateChunks] -> create job to process chunks {[c for c in node.chunks]}")
+submitter.createChunkTask(node, graphFile=args.graphFile, cache=args.cache, forceCompute=args.forceCompute)

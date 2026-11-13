@@ -317,3 +317,30 @@ def test_desc_with_callable_serialization(attributeDesc, callableDesc):
     assert rebuiltCallableDesc is not None
     assert rebuiltCallableDesc.enabled is True
     assert not callable(rebuiltCallableDesc.value)
+
+
+def geometryValueDesc(shapeDesc):
+    """Return the description of the first geometry value of 'shapeDesc', which holds its keyable state."""
+    geometryValue = next(item for item in shapeDesc.items if item.name == "geometry")
+    while isinstance(geometryValue, desc.GroupAttribute):
+        geometryValue = geometryValue.items[0]
+    return geometryValue
+
+
+SHAPE_TYPES = [type(shapeDesc) for shapeDesc in shapeDescs(keyable=False) if isinstance(shapeDesc, desc.Shape)]
+
+
+@pytest.mark.parametrize("keyable", [False, True], ids=["notKeyable", "keyable"])
+@pytest.mark.parametrize("shapeType", SHAPE_TYPES, ids=[shapeType.__name__ for shapeType in SHAPE_TYPES])
+def test_shape_desc_short_description_keeps_keyable_state(shapeType, keyable):
+    """
+    The short description of a shape, which describes the shapes of a ShapeList in the node descriptions saved in the
+    graph files, holds its keyable state: a shape rebuilt from it (e.g. for a CompatibilityNode) has the same keyable state.
+    """
+    shapeDesc = shapeType(name="shape", label="", description="", keyable=keyable, keyType="viewId" if keyable else None)
+    shapeList = desc.ShapeList(name="shapeList", label="", description="", shape=shapeDesc)
+    for shortDesc in (shapeDesc.shortDesc(), shapeList.shortDesc()["shape"]):
+        assert shortDesc.get("keyable", False) is keyable
+        rebuiltDesc = attributeDescriptionFactory(dict(shortDesc, name=shapeDesc.name))
+        assert type(rebuiltDesc) is shapeType
+        assert geometryValueDesc(rebuiltDesc).keyable is keyable

@@ -9,6 +9,7 @@ from ..utils import registeredPlugin, writeFile
 import json
 import os
 import time
+from types import SimpleNamespace
 
 # The folder of the test plugins.
 pluginsFolder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "plugins")
@@ -304,3 +305,18 @@ class TestGetUpdateRecord:
                 assert pluginManager.getUpdateRecord(plugin) is None
             finally:
                 del pluginManager._pluginRegistries[registry.name]
+
+    def test_comparesTheVersionInstalledFromTheSource(self):
+        """ A record names a tag, compared to the one the plugin was installed from if known, else to its version. """
+        assert pluginManager.isInstalledVersion(SimpleNamespace(version="1.0.3", sourceVersion=""), "v1.0.3")
+        assert not pluginManager.isInstalledVersion(SimpleNamespace(version="1.0.3", sourceVersion="v1.0.2"), "v1.0.3")
+
+    def test_renamedPlugin(self, tmp_path):
+        """ A plugin renamed by its source is found by the url it was installed from. """
+        registry = self._withRegistry(tmp_path, publisher="publisher")
+        try:
+            plugin = SimpleNamespace(name="oldName", publisher="publisher",
+                                     sourceUrl="https://github.com/Publisher/pluginA.git")
+            assert pluginManager.getRenamedRecord(plugin).name == "pluginA"
+        finally:
+            del pluginManager._pluginRegistries[registry.name]

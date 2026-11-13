@@ -397,3 +397,18 @@ class TestDFS:
 
         assert len(nodes) == len(set(nodes)), "dfsOnDiscover returned duplicate nodes"
         assert set(nodes) == {A, B, C}
+
+
+def test_createsCycle():
+    graph = Graph("Tests cycle detection")
+
+    tA = graph.addNewNode("AppendText", inputText="echo A")
+    tB = graph.addNewNode("AppendText", inputText="echo B")
+    tC = graph.addNewNode("AppendText", inputText="echo C")
+
+    tA.output.connectTo(tB.input)
+    tB.output.connectTo(tC.input)
+
+    assert graph.createsCycle(tA.output, tA.input)
+    assert graph.createsCycle(tC.output, tA.input)
+    assert not graph.createsCycle(tA.output, tC.input)

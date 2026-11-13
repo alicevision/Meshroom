@@ -13,7 +13,6 @@ import "AnySetUtils.js" as AnySetUtils
 RowLayout {
     id: root
 
-    property var nodeItem
     property var attribute
     property bool expanded: false
     property bool readOnly: false
@@ -253,7 +252,7 @@ RowLayout {
                     if (root.readOnly                                            // Cannot connect on a read-only attribute
                         || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
                         || !validIncomingConnection                              // Connection is not allowed
-                        || drag.source.nodeItem === inputDragTarget.nodeItem     // Connection between attributes of the same node
+                        || _currentScene.createsCycle(drag.source.attribute, inputDragTarget.attribute)  // Would create a cycle
                         || drag.source.isList && childrenRepeater.count          // Source/target are lists but target already has children
                         || drag.source.connectorType === "input"                 // Refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
                     ) {
@@ -284,7 +283,6 @@ RowLayout {
                 objectName: "edgeConnector"
                 readonly property string connectorType: "input"
                 readonly property alias attribute: root.attribute
-                readonly property alias nodeItem: root.nodeItem
                 readonly property bool isOutput: Boolean(attribute.isOutput)
                 readonly property alias isList: root.isList
                 readonly property alias isExpandable: root.isExpandable
@@ -502,7 +500,7 @@ RowLayout {
                 // Check if attributes are compatible to create a valid connection
                 if (drag.source.objectName != outputDragTarget.objectName   // Not an edge connector
                     || !validIncomingConnection                             // Connection is not allowed
-                    || drag.source.nodeItem === outputDragTarget.nodeItem   // Connection between attributes of the same node
+                    || _currentScene.createsCycle(outputDragTarget.attribute, drag.source.attribute)  // Would create a cycle
                     || (!drag.source.isList && outputDragTarget.isList)     // Connection between a list and a simple attribute
                     || (drag.source.isList && childrenRepeater.count)       // Source/target are lists but target already has children
                     || drag.source.connectorType === "output"               // Refuse to connect an output pin on another one
@@ -530,7 +528,6 @@ RowLayout {
             objectName: "edgeConnector"
             readonly property string connectorType: "output"
             readonly property alias attribute: root.attribute
-            readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: Boolean(attribute.isOutput)
             readonly property alias isList: root.isList
             readonly property alias isExpandable: root.isExpandable

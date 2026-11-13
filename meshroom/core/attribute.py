@@ -97,7 +97,8 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     # GroupAttribute descriptions have no default value: their value is defined by their items.
     # Groups serialized with an older version still hold a "value" that must not reach the constructor,
     # the runtime value is restored separately when the attribute is created.
-    if value is not None and not issubclass(attrClass, desc.GroupAttribute):
+    # The same goes for ShapeList descriptions, whose constructor has no default value.
+    if value is not None and not issubclass(attrClass, (desc.GroupAttribute, desc.ShapeList)):
         kwargs['value'] = value
 
     if elementDesc is not None:
@@ -1860,6 +1861,14 @@ class ShapeAttribute(GroupAttribute):
             return self._getInputLink().asLinkExpr()
         return super().getSerializedValue()
 
+    # Override
+    def asDict(self) -> dict:
+        # The shape constructor builds its items from its keyable state: serialize the shape description,
+        # which holds this keyable state instead of the items, along with the value
+        serializedData = self.desc.asDict()
+        serializedData.update(name=self.name, label=self.label, value=self.getSerializedValue())
+        return serializedData
+
     def getShapeAsDict(self) -> dict:
         """
         Return the shape attribute as dict with the shape file structure.
@@ -1986,6 +1995,14 @@ class ShapeListAttribute(ListAttribute):
             if isinstance(attribute, ShapeAttribute):
                 attribute.isVisible = visible
         self.shapeListChanged.emit()
+
+    # Override
+    def asDict(self) -> dict:
+        # The ShapeList constructor expects its element description as a shape: serialize the ShapeList description,
+        # which holds it this way, along with the value
+        serializedData = self.desc.asDict()
+        serializedData.update(name=self.name, label=self.label, value=self.getSerializedValue())
+        return serializedData
 
     # Override
     def shortDesc(self) -> dict:

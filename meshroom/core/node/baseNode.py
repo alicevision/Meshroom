@@ -703,6 +703,10 @@ class BaseNode(BaseObject):
 
     def upgradeStatusTo(self, newStatus, execMode=None):
         """ Upgrade node to the given status and save it on disk. """
+        if not self._chunksCreated:
+            # The chunks may have been created by another process (e.g. on a render farm) since the status
+            # was last loaded: reload it so that the new status is applied to them instead of erasing them
+            self.updateStatusFromCache()
         if self._preprocessChunk:
             self._preprocessChunk.upgradeStatusTo(newStatus)
         if self._postprocessChunk:
@@ -964,6 +968,10 @@ class BaseNode(BaseObject):
         renameWritingToFinalPath(statusFilepathWriting, statusFilepath)
 
     def setJobId(self, jid, submitterName):
+        if not self._chunksCreated:
+            # The chunks may have been created by another process (e.g. on a render farm) since the status
+            # was last loaded: reload it before setting the job so that the chunks are not erased upon writing
+            self.updateStatusFromCache()
         self._nodeStatus.setJob(jid, submitterName)
         self.upgradeStatusFile()
 

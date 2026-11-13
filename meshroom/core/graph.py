@@ -1564,6 +1564,10 @@ class Graph(BaseObject):
         inputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=False)
         return inputNodes[1:]  # exclude current node
 
+    def createsCycle(self, srcAttr: Attribute, dstAttr: Attribute) -> bool:
+        """ Whether connecting 'srcAttr' to 'dstAttr' would make a node depend on itself. """
+        return dstAttr.node in self.dfsOnDiscover(startNodes=[srcAttr.node])[0]
+
     def getOutputNodes(self, node, recursive, dependenciesOnly):
         """ Return either the first level output nodes of a node or the whole chain. """
         if not recursive:

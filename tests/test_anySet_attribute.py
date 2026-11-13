@@ -606,6 +606,93 @@ def test_anyset_child_duplicated_from_disabled_attribute_contributes_to_uid():
         assert dynamicNode._uid != uidBefore
 
 
+def descWithFlag(attributeDesc, flagName, value):
+    """
+    Return a clone of 'attributeDesc' with the private flag 'flagName' set to 'value' on the clone
+    and on all its descendants (group items, list elements), without modifying 'attributeDesc'.
+    """
+    clone = attributeDesc.clone()
+    setattr(clone, flagName, value)
+    # Recursively set the flag on independent clones of the descendant descriptions
+    if isinstance(clone, desc.ListAttribute):
+        clone._elementDesc = descWithFlag(clone.elementDesc, flagName, value)
+    elif isinstance(clone, desc.GroupAttribute):
+        clone._items = [descWithFlag(item, flagName, value) for item in clone.items]
+    return clone
+
+
+def assertDescInvalidatingAndEnabled(attributeDesc):
+    """
+    Assert that 'attributeDesc' and all its descendant descriptions (group items, list elements) are invalidating and enabled.
+    The private flags are checked, as the public 'invalidate' of a group or a list is derived from its descendants:
+    the own invalidate flag of a group or a list is not relevant (their constructors set it to False), so it is not checked.
+    """
+    if not isinstance(attributeDesc, (desc.ListAttribute, desc.GroupAttribute)):
+        assert attributeDesc._invalidate is True, attributeDesc.name
+    assert attributeDesc._enabled is True, attributeDesc.name
+    if isinstance(attributeDesc, desc.ListAttribute):
+        assertDescInvalidatingAndEnabled(attributeDesc.elementDesc)
+    elif isinstance(attributeDesc, desc.GroupAttribute):
+        for item in attributeDesc.items:
+            assertDescInvalidatingAndEnabled(item)
+
+
+def assertInvalidatingAndEnabled(attribute):
+    """Assert that the live 'attribute', its description and all its descendants are invalidating and enabled."""
+    assertDescInvalidatingAndEnabled(attribute.desc)
+    assert attribute.invalidate and attribute.enabled, attribute.fullName
+    if isinstance(attribute, AnySet) or isinstance(attribute.desc, desc.ListAttribute):
+        children = list(attribute.value)
+    elif isinstance(attribute.desc, desc.GroupAttribute):
+        children = list(attribute.value.values())
+    else:
+        children = []
+    for child in children:
+        assertInvalidatingAndEnabled(child)
+
+
+def compoundChildren():
+    """Return compound child descriptions (group, list, list of groups), along with a value to set on each of them."""
+    def intParam(name):
+        return desc.IntParam(name=name, label=name, description="", value=1, range=(0, 100, 1))
+
+    group = desc.GroupAttribute(name="group", label="group", description="", items=[intParam("a"), intParam("b")])
+    return [
+        (group, {"a": 2, "b": 3}),
+        (desc.ListAttribute(name="list", label="list", description="", elementDesc=intParam("element")), [2, 3]),
+        (desc.ListAttribute(name="listOfGroups", label="listOfGroups", description="", elementDesc=group.clone()),
+         [{"a": 2, "b": 3}]),
+    ]
+
+
+COMPOUND_CHILDREN = compoundChildren()
+
+
+@pytest.mark.parametrize("makeDesc", [lambda d: descWithFlag(d, "_invalidate", False),
+                                      lambda d: descWithFlag(d, "_enabled", False),
+                                      lambda d: descWithFlag(d, "_enabled", lambda node: False)],
+                         ids=["nonInvalidating", "disabled", "disabledByCallable"])
+@pytest.mark.parametrize("attributeDesc,value", COMPOUND_CHILDREN,
+                         ids=[attributeDesc.name for attributeDesc, _ in COMPOUND_CHILDREN])
+def test_anyset_compound_child_duplication_resets_invalidate_and_enabled_flags(attributeDesc, value, makeDesc):
+    """
+    A compound child duplicated into an AnySet and all its descendants (group items, list elements) are invalidating
+    and enabled, whatever the flags of the source description, which is not modified.
+    """
+    sourceDesc = makeDesc(attributeDesc)
+    sourceElementDesc = sourceDesc.elementDesc if isinstance(sourceDesc, desc.ListAttribute) else None
+    graph, dynamicNode = initGraphAndNode()
+    child = dynamicNode.ins.duplicateAttribute(SimpleNamespace(desc=sourceDesc))
+    child.value = value
+    graph.update()
+
+    assertInvalidatingAndEnabled(child)
+    if sourceElementDesc is not None:
+        # The element description of the source is neither shared nor modified
+        assert child.desc.elementDesc is not sourceElementDesc
+        assert sourceDesc.elementDesc is sourceElementDesc
+
+
 def test_anyset_structural_changes_update_node_uid():
     """Adding, renaming, moving and removing AnySet children updates the node UID without an explicit update."""
     graph, dynamicNode = initGraphAndNode()

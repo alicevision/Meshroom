@@ -37,7 +37,7 @@ GroupBox {
 
         background: Rectangle {
             id: labelBg
-            color: palette.base
+            color: palette.window
             opacity: 0.8
         }
 

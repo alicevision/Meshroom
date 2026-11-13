@@ -6,11 +6,10 @@ import Controls 1.0
 import MaterialIcons 2.2
 import Utils 1.0
 
-FloatingPane {
+Pane {
     id: root
 
     implicitWidth: 200
-    opaque: true
     property var collection: null
     readonly property bool hasImageContent: root.collection && root.collection.sceneView && root.collection.sceneView.imageLayerRef
                                           && root.collection.sceneView.imageLayerRef.source !== undefined

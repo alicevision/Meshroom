@@ -1,5 +1,6 @@
 """Tests for the AnySet feature."""
 
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -375,8 +376,6 @@ def test_anyset_children_preserved_when_resaving_loaded_template(tmp_path):
 
 
 def test_legacy_dict_anyset_serialization_still_loads(tmp_path):
-    import json
-
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
 
@@ -401,8 +400,6 @@ def test_legacy_dict_anyset_serialization_still_loads(tmp_path):
 
 
 def test_legacy_list_anyset_serialization_still_loads(tmp_path):
-    import json
-
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
 
@@ -426,8 +423,6 @@ def test_legacy_list_anyset_serialization_still_loads(tmp_path):
 
 def test_legacy_group_anyset_child_with_value_still_loads(tmp_path):
     """GroupAttribute children used to be serialized with both their items and their value."""
-    import json
-
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("AllAttributesNode")
 
@@ -883,6 +878,102 @@ def test_anyset_child_duplicated_from_disabled_attribute_save_load_preserves_uid
 
 
 # ---------------------------------------------------------------------------
+# Shape children tests
+# ---------------------------------------------------------------------------
+
+def shapeChildren():
+    """
+    Return a description of each shape type and of a ShapeList, keyable or not, along with a partial observation
+    to set on the shape (or on the first shape of the ShapeList).
+    """
+    shapeChildren = []
+    for keyable in (False, True):
+        prefix = "keyable" if keyable else ""
+        kwargs = {"label": "", "description": "", "keyable": keyable, "keyType": "viewId" if keyable else None}
+        shapeChildren += [
+            (desc.Point2d(name=f"{prefix}point2d", **kwargs), {"x": 2.0}),
+            (desc.Line2d(name=f"{prefix}line2d", **kwargs), {"a": {"x": 2.0, "y": 2.0}}),
+            (desc.Rectangle(name=f"{prefix}rectangle", **kwargs), {"center": {"x": 20.0, "y": 20.0}}),
+            (desc.Circle(name=f"{prefix}circle", **kwargs), {"radius": 40.0}),
+            (desc.SurveyPoint(name=f"{prefix}surveyPoint", **kwargs), {"X": 2.0}),
+            (desc.ShapeList(name=f"{prefix}shapeList", label="", description="",
+                            shape=desc.Point2d(name="point2d", **kwargs)), {"x": 2.0}),
+        ]
+    return shapeChildren
+
+
+SHAPE_CHILDREN = shapeChildren()
+SHAPE_CHILDREN_IDS = [attributeDesc.name for attributeDesc, _ in SHAPE_CHILDREN]
+
+
+def shapeChildState(child):
+    """
+    Return the serialization of a shape child, which holds its type, keyable state, key type and value, as a string
+    for the NaN values (e.g. SurveyPoint) to be comparable.
+    """
+    return json.dumps(child.asDict(), sort_keys=True)
+
+
+@pytest.mark.parametrize("modified", [False, True], ids=["default", "modified"])
+@pytest.mark.parametrize("attributeDesc,observation", SHAPE_CHILDREN, ids=SHAPE_CHILDREN_IDS)
+def test_anyset_shape_child_save_load_preserves_uid(tmp_path, attributeDesc, observation, modified):
+    """
+    A shape or a ShapeList child, keyable or not, keeps its type, keyable state, value and the node UID across
+    save/load cycles.
+    """
+    graph, dynamicNode = initGraphAndNode()
+    child = addAnySetChild(dynamicNode.ins, attributeDesc)
+    if modified:
+        shape = child
+        if isinstance(attributeDesc, desc.ShapeList):
+            child.append({})
+            shape = child.at(0)
+        shape.childAttribute("userName").value = "someShape"
+        shape.geometry.setObservation("0", observation)
+    graph.update()
+    expectedState = shapeChildState(child)
+    expectedUid = dynamicNode._uid
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+
+    for _ in range(2):
+        loadedGraph = loadGraph(graphFile)
+        loadedNode = loadedGraph.node(dynamicNode.name)
+
+        assert not isinstance(loadedNode, CompatibilityNode), loadedNode.issueDetails
+        assert [shapeChildState(loadedChild) for loadedChild in loadedNode.ins.value] == [expectedState]
+        assert loadedNode._uid == expectedUid
+
+        # Save the loaded graph to check the next iteration against a resaved file
+        graphFile = str(tmp_path / "resaved_graph.mg")
+        loadedGraph.save(graphFile)
+
+
+@pytest.mark.parametrize("attributeDesc", [attributeDesc for attributeDesc, _ in SHAPE_CHILDREN], ids=SHAPE_CHILDREN_IDS)
+def test_anyset_shape_child_duplication_does_not_modify_source_desc(attributeDesc):
+    """
+    Duplicating a shape or a ShapeList into an AnySet does not modify the invalidate and enabled flags of the source
+    description or of its descendants (e.g. the shape of a ShapeList).
+    """
+    def flags(attributeDesc):
+        """Return the invalidate and enabled flags of 'attributeDesc' and of its descendants."""
+        children = []
+        if isinstance(attributeDesc, desc.ListAttribute):
+            children = [attributeDesc.elementDesc]
+        elif isinstance(attributeDesc, desc.GroupAttribute):
+            children = attributeDesc.items
+        return (attributeDesc._invalidate, attributeDesc._enabled, [flags(child) for child in children])
+
+    sourceDesc = disabledDesc(nonInvalidatingDesc(attributeDesc), False)
+    expectedFlags = flags(sourceDesc)
+    _, dynamicNode = initGraphAndNode()
+    child = addAnySetChild(dynamicNode.ins, sourceDesc)
+    assert flags(sourceDesc) == expectedFlags
+    assertInvalidatingAndEnabled(child)
+
+
+# ---------------------------------------------------------------------------
 # Output AnySet tests
 # ---------------------------------------------------------------------------
 
@@ -1058,7 +1149,8 @@ def test_output_list_elements_do_not_contribute_to_node_uid():
 
 
 @pytest.mark.parametrize("attributeDesc",
-                         [attributeDesc for pair in COMPOUND_CHILDREN_WITH_DIFFERENT_STRUCTURES for attributeDesc in pair])
+                         [attributeDesc for pair in COMPOUND_CHILDREN_WITH_DIFFERENT_STRUCTURES for attributeDesc in pair]
+                         + [attributeDesc for attributeDesc, _ in SHAPE_CHILDREN])
 def test_output_child_schema_key_without_nested_anyset_matches_desc_schema_key(attributeDesc):
     """The schema key of an output child that does not hold any AnySet is the one of its description, keeping the existing UIDs."""
     _, dynamicNode = initGraphAndNode()

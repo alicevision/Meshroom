@@ -31,17 +31,15 @@ FloatingPane {
     property alias frameId: m.frame
     property var frameRange: { "min" : 0, "max" : 0 }
 
-    property int nbViewpoints: _currentScene ? _currentScene.viewpoints.count : 0
-
     Settings {
         id: settings_SequencePlayer
         property int maxCacheMemory: viewer && viewer.ramInfo != undefined ? viewer.ramInfo.x / 4 : 0
     }
 
     function updateSceneView() {
-        if (isOutputSequence)
+        if (isOutputSequence || m.updatingRange)
             return
-        if (_currentScene && m.frame >= frameRange.min && m.frame < frameRange.max + 1) {
+        if (_currentScene && m.frame >= 0 && m.frame < sortedViewIds.length) {
             if (!m.playing && !frameSlider.pressed) {
                 _currentScene.selectedViewId = sortedViewIds[m.frame]
             } else {
@@ -53,15 +51,60 @@ FloatingPane {
         }
     }
 
-    onIsOutputSequenceChanged: {
-        if (!isOutputSequence) {
-            frameId = frameRange.min
-        }
+    // sortedViewIds and isOutputSequence are updated separately, in any order:
+    // re-sync on both, the selection is only followed once both are consistent.
+    onIsOutputSequenceChanged: updateRange()
+    onSortedViewIdsChanged: updateRange()
+    Component.onCompleted: updateRange()
+
+    // Set the current frame without changing the scene selection
+    // (for frame changes caused by a change of the frame range, not by the user)
+    function setFrameSilently(frame) {
+        m.updatingRange = true
+        m.frame = frame
+        m.updatingRange = false
     }
 
-    onSortedViewIdsChanged: {
-        frameSlider.from = frameRange.min
-        frameSlider.to = frameRange.max
+    // Index of the scene's selected view in sortedViewIds (-1 if not found)
+    function selectedViewIndex() {
+        if (isOutputSequence || !_currentScene)
+            return -1
+        const selectedId = String(_currentScene.selectedViewId)
+        return sortedViewIds.findIndex(viewId => String(viewId) === selectedId)
+    }
+
+    // Move the current frame to the view selected in the scene (e.g. from the ImageGallery)
+    function syncFrameWithSelectedView() {
+        const idx = selectedViewIndex()
+        if (idx >= 0 && m.frame !== idx)
+            m.frame = idx
+    }
+
+    function updateRange() {
+        // frameRange is mutated in place by the owner of sortedViewIds, which does not notify:
+        // propagate it explicitly to the widgets.
+        if (sortedViewIds.length === 0) {
+            // No image: reset to an empty range and stop the playback (the play button is disabled)
+            frameRange.min = 0
+            frameRange.max = 0
+            m.playing = false
+        }
+        const min = frameRange.min
+        const max = Math.max(frameRange.min, frameRange.max)
+
+        // Changing the range clamps the slider/selector values: do not let that change the scene selection
+        m.updatingRange = true
+        frameSlider.from = min
+        frameSlider.to = max
+        frameInput.range = { "min": min, "max": max }
+        const idx = selectedViewIndex()
+        if (idx >= 0)
+            m.frame = idx
+        else if (m.frame < min || m.frame > max)
+            m.frame = min
+        m.updatingRange = false
+        // Clamping may have desynchronized the slider from the current frame: restore the binding
+        frameSlider.value = Qt.binding(function() { return m.frame })
     }
 
     // Sequence player model:
@@ -76,6 +119,7 @@ FloatingPane {
         property bool playing: false
         property bool repeat: false
         property real fps: 24
+        property bool updatingRange: false  // true while the frame range is being updated
 
         onFrameChanged: {
             updateSceneView()
@@ -86,7 +130,8 @@ FloatingPane {
             if (playing && (frame + 1 >= frameRange.max + 1)) {
                 frame = frameRange.min
             }
-            viewer.playback(playing)
+            if (viewer)
+                viewer.playback(playing)
         }
     }
 
@@ -95,15 +140,7 @@ FloatingPane {
     Connections {
         target: _currentScene
         function onSelectedViewIdChanged() {
-            for (let idx = 0; idx < sortedViewIds.length; idx++) {
-                if (_currentScene.selectedViewId === sortedViewIds[idx] && (m.frame != idx)) {
-                    m.frame = idx
-                }
-            }
-        }
-
-        function onImageListChanged() {
-            nbViewpoints = Qt.binding(function() { return _currentScene ? _currentScene.viewpoints.count : 0 })
+            syncFrameWithSelectedView()
         }
     }
 
@@ -118,6 +155,11 @@ FloatingPane {
         interval: 1000 / m.fps
 
         onTriggered: {
+            if (!viewer) {
+                // No HDR viewer (e.g. 8-bit viewer): it cannot report the image status, stop the playback
+                m.playing = false
+                return
+            }
             if (viewer.imageStatus !== Image.Ready) {
                 // Wait for current image to be displayed before switching to next image
                 return
@@ -151,14 +193,16 @@ FloatingPane {
 
         IntSelector {
             id: frameInput
+            enabled: sortedViewIds.length > 0
 
             tooltipText: "Frame"
             displayButtons: true
 
-            range: frameRange
+            // range is set by updateRange(): frameRange is mutated in place and does not notify
 
             onValueChanged: {
-                m.frame = value
+                if (!m.updatingRange)
+                    m.frame = value
             }
 
             Binding {
@@ -171,7 +215,7 @@ FloatingPane {
 
         MaterialToolButton {
             id: playButton
-            enabled: nbViewpoints > 0
+            enabled: sortedViewIds.length > 0
 
             checkable: true
             checked: false
@@ -194,7 +238,7 @@ FloatingPane {
     
         TimelineSlider {
             id: frameSlider
-            enabled: nbViewpoints > 0
+            enabled: sortedViewIds.length > 0
 
             Layout.fillWidth: true
 
@@ -207,10 +251,11 @@ FloatingPane {
             from: frameRange.min
             to: frameRange.max
 
-            cachedFrames: viewer && nbViewpoints > 0 ? viewer.cachedFrames : []
+            cachedFrames: viewer && sortedViewIds.length > 0 ? viewer.cachedFrames : []
 
             onValueChanged: {
-                m.frame = value
+                if (!m.updatingRange)
+                    m.frame = value
             }
 
             onPressedChanged: {

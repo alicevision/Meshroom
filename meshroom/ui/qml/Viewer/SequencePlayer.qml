@@ -39,7 +39,7 @@ FloatingPane {
     }
 
     function updateSceneView() {
-        if (isOutputSequence)
+        if (isOutputSequence || m.updatingRange)
             return
         if (_currentScene && m.frame >= frameRange.min && m.frame < frameRange.max + 1) {
             if (!m.playing && !frameSlider.pressed) {
@@ -53,15 +53,54 @@ FloatingPane {
         }
     }
 
-    onIsOutputSequenceChanged: {
-        if (!isOutputSequence) {
-            frameId = frameRange.min
-        }
+    // sortedViewIds and isOutputSequence are updated separately, in any order:
+    // re-sync on both, the selection is only followed once both are consistent.
+    onIsOutputSequenceChanged: updateRange()
+    onSortedViewIdsChanged: updateRange()
+    Component.onCompleted: updateRange()
+
+    // Set the current frame without changing the scene selection
+    // (for frame changes caused by a change of the frame range, not by the user)
+    function setFrameSilently(frame) {
+        m.updatingRange = true
+        m.frame = frame
+        m.updatingRange = false
     }
 
-    onSortedViewIdsChanged: {
-        frameSlider.from = frameRange.min
-        frameSlider.to = frameRange.max
+    // Index of the scene's selected view in sortedViewIds (-1 if not found)
+    function selectedViewIndex() {
+        if (isOutputSequence || !_currentScene)
+            return -1
+        const selectedId = String(_currentScene.selectedViewId)
+        return sortedViewIds.findIndex(viewId => String(viewId) === selectedId)
+    }
+
+    // Move the current frame to the view selected in the scene (e.g. from the ImageGallery)
+    function syncFrameWithSelectedView() {
+        const idx = selectedViewIndex()
+        if (idx >= 0 && m.frame !== idx)
+            m.frame = idx
+    }
+
+    function updateRange() {
+        // frameRange is mutated in place by the owner of sortedViewIds, which does not notify:
+        // propagate it explicitly to the widgets.
+        const min = frameRange.min
+        const max = frameRange.max
+
+        // Changing the range clamps the slider/selector values: do not let that change the scene selection
+        m.updatingRange = true
+        frameSlider.from = min
+        frameSlider.to = max
+        frameInput.range = { "min": min, "max": max }
+        const idx = selectedViewIndex()
+        if (idx >= 0)
+            m.frame = idx
+        else if (m.frame < min || m.frame > max)
+            m.frame = min
+        m.updatingRange = false
+        // Clamping may have desynchronized the slider from the current frame: restore the binding
+        frameSlider.value = Qt.binding(function() { return m.frame })
     }
 
     // Sequence player model:
@@ -76,6 +115,7 @@ FloatingPane {
         property bool playing: false
         property bool repeat: false
         property real fps: 24
+        property bool updatingRange: false  // true while the frame range is being updated
 
         onFrameChanged: {
             updateSceneView()
@@ -95,11 +135,7 @@ FloatingPane {
     Connections {
         target: _currentScene
         function onSelectedViewIdChanged() {
-            for (let idx = 0; idx < sortedViewIds.length; idx++) {
-                if (_currentScene.selectedViewId === sortedViewIds[idx] && (m.frame != idx)) {
-                    m.frame = idx
-                }
-            }
+            syncFrameWithSelectedView()
         }
 
         function onImageListChanged() {
@@ -155,10 +191,11 @@ FloatingPane {
             tooltipText: "Frame"
             displayButtons: true
 
-            range: frameRange
+            // range is set by updateRange(): frameRange is mutated in place and does not notify
 
             onValueChanged: {
-                m.frame = value
+                if (!m.updatingRange)
+                    m.frame = value
             }
 
             Binding {
@@ -210,7 +247,8 @@ FloatingPane {
             cachedFrames: viewer && nbViewpoints > 0 ? viewer.cachedFrames : []
 
             onValueChanged: {
-                m.frame = value
+                if (!m.updatingRange)
+                    m.frame = value
             }
 
             onPressedChanged: {

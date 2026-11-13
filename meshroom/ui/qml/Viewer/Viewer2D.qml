@@ -354,7 +354,7 @@ FocusScope {
                     frameRange.min = newFrameRange[0]
                     frameRange.max = newFrameRange[1]
                     // Change the current frame, only if the frame range is different
-                    currentFrame = frameRange.min
+                    sequencePlayer.setFrameSilently(frameRange.min)
                 }
 
                 enableSequencePlayerAction.checked = true
@@ -373,7 +373,7 @@ FocusScope {
                         frameRange.min = newFrameRange[0]
                         frameRange.max = newFrameRange[1]
                         // Change the current frame, only if the frame range is different
-                        currentFrame = frameRange.min
+                        sequencePlayer.setFrameSilently(frameRange.min)
                     }
                 }
 
@@ -459,7 +459,7 @@ FocusScope {
             root.source = ""
             root.sequence = getSequence()
             if (currentFrame > frameRange.max)
-                currentFrame = frameRange.min
+                sequencePlayer.setFrameSilently(frameRange.min)
         }
     }
 

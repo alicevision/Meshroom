@@ -18,6 +18,17 @@ Item {
     property variant nodeTypesModel: null  /// The list of node types that can be instantiated
     property real maxZoom: 2.0
     property real minZoom: 0.1
+
+    // Autoscroll properties
+    readonly property int autoscrollMargin: 100         // Border thickness (width in pixels)
+    readonly property int autoscrollSpeed: 15           // Speed factor
+    readonly property real maxScrollSpeed: 3.0          // Clamp scroll speed
+    property Item edgeDragTarget: null                  // Connector of the edge being dragged, if any
+    property point autoscrollDirection: Qt.point(0, 0)  // Sign of the current scroll on each axis
+
+    readonly property color borderHighlightColor: Colors.blue
+    readonly property real borderHighlightWidth: 3
+
     property var edgeAboutToBeRemoved: undefined
 
     property var _attributeToDelegate: ({})
@@ -154,6 +165,76 @@ Item {
                 newNodeMenu.popup()
             }
         }
+    }
+
+    /// Signed auto-scroll step along one axis for a mouse at 'pos' in an editor of length 'size'
+    function autoscrollStep(pos, size) {
+        var factor = 0
+        if (pos < autoscrollMargin)
+            factor = (autoscrollMargin - pos) / autoscrollMargin
+        else if (pos > size - autoscrollMargin)
+            factor = -(pos - (size - autoscrollMargin)) / autoscrollMargin
+        return autoscrollSpeed * Math.max(-maxScrollSpeed, Math.min(maxScrollSpeed, factor))
+    }
+
+    // Listen to the UIGraph edge drag infos
+    Connections {
+        target: _currentScene
+        ignoreUnknownSignals: true
+
+        function onEdgeDragTargetChanged(dragTarget) {
+            root.edgeDragTarget = dragTarget
+            root.autoscrollDirection = Qt.point(0, 0)
+        }
+    }
+
+    // Auto-scroll the graph when an edge is dragged near the borders
+    Timer {
+        id: autoscrollTimer
+        interval: 20
+        running: root.edgeDragTarget !== null
+        repeat: true
+
+        onTriggered: {
+            var target = root.edgeDragTarget
+            // The drag target is centered on the mouse
+            var mousePos = target.mapToItem(root, target.width / 2, target.height / 2)
+            var deltaX = autoscrollStep(mousePos.x, root.width)
+            var deltaY = autoscrollStep(mousePos.y, root.height)
+            root.autoscrollDirection = Qt.point(Math.sign(deltaX), Math.sign(deltaY))
+            if (deltaX === 0 && deltaY === 0)
+                return
+
+            draggable.x += deltaX
+            draggable.y += deltaY
+            // The MouseArea only moves its drag target on mouse moves: keep it under the cursor while the view scrolls
+            target.x -= deltaX / draggable.scale
+            target.y -= deltaY / draggable.scale
+            workspaceMoved()
+        }
+    }
+
+    // Display scroll direction
+    Rectangle {
+        visible: root.edgeDragTarget !== null
+        z: 100
+        color: "transparent"
+        border.color: root.borderHighlightColor
+        border.width: root.borderHighlightWidth
+
+        // Borders are hidden outside of the clipped editor area unless the view scrolls in their direction
+        anchors {
+            fill: parent
+            leftMargin:   root.autoscrollDirection.x > 0 ? 0 : -root.borderHighlightWidth
+            rightMargin:  root.autoscrollDirection.x < 0 ? 0 : -root.borderHighlightWidth
+            topMargin:    root.autoscrollDirection.y > 0 ? 0 : -root.borderHighlightWidth
+            bottomMargin: root.autoscrollDirection.y < 0 ? 0 : -root.borderHighlightWidth
+        }
+
+        Behavior on anchors.leftMargin   { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+        Behavior on anchors.rightMargin  { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+        Behavior on anchors.topMargin    { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+        Behavior on anchors.bottomMargin { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
     }
 
     MouseArea {

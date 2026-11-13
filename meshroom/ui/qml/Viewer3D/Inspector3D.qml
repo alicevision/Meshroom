@@ -125,7 +125,7 @@ Pane {
         Label {
             visible: root.collection && !hasAnyContent
             text: "No 3D content"
-            color: palette.mid
+            color: Qt.darker(palette.text, 1.4)
             horizontalAlignment: Text.AlignHCenter
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -135,7 +135,7 @@ Pane {
         Label {
             visible: !root.collection
             text: "Waiting for Viewer3D collection..."
-            color: palette.mid
+            color: Qt.darker(palette.text, 1.4)
             horizontalAlignment: Text.AlignHCenter
             Layout.fillWidth: true
             Layout.fillHeight: true

@@ -31,19 +31,19 @@ LayerListGroup {
                 columnSpacing: 6
                 rowSpacing: 0
 
-                Label { text: "Views"; font.pointSize: 9; color: palette.mid }
+                Label { text: "Views"; font.pointSize: 9; color: Qt.darker(palette.text, 1.4) }
                 Label { text: advanced.sfmData ? advanced.sfmData.viewCount : 0; font.pointSize: 9 }
 
-                Label { text: "Reconstructed"; font.pointSize: 9; color: palette.mid }
+                Label { text: "Reconstructed"; font.pointSize: 9; color: Qt.darker(palette.text, 1.4) }
                 Label { text: advanced.sfmData ? advanced.sfmData.cameraCount : 0; font.pointSize: 9 }
 
-                Label { text: "Intrinsics"; font.pointSize: 9; color: palette.mid }
+                Label { text: "Intrinsics"; font.pointSize: 9; color: Qt.darker(palette.text, 1.4) }
                 Label { text: advanced.sfmData ? advanced.sfmData.intrinsicCount : 0; font.pointSize: 9 }
 
-                Label { text: "Landmarks"; font.pointSize: 9; color: palette.mid }
+                Label { text: "Landmarks"; font.pointSize: 9; color: Qt.darker(palette.text, 1.4) }
                 Label { text: advanced.sfmData ? advanced.sfmData.pointCount : 0; font.pointSize: 9 }
 
-                Label { text: "Path"; font.pointSize: 9; color: palette.mid }
+                Label { text: "Path"; font.pointSize: 9; color: Qt.darker(palette.text, 1.4) }
                 Label {
                     id: pathLabel
                     Layout.fillWidth: true

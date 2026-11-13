@@ -49,7 +49,7 @@ ExpandableGroup {
             anchors.centerIn: parent
             visible: root.count === 0
             text: root.emptyText
-            color: palette.mid
+            color: Qt.darker(palette.text, 1.4)
         }
     }
 }

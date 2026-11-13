@@ -29,12 +29,22 @@ class Shape(GroupAttribute):
         from meshroom.core.attribute import ShapeAttribute
         return ShapeAttribute
 
+    def _geometryValueDesc(self):
+        """
+        Return the description of the first geometry value, which holds the keyable state and the key type of the shape
+        (the first items are the user name and color, which are never keyable).
+        """
+        geometryValue = next(item for item in self.items if item.name == "geometry")
+        while isinstance(geometryValue, GroupAttribute):
+            geometryValue = geometryValue.items[0]
+        return geometryValue
+
     def shortDesc(self) -> dict:
         serializedData = {
             "type": self.__class__.__name__,
             "name": self.name,
         }
-        if self.items[0].keyable:
+        if self._geometryValueDesc().keyable:
             serializedData["keyable"] = True
         return serializedData
 
@@ -43,9 +53,7 @@ class Shape(GroupAttribute):
         serializedData = super().asDict()
         # The items are built by the shape constructor from its keyable state, which is held by the geometry values
         del serializedData["items"]
-        geometryValue = next(item for item in self.items if item.name == "geometry")
-        while isinstance(geometryValue, GroupAttribute):
-            geometryValue = geometryValue.items[0]
+        geometryValue = self._geometryValueDesc()
         if geometryValue.keyable:
             serializedData["keyable"] = True
             serializedData["keyType"] = geometryValue.keyType

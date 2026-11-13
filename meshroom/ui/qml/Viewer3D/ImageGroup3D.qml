@@ -41,15 +41,6 @@ ExpandableGroup {
             activeIcon: MaterialIcons.keyboard_arrow_right
         }
 
-        LoadingRemoveButton {
-            loading: root.imageLayer ? root.imageLayer.loading === true : false
-            toolTip: "Close"
-            onRemoveRequested: {
-                root.imageLayer.visible = false
-                root.imageLayer.source = ""
-            }
-        }
-
         Label {
             Layout.fillWidth: true
             text: root.source ? Filepath.basename(root.source) : "No image"
@@ -66,6 +57,15 @@ ExpandableGroup {
                 anchors.fill: parent
                 hoverEnabled: true
                 acceptedButtons: Qt.NoButton
+            }
+        }
+
+        LoadingRemoveButton {
+            loading: root.imageLayer ? root.imageLayer.loading === true : false
+            toolTip: "Close"
+            onRemoveRequested: {
+                root.imageLayer.visible = false
+                root.imageLayer.source = ""
             }
         }
     }

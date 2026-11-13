@@ -7,8 +7,8 @@ import "Inspector3DUtils.js" as Inspector3DUtils
 import MaterialIcons 2.2
 
 /**
- * ListView delegate for one entry of a LayerList: selection bar, visibility toggle, advanced toggle,
- * loading/remove button, label, fit / picking buttons and an optional expandable advanced section.
+ * ListView delegate for one entry of a LayerList: selection bar, visibility toggle, advanced toggle, label,
+ * fit / picking buttons, loading/remove button and an optional expandable advanced section.
  *
  * @p advancedComponent root item must declare `property var entry`; it is bound to this row's entry.
  */
@@ -93,11 +93,6 @@ MouseArea {
                 }
             }
 
-            LoadingRemoveButton {
-                loading: root.loading
-                onRemoveRequested: root.layerList.remove(root.index)
-            }
-
             Label {
                 Layout.fillWidth: true
                 text: root.label.length > 0 ? root.label : Inspector3DUtils.randomLabel(root.index, root.layerList.typeName)
@@ -131,6 +126,11 @@ MouseArea {
                 activeToolTip: "Pickable"
                 inactiveToolTip: "Not Pickable"
                 onClicked: root.entryLayer.picking = !root.entryLayer.picking
+            }
+
+            LoadingRemoveButton {
+                loading: root.loading
+                onRemoveRequested: root.layerList.remove(root.index)
             }
         }
 

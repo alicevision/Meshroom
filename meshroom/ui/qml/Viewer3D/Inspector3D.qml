@@ -12,6 +12,8 @@ FloatingPane {
     implicitWidth: 200
     opaque: true
     property var collection: null
+    /** Viewer interactions shown by the help button (hidden if empty), see Viewer3D.interactions. */
+    property var interactions: []
     readonly property bool hasImageContent: root.collection && root.collection.sceneView && root.collection.sceneView.imageLayerRef
                                           && root.collection.sceneView.imageLayerRef.source !== undefined
                                           && root.collection.sceneView.imageLayerRef.source.length > 0
@@ -68,6 +70,25 @@ FloatingPane {
                 activeToolTip: "Hide Bounding Box"
                 inactiveToolTip: "Display Bounding Box"
                 onClicked: root.collection.showBoundingBox = !root.collection.showBoundingBox
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            MaterialToolButton {
+                id: helpButton
+                visible: root.interactions.length > 0
+                text: MaterialIcons.help_outline
+                font.pointSize: 10
+                flat: true
+                focusPolicy: Qt.NoFocus
+
+                InteractionsToolTip {
+                    visible: helpButton.hovered
+                    delay: 300
+                    interactions: root.interactions
+                }
             }
         }
 

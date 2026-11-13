@@ -348,7 +348,7 @@ FocusScope {
                 let [_, filesSeqs] = Filepath.resolveSequence(pathTemplate, includesSeqMissingFiles)
                 // Concat in one array all sequences in resolved
                 outputFiles = [].concat.apply([], filesSeqs)
-                let newFrameRange = [0, outputFiles.length - 1]
+                let newFrameRange = [0, Math.max(0, outputFiles.length - 1)]
 
                 if(frameRange.min != newFrameRange[0] || frameRange.max != newFrameRange[1]) {
                     frameRange.min = newFrameRange[0]
@@ -368,13 +368,13 @@ FocusScope {
                     // If there is one or several sequences, take the first one
                     outputFiles = filesSeqs[0]
                     newFrameRange = frameRanges[0]
+                }
 
-                    if(frameRange.min != newFrameRange[0] || frameRange.max != newFrameRange[1]) {
-                        frameRange.min = newFrameRange[0]
-                        frameRange.max = newFrameRange[1]
-                        // Change the current frame, only if the frame range is different
-                        sequencePlayer.setFrameSilently(frameRange.min)
-                    }
+                if(frameRange.min != newFrameRange[0] || frameRange.max != newFrameRange[1]) {
+                    frameRange.min = newFrameRange[0]
+                    frameRange.max = newFrameRange[1]
+                    // Change the current frame, only if the frame range is different
+                    sequencePlayer.setFrameSilently(frameRange.min)
                 }
 
 
@@ -400,7 +400,7 @@ FocusScope {
             }
 
             frameRange.min = 0
-            frameRange.max = outputFiles.length - 1
+            frameRange.max = Math.max(0, outputFiles.length - 1)
         }
         return outputFiles
     }

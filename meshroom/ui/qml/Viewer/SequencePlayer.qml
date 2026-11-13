@@ -31,8 +31,6 @@ FloatingPane {
     property alias frameId: m.frame
     property var frameRange: { "min" : 0, "max" : 0 }
 
-    property int nbViewpoints: _currentScene ? _currentScene.viewpoints.count : 0
-
     Settings {
         id: settings_SequencePlayer
         property int maxCacheMemory: viewer && viewer.ramInfo != undefined ? viewer.ramInfo.x / 4 : 0
@@ -41,7 +39,7 @@ FloatingPane {
     function updateSceneView() {
         if (isOutputSequence || m.updatingRange)
             return
-        if (_currentScene && m.frame >= frameRange.min && m.frame < frameRange.max + 1) {
+        if (_currentScene && m.frame >= 0 && m.frame < sortedViewIds.length) {
             if (!m.playing && !frameSlider.pressed) {
                 _currentScene.selectedViewId = sortedViewIds[m.frame]
             } else {
@@ -85,8 +83,14 @@ FloatingPane {
     function updateRange() {
         // frameRange is mutated in place by the owner of sortedViewIds, which does not notify:
         // propagate it explicitly to the widgets.
+        if (sortedViewIds.length === 0) {
+            // No image: reset to an empty range and stop the playback (the play button is disabled)
+            frameRange.min = 0
+            frameRange.max = 0
+            m.playing = false
+        }
         const min = frameRange.min
-        const max = frameRange.max
+        const max = Math.max(frameRange.min, frameRange.max)
 
         // Changing the range clamps the slider/selector values: do not let that change the scene selection
         m.updatingRange = true
@@ -137,10 +141,6 @@ FloatingPane {
         function onSelectedViewIdChanged() {
             syncFrameWithSelectedView()
         }
-
-        function onImageListChanged() {
-            nbViewpoints = Qt.binding(function() { return _currentScene ? _currentScene.viewpoints.count : 0 })
-        }
     }
 
     // In play mode
@@ -187,6 +187,7 @@ FloatingPane {
 
         IntSelector {
             id: frameInput
+            enabled: sortedViewIds.length > 0
 
             tooltipText: "Frame"
             displayButtons: true
@@ -208,7 +209,7 @@ FloatingPane {
 
         MaterialToolButton {
             id: playButton
-            enabled: nbViewpoints > 0
+            enabled: sortedViewIds.length > 0
 
             checkable: true
             checked: false
@@ -231,7 +232,7 @@ FloatingPane {
     
         TimelineSlider {
             id: frameSlider
-            enabled: nbViewpoints > 0
+            enabled: sortedViewIds.length > 0
 
             Layout.fillWidth: true
 
@@ -244,7 +245,7 @@ FloatingPane {
             from: frameRange.min
             to: frameRange.max
 
-            cachedFrames: viewer && nbViewpoints > 0 ? viewer.cachedFrames : []
+            cachedFrames: viewer && sortedViewIds.length > 0 ? viewer.cachedFrames : []
 
             onValueChanged: {
                 if (!m.updatingRange)

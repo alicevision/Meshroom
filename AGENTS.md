@@ -9,6 +9,7 @@ Meshroom is a general-purpose Python/QML engine for building, editing, and execu
 Read the relevant source-of-truth file before working in the area it covers:
 * **Project, Concepts & Vocabulary:** [README.md](README.md)
 * **Installation & System Setup:** [INSTALL.md](INSTALL.md) — read before touching build, dependency, or environment setup.
+* **Nightly Build:** [NIGHTLY.md](NIGHTLY.md) — read before touching the nightly workflows (`.github/workflows/nightly.yml`, `build-binary.yml`, `build-pyside6-linux.yml`, `.github/scripts/nightly-*.sh`).
 * **Plugin Architecture:** [INSTALL_PLUGINS.md](INSTALL_PLUGINS.md) — read before working on plugin loading/packaging.
 * **Node Development:** [NODE_DEVELOPMENT.md](NODE_DEVELOPMENT.md) — read before working on node types or their descriptors (`meshroom/nodes/`, `meshroom/core/desc/`).
 
@@ -53,7 +54,8 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 ├── CMakeLists.txt              # Build system file for compiling external modules/packaging
 ├── CONTRIBUTING.md             # Guidelines for developer onboarding and codebase contributions
 ├── INSTALL.md                  # Detailed steps for building from source and configuring dependencies
-└── INSTALL_PLUGINS.md          # Framework documentation explaining how to load custom Python plugins
+├── INSTALL_PLUGINS.md          # Framework documentation explaining how to load custom Python plugins
+└── NIGHTLY.md                  # Nightly build of develop: archives, how to use them, how they are built
 ```
 
 ## How It Fits Together (Mental Model)

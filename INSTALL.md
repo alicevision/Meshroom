@@ -33,6 +33,8 @@ To quickly run Meshroom without setting up a development environment, follow the
     * On Linux: in a terminal, run `tar -xzvf Meshroom.x.y.z.tar.gz`.
 3. **Run Meshroom**: in the extracted folder, double-click on the "Meshroom" executable to launch it.
 
+To try the latest development version instead, use the nightly build of the `develop` branch: see [NIGHTLY.md](NIGHTLY.md).
+
 ## Installation from source code
 
 Get the source code and install runtime requirements:

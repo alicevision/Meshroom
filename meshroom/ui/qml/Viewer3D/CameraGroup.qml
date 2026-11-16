@@ -68,6 +68,18 @@ ExpandableGroup {
                     target: root.cameraInfo
                     propertyName: "farPlane"
                 }
+
+                PropertySlider {
+                    Layout.fillWidth: true
+                    label: "Zoom"
+                    toolTipName: "Zoom Speed"
+                    logarithmic: true
+                    from: 0.01
+                    to: 100.0
+                    defaultValue: 1.0
+                    target: root.collection
+                    propertyName: "zoomSpeed"
+                }
             }
         }
     }

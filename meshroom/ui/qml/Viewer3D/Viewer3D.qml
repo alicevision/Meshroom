@@ -271,6 +271,7 @@ Item {
             anchors.fill: parent
             enabled: collection.selectedSfmDataObject === null
             sceneView: sceneView
+            zoomSpeed: collection.zoomSpeed
             focusTarget: root
         }
 

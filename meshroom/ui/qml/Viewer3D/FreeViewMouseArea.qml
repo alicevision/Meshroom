@@ -7,7 +7,7 @@ import meshViewer
  * Alt + left/middle/right drag to rotate/pan/zoom, Alt + wheel to zoom,
  * Ctrl + click to pick (Ctrl + Shift + click to pick with user code 1).
  * When the camera is orthographic, zooming changes its orthographicWidth (Maya-like)
- * instead of the orbit distance.
+ * instead of the orbit distance. @p zoomSpeed scales every zoom interaction.
  */
 DragMouseArea {
     id: root
@@ -15,6 +15,8 @@ DragMouseArea {
     property var sceneView: null
     readonly property var motionInfo: sceneView ? sceneView.motionInfo : null
     readonly property var cameraInfo: sceneView ? sceneView.cameraInfo : null
+    /** Multiplier applied to zoom interactions (wheel and right drag). */
+    property real zoomSpeed: 1.0
     /** True when the current camera is a BaseCameraInfo in orthographic mode. */
     readonly property bool isOrtho: cameraInfo instanceof BaseCameraInfo && cameraInfo.orthographic
     /** Orthographic width captured when the drag started. */
@@ -66,11 +68,11 @@ DragMouseArea {
             if (isOrtho)
             {
                 // Multiplicative zoom keeps the width positive
-                cameraInfo.orthographicWidth = initialOrthoWidth * Math.exp(deltaY * 0.005)
+                cameraInfo.orthographicWidth = initialOrthoWidth * Math.exp(deltaY * 0.005 * zoomSpeed)
             }
             else
             {
-                motionInfo.distance = deltaY * 0.05
+                motionInfo.distance = deltaY * 0.05 * zoomSpeed
             }
         }
     }
@@ -81,11 +83,11 @@ DragMouseArea {
             // Qt reports the vertical wheel on the x axis while Alt is pressed
             if (isOrtho)
             {
-                cameraInfo.orthographicWidth *= Math.exp(-wheel.angleDelta.x * 0.001)
+                cameraInfo.orthographicWidth *= Math.exp(-wheel.angleDelta.x * 0.001 * zoomSpeed)
             }
             else
             {
-                motionInfo.distance = -wheel.angleDelta.x * 0.05
+                motionInfo.distance = -wheel.angleDelta.x * 0.05 * zoomSpeed
                 motionInfo.applyTransform()
             }
             wheel.accepted = true

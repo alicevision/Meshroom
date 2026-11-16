@@ -709,9 +709,13 @@ class Attribute(BaseObject):
         Returns:
             True if the connection is valid, False otherwise.
         """
-        if self.baseType == connectingAttribute.baseType:
+        if self._acceptsNativeConnection(connectingAttribute):
             return True
         return AttributeConverterRegistry.hasConverter(connectingAttribute.baseType, self.baseType)
+
+    def _acceptsNativeConnection(self, connectingAttribute: Attribute) -> bool:
+        """ Return True if "connectingAttribute" can be connected without any AttributeConverter. """
+        return self.baseType == connectingAttribute.baseType
 
     def connectTo(self, dstAttribute: Attribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
         """
@@ -927,10 +931,12 @@ class ChoiceParam(Attribute):
         return len(self.getValues())
 
     def getValues(self):
-        if (linkParam := self._getInputLink()) is not None:
-            edges = [e for e in self.node.graph.edges.values() if e.dst == self]
-            if edges:
-                return edges[0].resolvedValues()
+        linkParam = self._getInputLink()
+        if isinstance(linkParam, ChoiceParam):
+            return linkParam.getValues()
+        edge = self.node.graph.edge(self) if linkParam is not None else None
+        if edge is not None and edge.isConverted():
+            return edge.resolvedValues()
         return self._values if self._values is not None else self._desc._values
 
     def setValues(self, values):
@@ -951,8 +957,8 @@ class ChoiceParam(Attribute):
         return [self._conformValue(v) for v in value]
 
     # Override
-    def _validateIncomingConnection(self, connectingAttribute: Attribute) -> bool:
-        if super()._validateIncomingConnection(connectingAttribute):
+    def _acceptsNativeConnection(self, connectingAttribute: Attribute) -> bool:
+        if super()._acceptsNativeConnection(connectingAttribute):
             return True
 
         expectedBaseType = self._LINKABLE_PARAM_TYPES.get(self._desc._valueType)

@@ -141,7 +141,7 @@ class Edge(BaseObject):
                     f"{srcDesc.__class__.__name__} -> {dstDesc.__class__.__name__}"
                 )
             return
-        if self.src.baseType == self.dst.baseType:
+        if self.dst._acceptsNativeConnection(self.src):
             self._converter = None
             return
         # Find a default converter

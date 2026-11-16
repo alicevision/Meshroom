@@ -68,6 +68,7 @@ class MrNodeType(enum.Enum):
     NONE = enum.auto()
     BASENODE = enum.auto()
     NODE = enum.auto()
+    INLINE = enum.auto()
     COMMANDLINE = enum.auto()
     INIT = enum.auto()
     BACKDROP = enum.auto()
@@ -193,6 +194,7 @@ class InternalAttributesFactory:
             MrNodeType.NONE: cls.BASIC,
             MrNodeType.BASENODE: cls.INVALIDATION + cls.BASIC,
             MrNodeType.NODE: cls.INVALIDATION + cls.BASIC,
+            MrNodeType.INLINE: cls.INVALIDATION + cls.BASIC,
             MrNodeType.COMMANDLINE: cls.INVALIDATION + cls.BASIC,
             MrNodeType.INIT: cls.BASIC,
             MrNodeType.BACKDROP: cls.BASIC + cls.RESIZABLE,
@@ -598,6 +600,15 @@ class Node(BaseNode):
         cmdSuffix = chunk.node.nodeDesc.provider.commandSuffix
         self.executeChunkCommandLine(chunk, cmdPrefix + meshroomComputeCmd + cmdSuffix,
                                      env=runtimeEnv)
+
+
+class InlineNode(BaseNode):
+    """
+    Node with a lightweight "process" method that is not scheduled on its own: it has no chunks,
+    status, logs nor cache folder, and is evaluated in the process of its downstream nodes, right
+    before they compute. Its dynamic outputs are therefore not persisted.
+    """
+    _mrNodeType: MrNodeType = MrNodeType.INLINE
 
 
 class CommandLineNode(BaseNode):

@@ -1066,6 +1066,10 @@ class BaseNode(BaseObject):
         for inputNode in self.getInputNodes(recursive=False, dependenciesOnly=True):
             if inputNode.isInlineNode:
                 inputNode.processInlineInputs()
+                # Nodes scheduled on the task manager evaluate their size in createChunks, 
+                # right before they compute. Inline nodes are not scheduled, 
+                # so their size is evaluated here instead.
+                inputNode._updateNodeSize()
                 inputNode.nodeDesc.process(inputNode)
 
     def getLogHandlers(self):

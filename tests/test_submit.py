@@ -40,6 +40,8 @@ def getJobEnv():
     pluginFolder = os.path.join(os.path.dirname(__file__), "plugins", "pluginSubmitter")
     return {
         "MESHROOM_PLUGINS_PATH": pluginFolder,
+        # Required for meshroom_createChunks to find the LocalFarm submitter and create the chunk tasks
+        "MESHROOM_SUBMITTERS_PATH": os.path.join(meshroomFolder, "submitters"),
         # Disable all rez variables that could lead to using rez in the test env
         "REZ_RESOLVE": "",
         "REZ_USED_RESOLVE": "",

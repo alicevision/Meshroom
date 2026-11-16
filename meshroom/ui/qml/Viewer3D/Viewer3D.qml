@@ -101,12 +101,47 @@ Item {
         }
     }
 
+    /**
+     * Move the free camera (which must be the current sceneView motion) to the orbit pose closest to the
+     * view matrix @p view (world to camera, looking along -Z): same position and viewing direction,
+     * without roll since the orbit keeps the world Y axis up.
+     * The orbit center is placed on the viewing ray, at the depth of the scene center when it is in front of the camera.
+     */
+    function matchOrbitToView(view)
+    {
+        const cameraToWorld = view.inverted()
+        const position = cameraToWorld.times(Qt.vector3d(0, 0, 0))
+        const direction = cameraToWorld.times(Qt.vector3d(0, 0, -1)).minus(position).normalized()
+
+        const bounds = sceneView.boundingBox
+        const sceneDepth = bounds.valid ? bounds.center.minus(position).dotProduct(direction) : 0
+        const distance = sceneDepth > 1e-3 ? sceneDepth : (bounds.valid && bounds.maxExtent > 0 ? bounds.maxExtent : 1.0)
+
+        // setCenter() keeps the camera position: look at the target position, then move the camera onto it
+        // (skipped when already there, as looking at the camera position itself is undefined)
+        if (sceneView.cameraPosition().minus(position).length() > 1e-6)
+        {
+            fallbackMotionInfo.setCenter(position)
+            fallbackMotionInfo.setDistance(0)
+        }
+        // Then look along the viewing direction, with the orbit center at the chosen distance
+        fallbackMotionInfo.setCenter(position.plus(direction.times(distance)))
+    }
+
     function restoreFallbackSceneState()
     {
+        // Leaving an SfM camera: keep its viewpoint
+        const leftView = sceneView.motionInfo === sfmMotionInfo ? sfmMotionInfo.pose : null
+
         imageLayer.visible = false
         imageLayer.source = ""
         sceneView.motionInfo = fallbackMotionInfo
         sceneView.cameraInfo = fallbackCameraInfo
+
+        if (leftView)
+        {
+            matchOrbitToView(leftView)
+        }
     }
 
     /** Look through the camera @p viewId of @p sfmDataObject and display its image. */

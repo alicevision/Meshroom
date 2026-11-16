@@ -4,8 +4,8 @@ import meshViewer
 
 /**
  * Free camera interactions on @p sceneView:
- * Alt + left/middle/right drag to rotate/pan/zoom, Alt + wheel to zoom,
- * Ctrl + click to pick (Ctrl + Shift + click to pick with user code 1).
+ * left/middle/right drag to rotate/pan/zoom, wheel to zoom,
+ * Ctrl + click to pick (Ctrl + Shift + click to pick with user code 1): Ctrl drags do not move the camera.
  * When the camera is orthographic, zooming changes its orthographicWidth (Maya-like)
  * instead of the orbit distance. @p zoomSpeed scales every zoom interaction.
  */
@@ -38,14 +38,15 @@ DragMouseArea {
     }
 
     onReleased: (mouse) => {
-        if (mouse.modifiers & Qt.AltModifier)
+        // Commit the relative motion of the drag (no-op when nothing moved)
+        if (motionInfo)
         {
             motionInfo.applyTransform()
         }
     }
 
     onPositionChanged: (mouse) => {
-        if (!(mouse.modifiers & Qt.AltModifier))
+        if (!motionInfo || (mouse.modifiers & Qt.ControlModifier))
         {
             return
         }
@@ -78,16 +79,17 @@ DragMouseArea {
     }
 
     onWheel: function(wheel) {
-        if ((wheel.modifiers & Qt.AltModifier) && !dragging)
+        if (motionInfo && !dragging)
         {
             // Qt reports the vertical wheel on the x axis while Alt is pressed
+            const delta = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.angleDelta.x
             if (isOrtho)
             {
-                cameraInfo.orthographicWidth *= Math.exp(-wheel.angleDelta.x * 0.001 * zoomSpeed)
+                cameraInfo.orthographicWidth *= Math.exp(-delta * 0.001 * zoomSpeed)
             }
             else
             {
-                motionInfo.distance = -wheel.angleDelta.x * 0.05 * zoomSpeed
+                motionInfo.distance = -delta * 0.05 * zoomSpeed
                 motionInfo.applyTransform()
             }
             wheel.accepted = true

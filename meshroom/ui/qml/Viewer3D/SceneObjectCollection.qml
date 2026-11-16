@@ -25,7 +25,7 @@ QtObject {
     property var boundingBoxNode: null
     /** Whether the user wants the bounding box of boundingBoxNode displayed. */
     property bool showBoundingBox: true
-    /** Multiplier applied to the free camera zoom (wheel and Alt + right drag). */
+    /** Multiplier applied to the free camera zoom (wheel and right drag). */
     property real zoomSpeed: 1.0
 
     readonly property LayerList meshes: LayerList {

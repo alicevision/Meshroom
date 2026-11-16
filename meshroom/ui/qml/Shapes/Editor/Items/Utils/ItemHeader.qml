@@ -35,6 +35,18 @@ Pane {
     readonly property bool isAttributeSelected: isAttribute ? (ShapeViewerHelper.selectedShapeNames.indexOf(model.fullName) >= 0) : false
     readonly property bool isAttributeInitialized: isAttribute ? (isShape ? !model.geometry.isDefault : !model.isDefault) : false
     readonly property bool isAttributeEnabled: isAttribute ? (model.enabled && !model.isLink && !isLinkChild) : false
+    readonly property bool isNameEditable: isAttributeEnabled && model.root && (model.root.type === "ShapeList")
+
+    // Whether the name is being edited (started by a double click on the name)
+    property bool isEditingName: false
+
+    function displayName() {
+        if(isAttribute && isShape && model.userName)
+            return model.userName
+        if(isAttribute && model.root && (model.root.type === "ShapeList"))
+            return model.rootName
+        return model.label
+    }
 
     // Padding
     topPadding: 2
@@ -115,6 +127,15 @@ Pane {
             // Left mouse button
             if(button === Qt.LeftButton && isAttribute && isAttributeEnabled)
             {
+                // Double tap on the name: edit it (the first tap has already selected the item)
+                if(tapCount === 2 && isNameEditable && nameField.contains(nameField.mapFromItem(itemHeader, eventPoint.position)))
+                {
+                    isEditingName = true
+                    nameField.forceActiveFocus()
+                    nameField.selectAll()
+                    return
+                }
+
                 if(isShape)
                 {
                     // Single tap: select (placement starts if no observation for the current view)
@@ -274,23 +295,31 @@ Pane {
             }
 
             // Shape name
+            // Disabled until a double click on it, so a single click selects the item like the rest of the row
             TextField {
+                id: nameField
                 font.pointSize: 8
                 background: Rectangle { color: "transparent" }
                 palette.text: parent.palette.text
-                maximumLength: 40 
+                maximumLength: 40
                 selectByMouse: true
                 persistentSelection: false
-                text: {
-                    if(isAttribute && isShape && model.userName)
-                        return model.userName
-                    if(isAttribute && model.root && (model.root.type === "ShapeList"))
-                        return model.rootName
-                    return model.label
+                text: displayName()
+                enabled: isEditingName
+                onEditingFinished: {
+                    if(!isEditingName)
+                        return
+                    isEditingName = false
+                    if(text !== displayName())
+                        _currentScene.setAttribute(model.childAttribute("userName"), text)
+                    // Typing broke the binding: restore it so that undo/redo updates the name
+                    text = Qt.binding(displayName)
+                    focus = false
                 }
-                enabled: isAttributeEnabled && model.root && (model.root.type === "ShapeList")
-                onEditingFinished: { 
-                    _currentScene.setAttribute(model.childAttribute("userName"), text)
+                Keys.onEscapePressed: {
+                    // Restore the name: the commit is then skipped as unchanged
+                    text = Qt.binding(displayName)
+                    isEditingName = false
                     focus = false
                 }
             }

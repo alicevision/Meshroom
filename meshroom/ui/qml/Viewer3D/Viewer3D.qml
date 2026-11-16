@@ -182,15 +182,37 @@ Item {
         }
     }
 
+    /**
+     * Return the name of the survey point receiving a 3d pick: the selected shape, or the last element
+     * of the selected ShapeList while adding elements to it in the 2d Viewer (the element just added).
+     * Return an empty string if there is none.
+     */
+    function pickingTargetShapeName()
+    {
+        if (!selectedShapeName || !ShapeViewerHelper.isListPlacement || !scene)
+        {
+            return selectedShapeName
+        }
+
+        const shapeList = scene.graph.attribute(selectedShapeName) || scene.graph.internalAttribute(selectedShapeName)
+        if (!shapeList || shapeList.value.count === 0)
+        {
+            return ""
+        }
+
+        return shapeList.value.at(shapeList.value.count - 1).fullName
+    }
+
     /** Store the point picked on mesh @p layer as the selected survey point's observation. */
     function handlePickingShape(layer)
     {
-        if (!selectedShapeName)
+        const shapeName = pickingTargetShapeName()
+        if (!shapeName)
         {
             return
         }
 
-        SurveyPointViewerHelper.setPickedPosition(selectedShapeName, layer.selection.x, -layer.selection.y, -layer.selection.z)
+        SurveyPointViewerHelper.setPickedPosition(shapeName, layer.selection.x, -layer.selection.y, -layer.selection.z)
     }
 
     function moveToCameraCenter(layer)

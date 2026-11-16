@@ -28,6 +28,14 @@ RowLayout {
                                      !readOnly && !(attribute.keyable && _currentScene.selectedViewId === "-1")
     readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     property var errorMessages: attribute.errorMessages
+    // Conversion node owning this attribute as its output, if any
+    readonly property var conversionNode: {
+        if (!attribute)
+            return null
+        if (attribute.isOutput && attribute.node.isConversionNode)
+            return attribute.node
+        return null
+    }
 
     signal doubleClicked(var mouse, var attr)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
@@ -443,6 +451,9 @@ RowLayout {
         sourceComponent: {
             // PushButtonParam always has value == undefined, so it needs to be excluded from this check
             if (attribute.type != "PushButtonParam" && attribute.type != "Flow" && !attribute.keyable && attribute.value === undefined) {
+                // Show why the converted value is missing
+                if (root.conversionNode && root.conversionNode.conversionError)
+                    return conversionStatusComponent
                 return notComputedComponent
             }
             switch (attribute.type) {
@@ -479,6 +490,46 @@ RowLayout {
         Component {
             id: notComputedComponent
             AttributeControls.NotComputed {}
+        }
+
+        Component {
+            id: conversionStatusComponent
+            Rectangle {
+                id: conversionStatus
+                readonly property string error: root.conversionNode.conversionError
+                implicitHeight: statusRow.implicitHeight
+                radius: 20
+                color: Qt.darker(palette.window, 1.1)
+
+                RowLayout {
+                    id: statusRow
+                    anchors.fill: parent
+                    spacing: 6
+
+                    MaterialLabel {
+                        leftPadding: 8
+                        text: MaterialIcons.error_outline
+                        color: Colors.red
+                    }
+                    Label {
+                        id: statusLabel
+                        Layout.fillWidth: true
+                        padding: 4
+                        elide: Text.ElideRight
+                        color: Colors.red
+                        text: conversionStatus.error
+                        ToolTip.text: text
+                        ToolTip.visible: truncated && statusMA.containsMouse
+
+                        MouseArea {
+                            id: statusMA
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            acceptedButtons: Qt.NoButton
+                        }
+                    }
+                }
+            }
         }
 
         Component {

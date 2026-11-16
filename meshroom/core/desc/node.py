@@ -603,6 +603,8 @@ class ConversionNode(BaseNode):
     # Names of the attributes holding the value to convert and the converted value
     inputAttributeName: ClassVar[str] = "input"
     outputAttributeName: ClassVar[str] = "output"
+    # Conversion node types with a higher priority are proposed first when connecting attributes
+    priority: ClassVar[int] = 0
 
     def __init__(self):
         super(ConversionNode, self).__init__()

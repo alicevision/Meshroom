@@ -1216,14 +1216,15 @@ class Graph(BaseObject):
     @staticmethod
     def getConversionNodeTypes(srcAttr: Attribute, dstAttr: Attribute) -> List[str]:
         """
-        Return the sorted names of the conversion node types able to convert the value of `srcAttr`
-        into a value for `dstAttr` (see desc.ConversionNode).
+        Return the names of the conversion node types able to convert the value of `srcAttr`
+        into a value for `dstAttr` (see desc.ConversionNode), sorted by decreasing priority, then by name.
         """
-        return sorted(
-            name for name, provider in meshroom.core.pluginManager.getNodeDescProviders().items()
+        nodeDescs = {
+            name: provider.nodeDescClass for name, provider in meshroom.core.pluginManager.getNodeDescProviders().items()
             if issubclass(provider.nodeDescClass, meshroom.core.desc.ConversionNode)
             and provider.nodeDescClass.canConvert(srcAttr, dstAttr)
-        )
+        }
+        return sorted(nodeDescs, key=lambda name: (-nodeDescs[name].priority, name))
 
     def connectWithConversion(self, srcAttr: Attribute, dstAttr: Attribute, nodeType: Optional[str] = None) -> Node:
         """

@@ -61,8 +61,8 @@ DragMouseArea {
         }
         else if (draggingMiddle)
         {
-            motionInfo.planeX = deltaX * 0.01
-            motionInfo.planeY = deltaY * 0.01
+            motionInfo.planeX = -deltaX * 0.01
+            motionInfo.planeY = -deltaY * 0.01
         }
         else if (draggingRight)
         {

@@ -16,6 +16,7 @@ QtObject {
 
     readonly property MeshLayer layer: MeshLayer {
         mesh: root.dataObject
+        picking: true
     }
 
     readonly property bool loading: dataObject.loading === true

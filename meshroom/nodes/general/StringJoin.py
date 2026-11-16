@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class StringJoin(desc.Node):
+class StringJoin(desc.InlineNode):
     """ Join multiple strings using a given separator. """
 
     category = "Utils"

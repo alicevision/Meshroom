@@ -11,6 +11,8 @@ from meshroom.core.desc import AnySet as AnySetDesc
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode
 
+from .utils import registeredNodeTypes
+
 
 def anyset_child(serializedAnySet, name):
     return next(attribute for attribute in anyset_children(serializedAnySet) if attribute.get("name") == name)
@@ -414,6 +416,39 @@ def test_legacy_group_anyset_child_with_value_still_loads(tmp_path):
     assert loadedGroup.desc.type == "GroupAttribute"
     assert [attribute.name for attribute in loadedGroup.value] == [attribute.name for attribute in groupAttr.value]
     assert loadedGroup.value.get("groupInt").value == 12
+
+
+class AnySetWithInitialChildrenNode(desc.Node):
+    """Node whose AnySet description declares initial children, with non-falsy default values."""
+    inputs = [
+        desc.AnySet(name="ins", label="Inputs", description="", items=[
+            desc.BoolParam(name="flag", label="Flag", description="", value=True),
+            desc.IntParam(name="count", label="Count", description="", value=5, range=(0, 10, 1)),
+            desc.FloatParam(name="ratio", label="Ratio", description="", value=0.5, range=(0.0, 1.0, 0.1)),
+            desc.StringParam(name="text", label="Text", description="", value="default"),
+            desc.ChoiceParam(name="choices", label="Choices", description="", value=["a"], values=["a", "b"],
+                             exclusive=False),
+        ])
+    ]
+    outputs = []
+
+
+@pytest.mark.parametrize("template", [False, True], ids=["project", "template"])
+@pytest.mark.parametrize("childName,value", [("flag", False), ("count", 0), ("ratio", 0.0), ("text", ""), ("choices", [])])
+def test_initial_anyset_child_falsy_value_restored_after_load(tmp_path, childName, value, template):
+    """A falsy value set on an initial child of an AnySet description is restored when loading the graph."""
+    with registeredNodeTypes([AnySetWithInitialChildrenNode]):
+        graph = Graph("test")
+        node = graph.addNewNode("AnySetWithInitialChildrenNode")
+        node.ins.childAttribute(childName).value = value
+        graphFile = str(tmp_path / "graph.mg")
+        graph.save(graphFile, template=template)
+
+        loadedNode = loadGraph(graphFile).node(node.name)
+
+        assert not isinstance(loadedNode, CompatibilityNode), loadedNode.issueDetails
+        assert loadedNode.ins.childAttribute(childName).getPrimitiveValue() == value
+        assert loadedNode._uid == node._uid
 
 
 def test_clone_attributes():

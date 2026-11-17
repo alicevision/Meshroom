@@ -2050,6 +2050,19 @@ class AnySet(GroupAttribute):
             for item in attributeDesc.items:
                 AnySet._makeInvalidatingAndEnabled(item)
 
+    @staticmethod
+    def _setupOutputChild(attribute: Attribute):
+        """ Make a created output child a dynamic output: its value is written by the computation,
+            so its UID is derived from the node UID rather than from its value.
+            Every path creating a child (duplication, insertion, restoration from a graph file) must call it.
+
+        Args:
+            attribute: the created child, left unchanged if it is not an output.
+        """
+        if attribute.isOutput:
+            attribute._isOutput = True
+            attribute._desc._isDynamicValue = True
+
     def duplicateAttribute(self, attribute: Attribute, isOutput: bool|None=None) -> Attribute:
         """ Create an attribute as child of the current, with the same description as the given one.
             Duplicated name's are handled by _renameAttributeDescriptionInPlace()
@@ -2063,10 +2076,7 @@ class AnySet(GroupAttribute):
                                         isOutput=self.isOutput if isOutput is None else isOutput,
                                         node=self.node,
                                         root=self)
-
-        if newAttribute.isOutput:
-            newAttribute._isOutput = True
-            newAttribute._desc._isDynamicValue = True
+        AnySet._setupOutputChild(newAttribute)
 
         self._value.insert(self._value.count, newAttribute)
         self._onChildrenChanged()
@@ -2149,9 +2159,7 @@ class AnySet(GroupAttribute):
             node=self.node,
             root=self
         )
-        if restoredAttribute.isOutput:
-            restoredAttribute._isOutput = True
-            restoredAttribute._desc._isDynamicValue = True
+        AnySet._setupOutputChild(restoredAttribute)
         self._value.insert(index, restoredAttribute)
         self._onChildrenChanged()
         return restoredAttribute
@@ -2210,6 +2218,7 @@ class AnySet(GroupAttribute):
                     node = self.node,
                     root = self
                 )
+                AnySet._setupOutputChild(childAttr)
 
                 self._value.insert(self._value.count, childAttr)
 

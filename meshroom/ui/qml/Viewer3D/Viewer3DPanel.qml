@@ -42,6 +42,7 @@ Panel {
         Inspector3D {
             id: inspector3d
             collection: c_viewer3D.collection
+            interactions: c_viewer3D.interactions
             visible: true
             height: c_viewer3DRowLayout.height
             SplitView.preferredWidth: 260

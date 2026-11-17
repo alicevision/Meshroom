@@ -13,6 +13,7 @@ LayerList 1.0 LayerList.qml
 LayerListGroup 1.0 LayerListGroup.qml
 LayerRow 1.0 LayerRow.qml
 ToggleIconButton 1.0 ToggleIconButton.qml
+InteractionsToolTip 1.0 InteractionsToolTip.qml
 LoadingRemoveButton 1.0 LoadingRemoveButton.qml
 PropertySlider 1.0 PropertySlider.qml
 PropertyComboBox 1.0 PropertyComboBox.qml

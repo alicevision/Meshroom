@@ -100,6 +100,11 @@ QtObject {
         setLayersVisibility((otherLayer) => otherLayer === layer)
     }
 
+    /** Show the layers loaded from the attributes of @p node and hide the others (see setLayersVisibility). */
+    function showOnlyNode(node) {
+        setLayersVisibility((layer, attribute) => attribute !== undefined && attribute.node === node)
+    }
+
     /** Set the selectedCamera property of every SfmDataLayer in the collection to @p cameraId. */
     function setSelectedCameraForAll(cameraId) {
         for (var i = 0; i < sfmData.count; ++i)

@@ -1319,6 +1319,11 @@ Page {
                             
                     }
 
+                // Ctrl: hide the other layers of the 3D viewer
+                if (alreadyDisplay && mouse && (mouse.modifiers & Qt.ControlModifier)) {
+                    panel3dViewer.viewer3D.collection.showOnlyNode(node)
+                }
+
                 // Text viewer - open the first text output when the node has only text outputs
                 if (node.hasTextOutput && !node.hasImageOutput && !node.hasSequenceOutput && !node.has3DOutput) {
                     for (var j = 0; j < node.attributes.count; j++) {

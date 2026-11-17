@@ -8,8 +8,6 @@ import Utils 1.0
 LayerListGroup {
     id: root
 
-    property var collection: null
-
     name: "SfM Data"
     emptyText: "No SfM Data entry"
     layerList: collection ? collection.sfmData : null

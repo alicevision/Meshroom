@@ -68,6 +68,38 @@ QtObject {
         depthmaps.clear()
     }
 
+    /**
+     * Set the visibility of the layers whose visibility is set from the 3D inspector: the image layer
+     * and the entries of meshes, sfmData and depthmaps.
+     * Helper layers (grid, axis, bounding box, survey points) are left unchanged.
+     * @p isVisible(layer, attribute) returns whether a layer is shown; attribute is the one the layer
+     * was loaded from, or undefined.
+     */
+    function setLayersVisibility(isVisible) {
+        for (const layerList of [meshes, sfmData, depthmaps])
+        {
+            for (var i = 0; i < layerList.count; ++i)
+            {
+                const entry = layerList.entryAt(i)
+                if (entry)
+                {
+                    entry.layer.visible = isVisible(entry.layer, layerList.attributeBySource[entry.source])
+                }
+            }
+        }
+
+        const imageLayer = sceneView ? sceneView.imageLayerRef : null
+        if (imageLayer)
+        {
+            imageLayer.visible = isVisible(imageLayer, undefined)
+        }
+    }
+
+    /** Show @p layer and hide the others (see setLayersVisibility). */
+    function showOnly(layer) {
+        setLayersVisibility((otherLayer) => otherLayer === layer)
+    }
+
     /** Set the selectedCamera property of every SfmDataLayer in the collection to @p cameraId. */
     function setSelectedCameraForAll(cameraId) {
         for (var i = 0; i < sfmData.count; ++i)

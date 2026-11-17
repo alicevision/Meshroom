@@ -18,6 +18,8 @@ MouseArea {
     required property int index
     required property string label
 
+    /** SceneObjectCollection holding layerList, used to show only this row's layer on Ctrl+click. */
+    property var collection: null
     property LayerList layerList: null
     property bool showPicking: false
     property Component advancedComponent: null
@@ -97,9 +99,18 @@ MouseArea {
                 active: root.entryLayer ? root.entryLayer.visible : true
                 activeIcon: MaterialIcons.visibility
                 inactiveIcon: MaterialIcons.visibility_off
-                activeToolTip: "Visible"
-                inactiveToolTip: "Hidden"
-                onClicked: root.entryLayer.visible = !root.entryLayer.visible
+                activeToolTip: "Visible (Ctrl+Click: Show Only This Layer)"
+                inactiveToolTip: "Hidden (Ctrl+Click: Show Only This Layer)"
+                onClicked: {
+                    if ((pressModifiers & Qt.ControlModifier) && root.collection)
+                    {
+                        root.collection.showOnly(root.entryLayer)
+                    }
+                    else
+                    {
+                        root.entryLayer.visible = !root.entryLayer.visible
+                    }
+                }
             }
 
             ToggleIconButton {

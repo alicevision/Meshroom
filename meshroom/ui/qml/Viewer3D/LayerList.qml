@@ -32,7 +32,7 @@ QtObject {
     signal entryRemoved(var entry)
 
     /**
-     * Append an entry. No-op if @p source is already in the list.
+     * Append an entry. If @p source is already in the list, only make its layer visible again.
      * @p label is optional. @p attribute is the optional attribute @p source was read from:
      * the entry is removed when that attribute or its node changes.
      */
@@ -45,6 +45,11 @@ QtObject {
         {
             if (model.get(i).source === source)
             {
+                const entry = entryAt(i)
+                if (entry && entry.layer)
+                {
+                    entry.layer.visible = true
+                }
                 return
             }
         }

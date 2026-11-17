@@ -29,6 +29,9 @@ QtObject {
     /** Attribute each source was added from, if any (kept out of the ListModel, which holds plain values). */
     property var attributeBySource: ({})
 
+    /** Attributes currently displayed in the 3D viewer (_currentScene context property), or null when unavailable. */
+    readonly property var displayedAttributes: typeof _currentScene === "undefined" || !_currentScene ? null : _currentScene.displayedAttrs3D
+
     signal entryRemoved(var entry)
 
     /**
@@ -149,11 +152,23 @@ QtObject {
         onObjectAdded: (index, object) => {
             object.errorStringChanged.connect(() => root.handleEntryError(object))
             root.watchEntryAttribute(object)
+            // Flag the source attribute as displayed (visibility icon in the attribute editor).
+            // The model allows duplicates, so an attribute stays flagged while any of its entries remains.
+            const attribute = root.attributeBySource[object.source]
+            if (attribute && root.displayedAttributes)
+            {
+                root.displayedAttributes.append(attribute)
+            }
             root.sceneView.appendLayer(object.layer)
             root.revision++
         }
 
         onObjectRemoved: (index, object) => {
+            const attribute = root.attributeBySource[object.source]
+            if (attribute && root.displayedAttributes && root.displayedAttributes.contains(attribute))
+            {
+                root.displayedAttributes.remove(attribute)
+            }
             delete root.attributeBySource[object.source]
             root.sceneView.removeLayer(object.layer)
             root.revision++

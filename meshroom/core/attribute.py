@@ -2222,7 +2222,8 @@ class AnySet(GroupAttribute):
 
                 self._value.insert(self._value.count, childAttr)
 
-            elif serializedValue:
+            # A falsy value (False, 0, "", []) is a value to restore: only a missing value keeps the current one
+            elif serializedValue is not None:
                 childAttr.value = serializedValue
 
     # Override

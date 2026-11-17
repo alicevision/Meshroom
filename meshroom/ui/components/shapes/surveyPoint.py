@@ -74,10 +74,6 @@ def observationToSurveyPoint(observation):
         return None
 
 
-def getNodeSurveyPointPositions(node, viewId):
-    return [item["position"] for item in getNodeSurveyPointData(node, viewId) if item["picked3d"]]
-
-
 def isPickedSurveyPoint(observation):
     if observation is None:
         return False

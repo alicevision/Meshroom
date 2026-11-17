@@ -317,6 +317,7 @@ Item {
                 id: pointLayer
                 visible: SurveyPointViewerHelper.hasSelectedNodeSurveyPoint
                 positions: SurveyPointViewerHelper.positions
+                selectedIndex: SurveyPointViewerHelper.selectedIndex
             },
             BoxControlLayer {
                 id: boxControlLayer

@@ -1035,6 +1035,35 @@ def test_input_linked_to_output_anyset_depends_on_producer_uid():
     assert consumer._uid != consumerUid
 
 
+@pytest.mark.parametrize("attributeDesc", [intDesc("a"), desc.File(name="a", label="a", description="", value="")],
+                         ids=["int", "file"])
+def test_input_linked_to_output_anyset_child_depends_on_producer_uid_after_load(tmp_path, attributeDesc):
+    """
+    An output AnySet child restored when loading a graph is still a dynamic output: an input linked to it keeps
+    the UID of the producer, and changing an input of the producer updates the UID of the consumer.
+    """
+    graph = Graph("test")
+    producer = graph.addNewNode("DynamicNode")
+    consumer = graph.addNewNode("DynamicNode")
+    output = addOutputChild(producer.outs, attributeDesc)
+    graph.addEdge(output, consumer.ins.duplicateAttribute(SimpleNamespace(desc=attributeDesc)))
+    graph.update()
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+
+    loadedGraph = loadGraph(graphFile)
+    loadedProducer, loadedConsumer = loadedGraph.node(producer.name), loadedGraph.node(consumer.name)
+
+    assert loadedProducer.outs.childAttribute("a").desc.isDynamicValue
+    assert not isinstance(loadedConsumer, CompatibilityNode), loadedConsumer.issueDetails
+    assert loadedConsumer._uid == consumer._uid
+
+    loadedProducer.code.value = "node.outs.a.value = 7"
+    loadedGraph.update()
+
+    assert loadedConsumer._uid != consumer._uid
+
+
 def renameOutputChild(node):
     node.outs.renameAttribute(node.outs.a, "b", "b")
 

@@ -228,7 +228,6 @@ Item {
             id: newNodeMenu
             property point spawnPosition
             property variant menuKeys: Object.keys(root.nodeTypesModel).concat(Object.values(MeshroomApp.pipelineTemplateNames))
-            height: searchBar.height + nodeMenuRepeater.height + instantiator.height
 
             function createNode(nodeType) {
                 // "nodeType" might be a pipeline (artificially added in the "Pipelines" category) instead of a node

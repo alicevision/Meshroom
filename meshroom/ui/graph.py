@@ -1310,6 +1310,11 @@ class UIGraph(QObject):
         """
         self.clearData(self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)[0])
 
+    @Slot(Attribute, Attribute, result=bool)
+    def createsCycle(self, src, dst):
+        """ Whether connecting 'src' to 'dst' would make a node depend on itself. """
+        return self._graph.createsCycle(src, dst)
+
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(src, AnySet):

@@ -4,10 +4,10 @@ import meshViewer
 
 /**
  * Free camera interactions on @p sceneView:
- * Alt + left/middle/right drag to rotate/pan/zoom, Alt + wheel to zoom,
- * Ctrl + click to pick (Ctrl + Shift + click to pick with user code 1).
+ * left/middle/right drag to rotate/pan/zoom, wheel to zoom,
+ * Ctrl + click to pick (Ctrl + Shift + click to pick with user code 1): Ctrl drags do not move the camera.
  * When the camera is orthographic, zooming changes its orthographicWidth (Maya-like)
- * instead of the orbit distance.
+ * instead of the orbit distance. @p zoomSpeed scales every zoom interaction.
  */
 DragMouseArea {
     id: root
@@ -15,6 +15,8 @@ DragMouseArea {
     property var sceneView: null
     readonly property var motionInfo: sceneView ? sceneView.motionInfo : null
     readonly property var cameraInfo: sceneView ? sceneView.cameraInfo : null
+    /** Multiplier applied to zoom interactions (wheel and right drag). */
+    property real zoomSpeed: 1.0
     /** True when the current camera is a BaseCameraInfo in orthographic mode. */
     readonly property bool isOrtho: cameraInfo instanceof BaseCameraInfo && cameraInfo.orthographic
     /** Orthographic width captured when the drag started. */
@@ -36,14 +38,15 @@ DragMouseArea {
     }
 
     onReleased: (mouse) => {
-        if (mouse.modifiers & Qt.AltModifier)
+        // Commit the relative motion of the drag (no-op when nothing moved)
+        if (motionInfo)
         {
             motionInfo.applyTransform()
         }
     }
 
     onPositionChanged: (mouse) => {
-        if (!(mouse.modifiers & Qt.AltModifier))
+        if (!motionInfo || (mouse.modifiers & Qt.ControlModifier))
         {
             return
         }
@@ -58,34 +61,35 @@ DragMouseArea {
         }
         else if (draggingMiddle)
         {
-            motionInfo.planeX = deltaX * 0.01
-            motionInfo.planeY = deltaY * 0.01
+            motionInfo.planeX = -deltaX * 0.01
+            motionInfo.planeY = -deltaY * 0.01
         }
         else if (draggingRight)
         {
             if (isOrtho)
             {
                 // Multiplicative zoom keeps the width positive
-                cameraInfo.orthographicWidth = initialOrthoWidth * Math.exp(deltaY * 0.005)
+                cameraInfo.orthographicWidth = initialOrthoWidth * Math.exp(deltaY * 0.005 * zoomSpeed)
             }
             else
             {
-                motionInfo.distance = deltaY * 0.05
+                motionInfo.distance = deltaY * 0.05 * zoomSpeed
             }
         }
     }
 
     onWheel: function(wheel) {
-        if ((wheel.modifiers & Qt.AltModifier) && !dragging)
+        if (motionInfo && !dragging)
         {
             // Qt reports the vertical wheel on the x axis while Alt is pressed
+            const delta = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.angleDelta.x
             if (isOrtho)
             {
-                cameraInfo.orthographicWidth *= Math.exp(-wheel.angleDelta.x * 0.001)
+                cameraInfo.orthographicWidth *= Math.exp(-delta * 0.001 * zoomSpeed)
             }
             else
             {
-                motionInfo.distance = -wheel.angleDelta.x * 0.05
+                motionInfo.distance = -delta * 0.05 * zoomSpeed
                 motionInfo.applyTransform()
             }
             wheel.accepted = true

@@ -57,9 +57,18 @@ ExpandableGroup {
             active: root.imageLayer ? root.imageLayer.visible : false
             activeIcon: MaterialIcons.visibility
             inactiveIcon: MaterialIcons.visibility_off
-            activeToolTip: "Visible"
-            inactiveToolTip: "Hidden"
-            onClicked: root.imageLayer.visible = !root.imageLayer.visible
+            activeToolTip: "Visible (Ctrl+Click: Show Only This Layer)"
+            inactiveToolTip: "Hidden (Ctrl+Click: Show Only This Layer)"
+            onClicked: {
+                if ((pressModifiers & Qt.ControlModifier) && root.collection)
+                {
+                    root.collection.showOnly(root.imageLayer)
+                }
+                else
+                {
+                    root.imageLayer.visible = !root.imageLayer.visible
+                }
+            }
         }
     }
 }

@@ -10,6 +10,8 @@ import Controls 1.0
 ExpandableGroup {
     id: root
 
+    /** SceneObjectCollection holding layerList, used to show only one of its layers. */
+    property var collection: null
     property LayerList layerList: null
     /** Group name; the entry count is appended to build the title. */
     property string name: ""
@@ -40,6 +42,7 @@ ExpandableGroup {
 
         delegate: LayerRow {
             width: listView.width - scrollBar.width
+            collection: root.collection
             layerList: root.layerList
             showPicking: root.showPicking
             advancedComponent: root.advancedComponent

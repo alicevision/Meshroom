@@ -16,6 +16,7 @@ QtObject {
 
     readonly property SfmDataLayer layer: SfmDataLayer {
         sfmData: root.dataObject
+        picking: true
     }
 
     readonly property bool loading: dataObject.loading === true

@@ -4,8 +4,6 @@ import QtQuick.Layouts
 LayerListGroup {
     id: root
 
-    property var collection: null
-
     name: "Meshes"
     emptyText: "No mesh entry"
     layerList: collection ? collection.meshes : null

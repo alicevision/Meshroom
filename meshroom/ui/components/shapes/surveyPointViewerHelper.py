@@ -1,33 +1,37 @@
 from PySide6.QtGui import QVector3D
 
 from meshroom.common import BaseObject, Property, Variant, Signal, Slot
-from .surveyPoint import (getNodeSurveyPointPositions, getSurveyPointObservationKey, mergeSurveyPointObservation,
+from .surveyPoint import (getNodeSurveyPointData, getSurveyPointObservationKey, mergeSurveyPointObservation,
                           resolveSelectedSurveyPointAttribute)
 
 
 class SurveyPointViewerHelper(BaseObject):
     """
-    Exposes the selected node SurveyPoint shapes as QVector3D positions for Viewer3D.
+    Exposes the selected node SurveyPoint shapes as QVector3D positions for Viewer3D,
+    along with the index of the selected SurveyPoint in these positions.
     """
 
-    def __init__(self, activeProject, parent=None):
+    def __init__(self, activeProject, shapeViewerHelper, parent=None):
         super().__init__(parent)
         self._activeProject = activeProject
+        self._shapeViewerHelper = shapeViewerHelper
         self._currentNode = None
         self._positions = []
+        self._positionNames = []  # Full name of the SurveyPoint at each index of positions
+        self._selectedIndex = -1
         self._hasSelectedNodeSurveyPoint = False
         self._connectedSignals = []
 
         self._activeProject.selectedNodeChanged.connect(self._onSelectedNodeChanged)
         self._activeProject.selectedViewIdChanged.connect(self._onSelectedViewIdChanged)
+        self._shapeViewerHelper.selectedShapeNamesChanged.connect(self._refreshSelectedIndex)
         self._onSelectedNodeChanged()
-
-    @classmethod
-    def getSurveyPointPositions(cls, node, viewId):
-        return [QVector3D(x, y, z) for x, y, z in getNodeSurveyPointPositions(node, viewId)]
 
     def _getPositions(self):
         return self._positions
+
+    def _getSelectedIndex(self):
+        return self._selectedIndex
 
     def _getHasSelectedNodeSurveyPoint(self):
         return self._hasSelectedNodeSurveyPoint
@@ -102,18 +106,40 @@ class SurveyPointViewerHelper(BaseObject):
     @Slot()
     def _refreshPositions(self):
         node = self._currentNode
-        positions = self.getSurveyPointPositions(node, self._activeProject.selectedViewId) if node else []
-        hasSelectedNodeSurveyPoint = bool(positions)
+        data = getNodeSurveyPointData(node, self._activeProject.selectedViewId) if node else []
+        pickedData = [item for item in data if item["picked3d"]]
+        hasSelectedNodeSurveyPoint = bool(pickedData)
 
-        self._positions = positions
+        self._positions = [QVector3D(*item["position"]) for item in pickedData]
+        self._positionNames = [item["fullName"] for item in pickedData]
         self.positionsChanged.emit()
 
         if self._hasSelectedNodeSurveyPoint != hasSelectedNodeSurveyPoint:
             self._hasSelectedNodeSurveyPoint = hasSelectedNodeSurveyPoint
             self.hasSelectedNodeSurveyPointChanged.emit()
 
+        self._refreshSelectedIndex()
+
+    @Slot()
+    def _refreshSelectedIndex(self):
+        """
+        Set the index in positions of the single selected shape, or -1 if it has no position
+        (nothing or several shapes selected, a ShapeList or a SurveyPoint without picked 3d position).
+        """
+        selectedShapeNames = self._shapeViewerHelper.selectedShapeNames
+        selectedIndex = -1
+        if len(selectedShapeNames) == 1 and selectedShapeNames[0] in self._positionNames:
+            selectedIndex = self._positionNames.index(selectedShapeNames[0])
+
+        if self._selectedIndex != selectedIndex:
+            self._selectedIndex = selectedIndex
+            self.selectedIndexChanged.emit()
+
     positionsChanged = Signal()
     positions = Property(Variant, _getPositions, notify=positionsChanged)
+
+    selectedIndexChanged = Signal()
+    selectedIndex = Property(int, _getSelectedIndex, notify=selectedIndexChanged)
 
     hasSelectedNodeSurveyPointChanged = Signal()
     hasSelectedNodeSurveyPoint = Property(bool, _getHasSelectedNodeSurveyPoint, notify=hasSelectedNodeSurveyPointChanged)

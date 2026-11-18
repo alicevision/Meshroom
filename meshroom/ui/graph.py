@@ -1317,6 +1317,9 @@ class UIGraph(QObject):
         elif isinstance(dst, AnySet):
             self.push(commands.ConnectAnySetCommand(self._graph, src=src, anySetAttribute=dst))
         elif isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
+            if len(src) == 0:
+                logging.warning(f"Cannot connect the empty list '{src.fullName}' to '{dst.fullName}'.")
+                return
             self._addEdge(src.at(0), dst)
         elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
             with self.groupedGraphModification(f"Insert and Add Edge on {dst.fullName}"):

@@ -19,6 +19,8 @@ Item {
     property string tabTitle: title
     /// Contextual toolbar, displayed in the header of the DockGroup while the panel is its current tab
     property Item toolBar: null
+    /// Color of the DockGroup header while the panel is its current tab; transparent keeps the default color
+    property color headerColor: "transparent"
 
     /// The DockGroup currently displaying the panel, set by the DockManager
     property Item dockGroup: null

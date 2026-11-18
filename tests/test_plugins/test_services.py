@@ -3,10 +3,14 @@
 
 import hashlib
 import json
+import os
+import stat
+import tarfile
 
 import pytest
 
 from meshroom.core.plugins.record import PluginRecord
+from meshroom.core.plugins.local import installer as installerModule, releases
 from meshroom.core.plugins.provider import ArchivePluginProvider
 from meshroom.core.plugins.local.service import PluginServiceCancelled, PluginServiceError
 from meshroom.core.plugins.local.installer import PluginInstaller
@@ -151,6 +155,28 @@ class TestInstaller:
             installer(archive, tmp_path / "plugins").execute()
         assert not (tmp_path / "plugins" / "myPlugin").exists()
 
+    def test_releaseAsset(self, tmp_path, monkeypatch):
+        """ The archive of the GitHub release file for this platform is extracted in the asset's path, without its root. """
+        tool = writeFile(tmp_path / "build" / "tool-1.0" / "bin" / "tool", "linux")
+        tool.chmod(0o755)
+        linuxArchive = tmp_path / "remote" / "tool-1.0-linux-x86_64.tar.gz"
+        linuxArchive.parent.mkdir()
+        with tarfile.open(linuxArchive, "w:gz") as archive:
+            archive.add(tool.parents[1], arcname="tool-1.0")
+        windowsArchive = writeZip(tmp_path / "remote" / "tool-1.0-windows-x86_64.zip", {"tool-1.0/bin/tool.exe": ""})
+        # The GitHub API answers from memory, the release files are local.
+        files = [{"name": path.name, "browser_download_url": path.as_uri(),
+                  "digest": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()}
+                 for path in (linuxArchive, windowsArchive)]
+        monkeypatch.setattr(releases, "fetchWithProgress", lambda url: json.dumps({"assets": files}).encode())
+        monkeypatch.setattr(installerModule, "currentPlatform", lambda: ("linux", "x86_64"))
+
+        entry = {"name": "tool", "category": "binary", "release": "myOrg/myTool@v1.0", "path": "tool"}
+        installer(writePluginZip(tmp_path / "plugin.zip", assets=[entry]), tmp_path / "plugins").execute()
+        toolPath = tmp_path / "plugins" / "myPlugin" / "tool" / "bin" / "tool"
+        assert toolPath.read_text() == "linux"
+        assert os.name == "nt" or toolPath.stat().st_mode & stat.S_IXUSR
+
 
 class TestUninstaller:
 
@@ -202,3 +228,18 @@ class TestUpdater:
         with pytest.raises(PluginServiceCancelled):
             updater(writePluginZip(tmp_path / "v2.zip", "2.0"), tmp_path / "plugins").execute(isCancelled=lambda: True)
         assert lockVersion(tmp_path / "plugins" / "myPlugin") == "1.0"
+
+    def test_keepsUnchangedAssetAndAddedFile(self, tmp_path):
+        """ An unchanged asset is kept rather than downloaded again, and a file added to the plugin is carried over. """
+        weights = writeFile(tmp_path / "remote" / "weights.pt", "weights")
+        weightsAsset = asset(weights.as_uri(), sha256=hashlib.sha256(b"weights").hexdigest())
+        installer(writePluginZip(tmp_path / "v1.zip", "1.0", assets=[weightsAsset]), tmp_path / "plugins").execute()
+        pluginFolder = tmp_path / "plugins" / "myPlugin"
+        writeFile(pluginFolder / "data" / "user.txt", "user")
+
+        # The asset cannot be downloaded anymore: the update has to keep the installed one.
+        weights.unlink()
+        updater(writePluginZip(tmp_path / "v2.zip", "2.0", assets=[weightsAsset]), tmp_path / "plugins").execute()
+        assert lockVersion(pluginFolder) == "2.0"
+        assert (pluginFolder / "weights.pt").read_text() == "weights"
+        assert (pluginFolder / "data" / "user.txt").read_text() == "user"

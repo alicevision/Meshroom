@@ -146,12 +146,17 @@ class ShapeViewerHelper(BaseObject):
         return self._isSelectedShapeAlive() and isinstance(self._selectedShape, ShapeListAttribute)
 
     def _setListPlacement(self, enabled: bool):
-        """Enable or disable the multi-add placement mode, only available when a ShapeList is selected."""
+        """
+        Enable or disable the multi-add placement mode, only available when a ShapeList is selected.
+        Disabling it clears the selection.
+        """
         enabled = enabled and self._isShapeListSelected()
         if enabled == self._listPlacement:
             return
         self._listPlacement = enabled
         self.placementChanged.emit()
+        if not enabled:
+            self.clearSelection()
 
     def _isPlacing(self) -> bool:
         """Whether the 2d Viewer is waiting for a click to place the selected shape."""

@@ -5,7 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import Qt.labs.platform as Platform
+import Meshroom.Helpers as Helpers
 import QtQuick.Dialogs
 
 import GraphEditor 1.0
@@ -136,7 +136,7 @@ Page {
     }
 
     // File dialogs
-    Platform.FileDialog {
+    Helpers.FileDialog {
         id: saveFileDialog
 
         property var _callback: undefined
@@ -146,7 +146,7 @@ Page {
         title: "Save File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         defaultSuffix: ".mg"
-        fileMode: Platform.FileDialog.SaveFile
+        fileMode: Helpers.FileDialog.SaveFile
         onAccepted: {
             if (!validateFilepathForSave(currentFile, saveFileDialog))
             {
@@ -156,12 +156,12 @@ Page {
             // Only save a valid file
             _currentScene.saveAs(currentFile)
             MeshroomApp.addRecentProjectFile(currentFile.toString())
-            closed(Platform.Dialog.Accepted)
-            fireCallback(Platform.Dialog.Accepted)
+            closed(Helpers.FileDialog.Accepted)
+            fireCallback(Helpers.FileDialog.Accepted)
         }
         onRejected: {
-            closed(Platform.Dialog.Rejected)
-            fireCallback(Platform.Dialog.Rejected)
+            closed(Helpers.FileDialog.Rejected)
+            fireCallback(Helpers.FileDialog.Rejected)
         }
 
         function fireCallback(rc)
@@ -181,7 +181,7 @@ Page {
         }
     }
 
-    Platform.FileDialog {
+    Helpers.FileDialog {
         id: saveTemplateDialog
 
         signal closed(var result)
@@ -189,7 +189,7 @@ Page {
         title: "Save Template"
         nameFilters: ["Meshroom Templates (*.mgt)"]
         defaultSuffix: ".mgt"
-        fileMode: Platform.FileDialog.SaveFile
+        fileMode: Helpers.FileDialog.SaveFile
         onAccepted: {
             if (!validateFilepathForSave(currentFile, saveTemplateDialog))
             {
@@ -198,13 +198,13 @@ Page {
 
             // Only save a valid template
             _currentScene.saveAsTemplate(currentFile)
-            closed(Platform.Dialog.Accepted)
+            closed(Helpers.FileDialog.Accepted)
             MeshroomApp.reloadTemplateList()
         }
-        onRejected: closed(Platform.Dialog.Rejected)
+        onRejected: closed(Helpers.FileDialog.Rejected)
     }
 
-    Platform.FileDialog {
+    Helpers.FileDialog {
         id: loadTemplateDialog
         title: "Open Template"
         nameFilters: ["Meshroom Templates (*.mgt *.mg)"]
@@ -215,10 +215,10 @@ Page {
         }
     }
 
-    Platform.FileDialog {
+    Helpers.FileDialog {
         id: importImagesDialog
         title: "Import Images"
-        fileMode: Platform.FileDialog.OpenFiles
+        fileMode: Helpers.FileDialog.OpenFiles
         nameFilters: []
         onAccepted: {
             _currentScene.importImagesUrls(currentFiles)
@@ -227,10 +227,10 @@ Page {
         }
     }
 
-    Platform.FileDialog {
+    Helpers.FileDialog {
         id: importProjectDialog
         title: "Import Project"
-        fileMode: Platform.FileDialog.OpenFile
+        fileMode: Helpers.FileDialog.OpenFile
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
             graphEditor.uigraph.importProject(currentFile)
@@ -494,7 +494,7 @@ Page {
             // Open "Save As" dialog
             else {
                 saveFileDialog.prompt(function(rc) {
-                    if (rc === Platform.Dialog.Accepted)
+                    if (rc === Helpers.FileDialog.Accepted)
                         fireCallback()
                 })
             }

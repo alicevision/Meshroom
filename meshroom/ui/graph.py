@@ -1704,6 +1704,9 @@ class UIGraph(QObject):
     selectedChunkChanged = Signal()
     selectedChunk = makeProperty(QObject, "_selectedChunk", selectedChunkChanged, resetOnDestroy=True)
 
+    # Emitted by AttributePin with its connector item when an edge drag starts, and with None when it ends (GraphEditor auto-scroll)
+    edgeDragTargetChanged = Signal(QObject)
+
     nodeSelection = makeProperty(QObject, "_nodeSelection")
 
     hoveredNodeChanged = Signal()

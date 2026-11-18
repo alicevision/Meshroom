@@ -1574,6 +1574,22 @@ class GroupAttribute(Attribute, Expandable):
     def matchText(self, text: str) -> bool:
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
+    # Override
+    def _hasAnyInputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its children is a link to another attribute.
+        """
+        return super()._hasAnyInputLinks() or any(child.hasAnyInputLinks for child in self._value)
+
+    # Override
+    def _hasAnyOutputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its children is linked by another attribute.
+        """
+        return super()._hasAnyOutputLinks() or any(child.hasAnyOutputLinks for child in self._value)
+
+    hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=Attribute.inputLinksChanged)
+    hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=Attribute.outputLinksChanged)
     # Override value property
     value = Property(Variant, lambda self: self._getValue(), lambda self, value: self._setValue(value), notify=Attribute.valueChanged)
     # Override flatStaticChildren property

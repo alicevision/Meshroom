@@ -28,12 +28,14 @@ RowLayout {
                                      !readOnly && !(attribute.keyable && _currentScene.selectedViewId === "-1")
     readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     property var errorMessages: attribute.errorMessages
-    // Conversion node owning this attribute as its output, if any
+    // Conversion node providing the value of this attribute (its output or an attribute converted by it), if any
     readonly property var conversionNode: {
         if (!attribute)
             return null
         if (attribute.isOutput && attribute.node.isConversionNode)
             return attribute.node
+        if (attribute.isLink && attribute.inputLink.node.isConversionNode)
+            return attribute.inputLink.node
         return null
     }
 
@@ -173,6 +175,17 @@ RowLayout {
             width: parent.width
             height: parent.height
 
+            // Conversion node converting the value of this attribute
+            MaterialToolButton {
+                visible: Boolean(root.conversionNode && object.isLink)
+                text: MaterialIcons.circle
+                font.pointSize: 6
+                Layout.fillHeight: true
+                textColor: root.conversionNode && root.conversionNode.conversionError ? Colors.red : Colors.conversion
+                ToolTip.text: root.conversionNode ? "Go to the conversion node (" + root.conversionNode.nodeType + ")" : ""
+                onClicked: _currentScene.selectedNode = root.conversionNode
+            }
+
             // In connection
             MaterialToolButton {
                 id: navButtonIn
@@ -190,7 +203,12 @@ RowLayout {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.inAttributeClicked(navButtonIn, mouse, object.allInputLinks)
+                        // Go to the attributes providing the values, through the conversion nodes
+                        const inAttributes = object.allInputLinks.map(function(attr) {
+                            const conversionInput = attr.node.isConversionNode ? attr.node.inputAttribute.inputLink : null
+                            return conversionInput ? conversionInput : attr
+                        })
+                        root.inAttributeClicked(navButtonIn, mouse, inAttributes)
                     }
                 }
 

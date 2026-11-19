@@ -11,7 +11,7 @@ import QtQuick
  *   // Then:
  *   collection.meshes.add("file:///path/to/mesh.obj")
  *   collection.sfmData.add("file:///path/to/sfm.abc")
- *   // Removed when the attribute or its node changes:
+ *   // Waits until the attribute's node is computed, follows the attribute, removed with the node:
  *   collection.sfmData.add(attribute.value, "SfM", attribute)
  */
 QtObject {
@@ -31,6 +31,7 @@ QtObject {
     readonly property LayerList meshes: LayerList {
         sceneView: root.sceneView
         typeName: "Mesh"
+        extensions: [".obj", ".glb"]
         delegate: Component {
             MeshEntry {}
         }
@@ -39,8 +40,17 @@ QtObject {
     readonly property LayerList sfmData: LayerList {
         sceneView: root.sceneView
         typeName: "SfmData"
+        extensions: [".abc", ".usda", ".sfm"]
         delegate: Component {
-            SfmDataEntry {}
+            SfmDataEntry {
+                // An unloaded SfM data has no camera to look through
+                onReadyChanged: {
+                    if (!ready && root.selectedSfmDataObject === dataObject)
+                    {
+                        root.selectedSfmDataObject = null
+                    }
+                }
+            }
         }
 
         onEntryRemoved: (entry) => {
@@ -54,8 +64,38 @@ QtObject {
     readonly property LayerList depthmaps: LayerList {
         sceneView: root.sceneView
         typeName: "Depthmap"
+        extensions: [".exr"]
         delegate: Component {
             DepthmapEntry {}
+        }
+    }
+
+    readonly property var layerLists: [meshes, sfmData, depthmaps]
+
+    /** Return the LayerList able to load @p source (matched on its file extension), or null. */
+    function layerListFor(source) {
+        const extension = Filepath.extension(String(source))
+        for (const layerList of layerLists)
+        {
+            if (layerList.extensions.indexOf(extension) !== -1)
+            {
+                return layerList
+            }
+        }
+        return null
+    }
+
+    // An entry whose attribute now points to a file of another type moves to the matching list (if any)
+    Component.onCompleted: {
+        for (const layerList of layerLists)
+        {
+            layerList.entryMoved.connect((source, label, attribute) => {
+                const target = root.layerListFor(source)
+                if (target)
+                {
+                    target.add(source, label, attribute)
+                }
+            })
         }
     }
 
@@ -76,7 +116,7 @@ QtObject {
      * was loaded from, or undefined.
      */
     function setLayersVisibility(isVisible) {
-        for (const layerList of [meshes, sfmData, depthmaps])
+        for (const layerList of layerLists)
         {
             for (var i = 0; i < layerList.count; ++i)
             {

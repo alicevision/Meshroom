@@ -629,11 +629,19 @@ Item {
                     property var src: {
                         return getAttributePin(edge.src, root._attributeToDelegate)
                         }
+                    // Conversion nodes are not displayed: the edge entering a conversion node goes straight to the
+                    // converted attribute, and the edge leaving it is hidden
+                    readonly property bool fromConversion: Boolean(edge.src && edge.src.node.isConversionNode)
                     property var dst: {
-                        return getAttributePin(edge.dst, root._attributeToDelegate)
+                        let dstAttribute = edge.dst
+                        if (dstAttribute && dstAttribute.node.isConversionNode) {
+                            const outputLinks = dstAttribute.node.outputAttribute.outputLinks
+                            dstAttribute = outputLinks.length > 0 ? outputLinks[0] : null
+                        }
+                        return getAttributePin(dstAttribute, root._attributeToDelegate)
                         }
                     property bool isValidEdge: src != null && dst != null
-                    visible: isValidEdge && src.visible && dst.visible
+                    visible: isValidEdge && src.visible && dst.visible && !fromConversion
 
                     property var loopSource: edge.src && edge.src.root && edge.src.root.value ? edge.src.root : null
                     property bool forLoop: src != null && dst != null &&
@@ -1316,7 +1324,19 @@ Item {
                         }
                     }
 
-                    sourceComponent: object.isBackdropNode ? backdropComponent : nodeComponent
+                    Component {
+                        id: conversionComponent
+                        // Conversion nodes are not displayed: their edges go to the converted attribute
+                        Item {
+                            property var node: object
+                            readonly property bool isConversionNode: true
+                            visible: false
+                            x: node.x
+                            y: node.y
+                        }
+                    }
+
+                    sourceComponent: object.isBackdropNode ? backdropComponent : object.isConversionNode ? conversionComponent : nodeComponent
 
                     onLoaded: {
                         nodeLoader.z = Qt.binding(function() { return nodeLoader.item ? nodeLoader.item.z : 0 })

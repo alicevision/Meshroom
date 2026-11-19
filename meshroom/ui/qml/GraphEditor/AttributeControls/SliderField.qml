@@ -9,9 +9,10 @@ RowLayout {
     required property var checked
     required property var type
     required property int length
-    required property int start
-    required property int end
-    required property int step
+    // Reals: the range of a FloatParam (e.g. a 0.01 step) must not be truncated to integers
+    required property real start
+    required property real end
+    required property real step
 	property bool editable
     signal editingFinished(bool hasExprError, var evaluatedValue, var text, var displayValue)
     signal accepted(bool hasExprError, var evaluatedValue, var text, var displayValue)

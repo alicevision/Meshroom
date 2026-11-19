@@ -7,6 +7,7 @@ import MaterialIcons 2.2
 import Utils 1.0
 import Controls 1.0
 import "AttributeControls" as AttributeControls
+import "AttributeFunctions" as AttributeFunctions
 import "AnySetUtils.js" as AnySetUtils
 
 /**
@@ -413,28 +414,13 @@ RowLayout {
         }
     }
 
-    function setTextFieldAttribute(value) {
-        // editingFinished called even when TextField is readonly
-        if (!editable)
-            return
-        switch (attribute.type) {
-            case "IntParam":
-            case "FloatParam":
-                // We do not set a number because we want to keep the invalid expression
-                if(attribute.keyable)
-                    _currentScene.addAttributeKeyValue(root.attribute, _currentScene.selectedViewId, Number(value))
-                else
-                    _currentScene.setAttribute(root.attribute, Number(value))
-                break
-            case "File":
-                _currentScene.setAttribute(root.attribute, value)
-                break
-            default:
-                _currentScene.setAttribute(root.attribute, value.trim())
-                break
-        }
+    
+    AttributeFunctions.SetAttribute {
+        id: setAttributeHelper
     }
-
+    function setTextFieldAttribute(value) {
+        setAttributeHelper.setTextFieldAttribute(root.attribute, value, root.editable, _currentScene, _currentScene.selectedViewId)
+    }
 
     Loader {
         Layout.fillWidth: true
@@ -458,7 +444,10 @@ RowLayout {
                 case "BoolParam":
                     return checkboxComponent
                 case "ListAttribute":
-                    return listAttributeComponent
+                    if (attribute.baseType == "GroupAttribute")
+                        return tableViewAttributeComponent
+                    else
+                        return listAttributeComponent
                 case "GroupAttribute":
                     return groupAttributeComponent
                 case "AnySet":
@@ -503,7 +492,6 @@ RowLayout {
             AttributeControls.TextFieldRow {
                 text: attribute.value
                 mandatory: attribute.isMandatory
-                attribute: root.attribute
                 editable: root.editable
                 onEditingFinished: (text) => setTextFieldAttribute(text)
                 onAccepted: (parameterLabel, text) => {
@@ -853,6 +841,13 @@ RowLayout {
                         }
                     )
                 }
+            }
+        }
+
+        Component {
+            id: tableViewAttributeComponent
+            AttributeControls.TableView {
+                attribute: root.attribute
             }
         }
 

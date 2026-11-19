@@ -24,6 +24,8 @@ QtObject {
     readonly property color lightgrey: "#999999"
     readonly property color warning: "#FF9800"
     readonly property color darkpurple: "#5c4885"
+    // Attributes converted by conversion nodes
+    readonly property color conversion: "#e09c2d"
 
     readonly property var statusColors: {
         "NONE": "transparent",

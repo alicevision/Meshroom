@@ -533,6 +533,19 @@ class TestTemplateSerialization:
 
             assert nodeData["inputs"]["input"] == "/some/path"
 
+    def test_templateSerializationOfUnknownNodeType(self, tmp_path):
+        """Test that a loaded node of an unknown type (compatibility node, no internal inputs) is serialized in a template."""
+        filepath = tmp_path / "unknown.mg"
+        filepath.write_text(json.dumps({
+            "header": {"fileVersion": "2.1", "nodesVersions": {}},
+            "graph": {"Unknown_1": {"nodeType": "UnknownNodeType", "position": [0, 0], "inputs": {"value": 1}}},
+        }))
+        graph = loadGraph(str(filepath))
+        assert graph.node("Unknown_1").isCompatibilityNode
+
+        data = graph.serialize(asTemplate=True)
+        assert data["graph"]["Unknown_1"]["nodeType"] == "UnknownNodeType"
+
 
 class TestLoadGraphWithCompatibilityNodes:
     """ Tests for loading graphs that contain CompatibilityNodes. """

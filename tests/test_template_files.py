@@ -136,3 +136,25 @@ def test_template_version_check_falls_back_to_legacy_header(tmp_path):
     template_file.write_text(json.dumps(file_data))
 
     assert not checkTemplateVersions(str(template_file), nodesAlreadyLoaded=True)
+
+
+def test_set_template_info_is_saved_with_the_template(tmp_path):
+    template_file = tmp_path / f"template{MESHROOM_TEMPLATE_EXTENSION}"
+    graph = Graph("Template")
+    assert graph.templateInfo == {}
+
+    graph.setTemplateInfo({"label": "My Template", "icon": "camera"})
+    assert graph.templateInfo == {"label": "My Template", "icon": "camera"}
+    graph.save(template_file, setupProjectFile=False, template=True)
+    assert json.loads(template_file.read_text())["header"]["templateInfo"] == {"label": "My Template", "icon": "camera"}
+
+    # An empty info removes it from the template
+    graph.setTemplateInfo({})
+    assert graph.templateInfo == {}
+    graph.save(template_file, setupProjectFile=False, template=True)
+    assert "templateInfo" not in json.loads(template_file.read_text())["header"]
+
+    # The returned info is a copy: editing it does not change the graph
+    graph.setTemplateInfo({"category": "Utilities"})
+    graph.templateInfo["category"] = "Other"
+    assert graph.templateInfo == {"category": "Utilities"}

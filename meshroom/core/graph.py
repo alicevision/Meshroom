@@ -1789,6 +1789,18 @@ class Graph(BaseObject):
         self._templateFilepath = newFilepath
         self.templateFilepathChanged.emit()
 
+    @property
+    def templateInfo(self) -> Dict[str, Any]:
+        """ The template metadata ("label", "category", "icon", ...) written when saving this graph as a template. """
+        return dict(self.header.get(GraphIO.Keys.TemplateInfo, {}))
+
+    def setTemplateInfo(self, info: Optional[Dict[str, Any]]):
+        """ Set the template metadata written when saving this graph as a template; empty or None removes it. """
+        if info:
+            self.header[GraphIO.Keys.TemplateInfo] = dict(info)
+        else:
+            self.header.pop(GraphIO.Keys.TemplateInfo, None)
+
     def updateInternals(self, startNodes=None, force=False):
         nodes, edges = self.dfsOnFinish(startNodes=startNodes)
         for node in nodes:

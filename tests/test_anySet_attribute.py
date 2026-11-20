@@ -969,6 +969,112 @@ def test_anyset_shape_child_save_load_preserves_uid(tmp_path, attributeDesc, obs
     assertGraphRoundTrip(tmp_path, graph, dynamicNode, lambda node: [shapeChildState(child) for child in node.ins.value])
 
 
+# ---------------------------------------------------------------------------
+# Keyable children tests
+# ---------------------------------------------------------------------------
+
+# Keyable parameters, along with a key value to set on them.
+KEYABLE_CHILDREN = [
+    (desc.IntParam(name="keyableInt", label="Keyable Int", description="", value=1, range=(0, 100, 1),
+                   keyable=True, keyType="viewId"),
+     42),
+    (desc.FloatParam(name="keyableFloat", label="Keyable Float", description="", value=0.5, range=(0.0, 10.0, 0.1),
+                     keyable=True, keyType="viewId"),
+     3.25),
+]
+KEYABLE_CHILDREN_IDS = [attributeDesc.name for attributeDesc, _ in KEYABLE_CHILDREN]
+
+
+class KeyableAttributesNode(desc.Node):
+    """Node holding keyable parameters and a keyable shape, to connect to an AnySet."""
+    inputs = [attributeDesc for attributeDesc, _ in KEYABLE_CHILDREN] + [
+        desc.Rectangle(name="keyableRectangle", label="Keyable Rectangle", description="", keyable=True, keyType="viewId"),
+    ]
+    outputs = []
+
+
+KEYABLE_ATTRIBUTE_NAMES = [attributeDesc.name for attributeDesc in KeyableAttributesNode.inputs]
+
+
+def keyableState(attribute):
+    """
+    Return the name, type, keyable state, key type and serialized value of a keyable parameter or shape attribute:
+    its key values, or its link expression when it is connected.
+    """
+    geometry = getattr(attribute, "geometry", None)
+    keyable = geometry.observationKeyable if geometry is not None else attribute.keyable
+    return (attribute.name, attribute.desc.type, keyable, attribute.desc.keyType,
+            json.dumps(attribute.getSerializedValue(), sort_keys=True))
+
+
+def setKey(attribute, value):
+    """Set a key on a keyable parameter, or an observation on a keyable shape."""
+    if getattr(attribute, "geometry", None) is not None:
+        attribute.geometry.setObservation("0", {"center": {"x": 20.0, "y": 20.0}})
+    else:
+        attribute.keyValues.add("0", value)
+
+
+@pytest.mark.parametrize("modified", [False, True], ids=["default", "modified"])
+@pytest.mark.parametrize("attributeDesc,value", KEYABLE_CHILDREN, ids=KEYABLE_CHILDREN_IDS)
+def test_anyset_keyable_child_save_load_preserves_uid(tmp_path, attributeDesc, value, modified):
+    """A keyable parameter child keeps its keyable state, its key values and the node UID across save/load cycles."""
+    graph, dynamicNode = initGraphAndNode()
+    child = addAnySetChild(dynamicNode.ins, attributeDesc)
+    assert child.keyable
+    if modified:
+        setKey(child, value)
+    graph.update()
+    assertGraphRoundTrip(tmp_path, graph, dynamicNode, lambda node: [keyableState(child) for child in node.ins.value])
+
+
+@pytest.mark.parametrize("modified", [False, True], ids=["default", "modified"])
+@pytest.mark.parametrize("attributeName", KEYABLE_ATTRIBUTE_NAMES)
+def test_keyable_attribute_connected_to_input_anyset_save_load_preserves_uid(tmp_path, attributeName, modified):
+    """
+    A keyable attribute connected to an input AnySet creates a keyable child linked to it, which keeps its keyable
+    state, its link and the node UID across save/load cycles.
+    """
+    with registeredNodeTypes([KeyableAttributesNode]):
+        graph, dynamicNode = initGraphAndNode()
+        srcAttribute = graph.addNewNode("KeyableAttributesNode").attribute(attributeName)
+        if modified:
+            setKey(srcAttribute, 42)
+
+        # Same path as the UI connection to an AnySet (see ConnectToAnySetCommand)
+        child = dynamicNode.ins.duplicateAttribute(srcAttribute, isOutput=False)
+        graph.addEdge(srcAttribute, child)
+        graph.update()
+        assert child.inputLink is srcAttribute
+
+        assertGraphRoundTrip(tmp_path, graph, dynamicNode, lambda node: [keyableState(child) for child in node.ins.value])
+
+
+@pytest.mark.parametrize("attributeName", KEYABLE_ATTRIBUTE_NAMES)
+def test_output_anyset_connected_to_keyable_attribute_save_load_preserves_uid(tmp_path, attributeName):
+    """
+    An output AnySet connected to a keyable attribute creates a keyable output child linked to it: both keep
+    their keyable state, the link and the UID of the connected node across save/load cycles.
+    """
+    with registeredNodeTypes([KeyableAttributesNode]):
+        graph, dynamicNode = initGraphAndNode()
+        dstNode = graph.addNewNode("KeyableAttributesNode")
+        dstAttribute = dstNode.attribute(attributeName)
+
+        # Same path as the UI connection from an output AnySet (see ConnectToAnySetCommand)
+        child = dynamicNode.outs.duplicateAttribute(dstAttribute, isOutput=True)
+        graph.addEdge(child, dstAttribute)
+        graph.update()
+        assert dstAttribute.inputLink is child
+
+        def state(node):
+            """Return the state of the connected keyable attribute of 'node' and of the output AnySet children."""
+            return (keyableState(node.attribute(attributeName)),
+                    [keyableState(child) for child in node.graph.node(dynamicNode.name).outs.value])
+
+        assertGraphRoundTrip(tmp_path, graph, dstNode, state)
+
+
 @pytest.mark.parametrize("attributeDesc", [attributeDesc for attributeDesc, _ in ANYSET_CHILDREN + SHAPE_CHILDREN],
                          ids=ANYSET_CHILDREN_IDS + SHAPE_CHILDREN_IDS)
 def test_anyset_child_duplication_does_not_modify_source_desc(attributeDesc):

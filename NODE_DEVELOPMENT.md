@@ -339,6 +339,23 @@ Each chunk receives a `Range` object with:
 For `CommandLineNode`, range placeholders are automatically injected into `commandLineRange` when `node.isParallelized` and `node.size > 1`.
 
 
+## Multi-node process
+
+By default, each chunk of a node runs in its own `meshroom_compute` process, wrapped in the plugin environment. Computing a scene on a single process is possible through the `meshroom_batch --inCurrentEnv` argument.
+
+> [!WARNING]
+> To make sure the process succeeds, the plugin environment needs to be loaded in the global environment (the one `meshroom_batch` is executed from).
+
+To compute such a scene from another graph, subclass `ComputeMeshroomScene` in the plugin providing the session nodes, so that `meshroom_batch` runs in that plugin's environment with its interpreter, and set `inCurrentEnv` to `True`. An example:
+
+```python
+from meshroom.nodes.general.ComputeMeshroomScene import ComputeMeshroomScene
+
+class ComputeMayaScene(ComputeMeshroomScene):
+    pythonExecutable = "mayapy"
+    inCurrentEnv = True
+```
+
 ## Installation
 
 See [INSTALL_PLUGINS.md](./INSTALL_PLUGINS.md)

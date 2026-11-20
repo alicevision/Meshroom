@@ -479,6 +479,11 @@ class Attribute(BaseObject):
         }
         if hasattr(self.desc, "range"):
             serializedData["range"] = list(self.desc.range)
+        # The keyable state is part of the description restored from this serialization (e.g. for an AnySet child):
+        # without it, the key values of a keyable attribute would be restored on a non-keyable one
+        if self.keyable:
+            serializedData["keyable"] = True
+            serializedData["keyType"] = self.desc.keyType
 
         return serializedData
 

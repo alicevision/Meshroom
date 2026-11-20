@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import argparse
 import json
 import sys
@@ -17,6 +16,7 @@ from PySide6.QtWidgets import QApplication
 import meshroom
 from meshroom.core import pluginManager
 from meshroom.core.desc import NodeVersionTypeEnum
+from meshroom.core.graphIO import getTemplateInfo
 from meshroom.core.plugins.local.taskQueue import PluginTaskQueue
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.taskManager import TaskManager
@@ -35,6 +35,7 @@ from meshroom.ui.dockLayoutManager import DockLayoutManager
 from meshroom.ui.components.shapes import SurveyPointViewerHelper, ShapeFilesHelper, ShapeViewerHelper
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.scene import Scene
+from meshroom.ui import templateInfo
 from meshroom.ui.utils import QmlInstantEngine
 from meshroom.ui import commands
 
@@ -274,6 +275,8 @@ class MeshroomApp(QApplication):
         # Initialize the list of recent project files
         self._recentProjectFiles = self._getRecentProjectFilesFromSettings()
         self._recentTemplateFiles = self._getRecentTemplateFilesFromSettings()
+        self._templateCategoryColors = templateInfo.loadCategoryColors()
+        self._templateIconNames = None  # read from MaterialIcons.qml on first search
         # Flag set to True if, for all the project files in the list, thumbnails have been retrieved when they
         # are available. If set to False, then all the paths in the list are accurate, but some thumbnails might
         # be retrievable
@@ -437,7 +440,7 @@ class MeshroomApp(QApplication):
         for key in sorted(meshroom.core.pipelineTemplates.keys()):
             # Use uppercase letters in the names as separators to format the templates' name nicely
             # e.g: the template "panoramaHdr" will be shown as "Panorama Hdr" in the menu
-            name = " ".join(re.findall('[A-Z][^A-Z]*', key[0].upper() + key[1:]))
+            name = templateInfo.defaultTemplateLabel(key)
             variant = {"name": name, "key": key, "path": meshroom.core.pipelineTemplates[key]}
             templates.append(variant)
         return templates
@@ -449,6 +452,33 @@ class MeshroomApp(QApplication):
     def reloadTemplateList(self):
         meshroom.core.initPipelines()
         self.pipelineTemplateFilesChanged.emit()
+
+    @Slot(result="QVariantList")
+    def templateCategories(self) -> list:
+        """ Return the categories offered for a template: the built-in ones, then those of the registered templates.
+
+        Each registered template file is read, so this is only called when the Save As Template dialog opens.
+        """
+        categories = (getTemplateInfo(key).get("category") for key in meshroom.core.pipelineTemplates)
+        # Template headers can be edited by hand: ignore categories that are not text
+        usedCategories = sorted(c for c in categories if isinstance(c, str))
+        return templateInfo.mergeCategories(self._templateCategoryColors.keys(), usedCategories)
+
+    @Slot(str, result=str)
+    def templateCategoryColor(self, category: str) -> str:
+        """ Return the color of a template category: built-in if listed, otherwise hashed from its lower-case name. """
+        return templateInfo.categoryColor(category, self._templateCategoryColors)
+
+    @Slot(str, result=str)
+    def defaultTemplateLabel(self, key: str) -> str:
+        return templateInfo.defaultTemplateLabel(key)
+
+    @Slot(str, result="QVariantList")
+    def searchTemplateIcons(self, query: str) -> list:
+        """ Return the names of the MaterialIcons matching all the words of `query`. """
+        if self._templateIconNames is None:
+            self._templateIconNames = templateInfo.materialIconNames()
+        return templateInfo.searchIcons(self._templateIconNames, query)
 
     @Slot()
     def forceUIUpdate(self):

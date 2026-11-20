@@ -38,6 +38,7 @@ from meshroom.core.submitter import jobManager
 from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, BackdropNode, Position
 from meshroom.core import submitters, MrNodeType
 from meshroom.ui import commands
+from meshroom.ui.templateInfo import updatedTemplateInfo
 from meshroom.ui.utils import makeProperty
 
 
@@ -581,11 +582,31 @@ class UIGraph(QObject):
         self._saveAs(url, extension=MESHROOM_PROJECT_EXTENSION)
 
     @Slot(QUrl)
-    def saveAsTemplate(self, url):
-        self._saveAs(url, setupProjectFile=False, template=True, extension=MESHROOM_TEMPLATE_EXTENSION)
+    @Slot(QUrl, "QVariantMap")
+    def saveAsTemplate(self, url, info=None):
+        """ Save the graph as a template at `url`.
 
-    def _saveAs(self, url, setupProjectFile=True, template=False, extension=MESHROOM_PROJECT_EXTENSION):
-        """ Helper function for 'save as' features. """
+        Args:
+            url: the template file; the template extension is added if missing.
+            info: (optional) the edited template metadata ("label", "category", "icon", "description"),
+                  empty fields are removed. If None, the current metadata is saved unchanged.
+        """
+        if info is not None:
+            self._graph.setTemplateInfo(updatedTemplateInfo(self._graph.templateInfo, info))
+        hadTemplateFile = bool(self._graph.templateFilepath)
+        savedFile = self._saveAs(url, setupProjectFile=False, template=True, extension=MESHROOM_TEMPLATE_EXTENSION)
+        # An open template now refers to the file just written, so that the next save suggests it.
+        # A project saved as a template stays a project (no template badge).
+        if hadTemplateFile:
+            self._graph.setTemplateFilepath(savedFile)
+
+    @Slot(result="QVariantMap")
+    def templateInfo(self) -> dict:
+        """ Return the template metadata of the graph, from the template it was loaded from or last saved as. """
+        return self._graph.templateInfo
+
+    def _saveAs(self, url, setupProjectFile=True, template=False, extension=MESHROOM_PROJECT_EXTENSION) -> str:
+        """ Helper function for 'save as' features. Return the path of the saved file. """
         if isinstance(url, (str)):
             localFile = url
         else:
@@ -596,6 +617,7 @@ class UIGraph(QObject):
         # saving file on disk impacts cache folder location
         # => force re-evaluation of monitored status files paths
         self.updateChunkMonitor()
+        return localFile
 
     @Slot()
     def saveAsTemp(self):

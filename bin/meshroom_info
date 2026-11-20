@@ -144,6 +144,7 @@ def get_pipeline_info(args, templates, name):
     print(f"  template       : {header.get('template', False)}")
     print(f"  releaseVersion : {header.get('releaseVersion')}")
     print(f"  fileVersion    : {header.get('fileVersion')}")
+    print(f"  templateInfo   : {header.get('templateInfo', {})}")
     nodeDescriptions = content.get("nodeDescriptions")
     if nodeDescriptions:
         # Keeps only the latest version of each node type in the template

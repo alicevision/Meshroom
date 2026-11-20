@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import pluginManager
-from meshroom.core.desc import NodeVersionTypeEnum
+from meshroom.core.desc import ConversionNode, NodeVersionTypeEnum
 from meshroom.core.plugins.local.taskQueue import PluginTaskQueue
 from meshroom.core.submitter import BaseSubmitter
 from meshroom.core.taskManager import TaskManager
@@ -310,7 +310,12 @@ class MeshroomApp(QApplication):
         self.aboutToQuit.connect(self._pluginTaskQueue.shutdown)
 
         # expose available node types that can be instantiated
-        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": pluginManager.getNodeDescProviders()[n].nodeDescClass.category} for n in sorted(pluginManager.getNodeDescProviders().keys())})
+        # (conversion nodes are only created when connecting attributes of different types)
+        nodeDescProviders = pluginManager.getNodeDescProviders()
+        self.engine.rootContext().setContextProperty("_nodeTypes", {
+            n: {"category": nodeDescProviders[n].nodeDescClass.category} for n in sorted(nodeDescProviders.keys())
+            if not issubclass(nodeDescProviders[n].nodeDescClass, ConversionNode)
+        })
 
         # instantiate the 3D Scene object
         self._undoStack = commands.UndoStack(self)

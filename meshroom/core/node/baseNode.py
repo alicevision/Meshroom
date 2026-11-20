@@ -579,7 +579,7 @@ class BaseNode(BaseObject):
         """
         # Ambiguous case for NONE, which could be used for compatibility nodes if we do not have
         # any information about the node descriptor.
-        return self.getMrNodeType() != MrNodeType.INIT and self.getMrNodeType() != MrNodeType.BACKDROP
+        return self.getMrNodeType() not in (MrNodeType.INIT, MrNodeType.BACKDROP, MrNodeType.CONVERSION)
 
     def clearData(self):
         """ Delete this Node internal folder.
@@ -1257,6 +1257,9 @@ class BaseNode(BaseObject):
     def _isBackdropNode(self) -> bool:
         return False
 
+    def _isConversionNode(self) -> bool:
+        return False
+
     @property
     def globalExecMode(self):
         if not self._chunksCreated:
@@ -1371,7 +1374,8 @@ class BaseNode(BaseObject):
 
     def updateDuplicates(self, nodesPerUid):
         """ Update the list of duplicate nodes (sharing the same UID). """
-        if not nodesPerUid or not self._uid:
+        # Conversion nodes have no data on disk: identical conversions are not duplicates
+        if not nodesPerUid or not self._uid or self._isConversionNode():
             if len(self._duplicates) > 0:
                 self._duplicates.clear()
                 self._hasDuplicates = False
@@ -1590,6 +1594,7 @@ class BaseNode(BaseObject):
     isIONode = Property(bool, lambda self: self._isIONode(), constant=True)
     isGraphInputNode = Property(bool, lambda self: self._isGraphInputNode(), constant=True)
     isBackdropNode = Property(bool, lambda self: self._isBackdropNode(), constant=True)
+    isConversionNode = Property(bool, lambda self: self._isConversionNode(), constant=True)
 
     globalExecMode = Property(str, globalExecMode.fget, notify=globalStatusChanged)
     jobName = Property(str, lambda self: self._getJobName(), notify=globalStatusChanged)

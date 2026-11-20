@@ -21,7 +21,7 @@ from meshroom.core.desc import Attribute as AttributeDescription
 from meshroom.core.keyValues import KeyValues
 from meshroom.core.exception import InvalidEdgeError
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 from meshroom.core.mixins import Expandable
 import uuid
@@ -168,6 +168,9 @@ class Attribute(BaseObject):
         # When set, this overrides the descriptor's expression for this node instance,
         # so that description changes on the node type only affect new nodes.
         self._expressionTemplate: Optional[str] = None
+        # Function evaluating the value of this attribute on-the-fly, used instead of the stored value
+        # (e.g. the output of a conversion node, computed from its input).
+        self._valueEvaluator: Optional[Callable[[Attribute], object]] = None
         self._initValue()
         self._uuid = f'{self._desc._name}-{uuid.uuid4()}'
 
@@ -266,6 +269,8 @@ class Attribute(BaseObject):
             raise RuntimeError(f"Cannot get value of {self._getFullName()}, the attribute is keyable.")
         if self.isLink:
             return self._getInputLink().value
+        if self._valueEvaluator is not None:
+            return self._valueEvaluator(self)
         self._resolveValue()
         return self._value
 
@@ -1574,6 +1579,22 @@ class GroupAttribute(Attribute, Expandable):
     def matchText(self, text: str) -> bool:
         return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
+    # Override
+    def _hasAnyInputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its children is a link to another attribute.
+        """
+        return super()._hasAnyInputLinks() or any(child.hasAnyInputLinks for child in self._value)
+
+    # Override
+    def _hasAnyOutputLinks(self) -> bool:
+        """
+        Whether the attribute or any of its children is linked by another attribute.
+        """
+        return super()._hasAnyOutputLinks() or any(child.hasAnyOutputLinks for child in self._value)
+
+    hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=Attribute.inputLinksChanged)
+    hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=Attribute.outputLinksChanged)
     # Override value property
     value = Property(Variant, lambda self: self._getValue(), lambda self, value: self._setValue(value), notify=Attribute.valueChanged)
     # Override flatStaticChildren property

@@ -420,3 +420,23 @@ class TestGroupAttributes:
         # Mutate via full path and verify via direct traversal
         node.attribute("firstGroup.groupedList[1].listedGroupInt").value = 99
         assert node.firstGroup.groupedList.at(1).listedGroupInt.value == 99
+
+    def test_groupHasAnyLinksFromChildren(self):
+        """ A group, and a list holding it, report the links of the group's children. """
+        graph = Graph()
+        nodeA = graph.addNewNode("GroupAttributes")
+        nodeB = graph.addNewNode("GroupAttributes")
+        assert not nodeA.firstGroup.hasAnyOutputLinks and not nodeB.firstGroup.hasAnyInputLinks
+
+        nodeA.firstGroup.nestedGroup.nestedGroupFloat.connectTo(nodeB.firstGroup.nestedGroup.nestedGroupFloat)
+
+        assert nodeA.firstGroup.hasAnyOutputLinks and nodeA.firstGroup.nestedGroup.hasAnyOutputLinks
+        assert nodeB.firstGroup.hasAnyInputLinks and nodeB.firstGroup.nestedGroup.hasAnyInputLinks
+        assert not nodeA.firstGroup.hasAnyInputLinks and not nodeB.firstGroup.hasAnyOutputLinks
+
+        # Group inside a list: the list reports the links of the group's children
+        nodeA.firstGroup.groupedList.value = [{"listedGroupInt": 5}]
+        assert not nodeA.firstGroup.groupedList.hasAnyOutputLinks
+        nodeA.firstGroup.groupedList.at(0).listedGroupInt.connectTo(nodeB.firstGroup.firstGroupIntA)
+        assert nodeA.firstGroup.groupedList.at(0).hasAnyOutputLinks
+        assert nodeA.firstGroup.groupedList.hasAnyOutputLinks

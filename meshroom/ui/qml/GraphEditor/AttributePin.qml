@@ -35,6 +35,27 @@ RowLayout {
     readonly property bool isDynamic: !!attribute.desc && !!attribute.desc.isCustomAttribute
     readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     readonly property bool isConnected: attribute.hasAnyInputLinks || attribute.hasAnyOutputLinks
+    // Conversion nodes converting the value received by this attribute, or by the elements of this list
+    readonly property var conversionNodes: {
+        const nodes = []
+        if (!attribute || attribute.isOutput)
+            return nodes
+        const addConversion = function(attr) {
+            if (attr.isLink && attr.inputLink.node.isConversionNode)
+                nodes.push(attr.inputLink.node)
+        }
+        addConversion(attribute)
+        if (isList && !attribute.isLink) {
+            for (let i = 0; i < attribute.value.count; ++i) {
+                const element = attribute.value.at(i)
+                addConversion(element)
+                if (element.flatStaticChildren)
+                    element.flatStaticChildren.forEach(addConversion)
+            }
+        }
+        return nodes
+    }
+    readonly property bool hasConversionError: conversionNodes.some(node => node.conversionError !== "")
 
     signal childPinCreated(var childAttribute, var pin)
     signal childPinDeleted(var childAttribute, var pin)
@@ -160,13 +181,15 @@ RowLayout {
             return "transparent"
         }
         if (hasChildrenConnected) {
-            return Colors.sysPalette.iconText
+            return Colors.sysPalette.text
         }
         return Colors.sysPalette.mid
     }
 
     ToolTip {
-        text: attribute.fullName + ": " + attribute.type
+        text: attribute.fullName + ": " + attribute.type +
+              (root.conversionNodes.length > 0 ? "\nConverted by " + root.conversionNodes.map(node => node.nodeType).join(", ") +
+                                                 " (click the pin to edit)" : "")
         visible: nameLabel.hovered
         delay: 500
 
@@ -227,6 +250,8 @@ RowLayout {
                 color: {
                     if (inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop))
                         return Colors.sysPalette.highlight
+                    if (root.conversionNodes.length > 0)
+                        return root.hasConversionError ? Colors.red : Colors.conversion
                     if (hasConnectedChildren)
                         return Colors.sysPalette.mid
                     if (root.isDynamic)
@@ -248,7 +273,9 @@ RowLayout {
 
                 keys: [inputDragTarget.objectName]
                 onEntered: function(drag) {
+                    // Attributes of different types can be connected through a conversion node
                     var validIncomingConnection = inputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
+                                                  || _currentScene.canConvert(drag.source.attribute, inputDragTarget.attribute)
                     // Check if attributes are compatible to create a valid connection
                     if (root.readOnly                                            // Cannot connect on a read-only attribute
                         || drag.source.objectName != inputDragTarget.objectName  // Not an edge connector
@@ -334,6 +361,9 @@ RowLayout {
 
                 onClicked: function() {
                     root.clicked()
+                    // Open the conversion in the Node Editor (the first one for a list)
+                    if (root.conversionNodes.length > 0)
+                        _currentScene.selectedNode = root.conversionNodes[0]
                 }
 
                 onPositionChanged: function(mouse) {
@@ -498,7 +528,9 @@ RowLayout {
 
             keys: [outputDragTarget.objectName]
             onEntered: function(drag) {
+                // Attributes of different types can be connected through a conversion node
                 var validIncomingConnection = outputDragTarget.attribute.validateIncomingConnection(drag.source.attribute)
+                                              || _currentScene.canConvert(outputDragTarget.attribute, drag.source.attribute)
                 // Check if attributes are compatible to create a valid connection
                 if (drag.source.objectName != outputDragTarget.objectName   // Not an edge connector
                     || !validIncomingConnection                             // Connection is not allowed

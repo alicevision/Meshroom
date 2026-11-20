@@ -28,6 +28,16 @@ RowLayout {
                                      !readOnly && !(attribute.keyable && _currentScene.selectedViewId === "-1")
     readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     property var errorMessages: attribute.errorMessages
+    // Conversion node providing the value of this attribute (its output or an attribute converted by it), if any
+    readonly property var conversionNode: {
+        if (!attribute)
+            return null
+        if (attribute.isOutput && attribute.node.isConversionNode)
+            return attribute.node
+        if (attribute.isLink && attribute.inputLink.node.isConversionNode)
+            return attribute.inputLink.node
+        return null
+    }
 
     signal doubleClicked(var mouse, var attr)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
@@ -165,6 +175,17 @@ RowLayout {
             width: parent.width
             height: parent.height
 
+            // Conversion node converting the value of this attribute
+            MaterialToolButton {
+                visible: Boolean(root.conversionNode && object.isLink)
+                text: MaterialIcons.circle
+                font.pointSize: 6
+                Layout.fillHeight: true
+                textColor: root.conversionNode && root.conversionNode.conversionError ? Colors.red : Colors.conversion
+                ToolTip.text: root.conversionNode ? "Go to the conversion node (" + root.conversionNode.nodeType + ")" : ""
+                onClicked: _currentScene.selectedNode = root.conversionNode
+            }
+
             // In connection
             MaterialToolButton {
                 id: navButtonIn
@@ -182,7 +203,12 @@ RowLayout {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
 
                     onClicked: function(mouse) {
-                        root.inAttributeClicked(navButtonIn, mouse, object.allInputLinks)
+                        // Go to the attributes providing the values, through the conversion nodes
+                        const inAttributes = object.allInputLinks.map(function(attr) {
+                            const conversionInput = attr.node.isConversionNode ? attr.node.inputAttribute.inputLink : null
+                            return conversionInput ? conversionInput : attr
+                        })
+                        root.inAttributeClicked(navButtonIn, mouse, inAttributes)
                     }
                 }
 
@@ -443,6 +469,9 @@ RowLayout {
         sourceComponent: {
             // PushButtonParam always has value == undefined, so it needs to be excluded from this check
             if (attribute.type != "PushButtonParam" && attribute.type != "Flow" && !attribute.keyable && attribute.value === undefined) {
+                // Show why the converted value is missing
+                if (root.conversionNode && root.conversionNode.conversionError)
+                    return conversionStatusComponent
                 return notComputedComponent
             }
             switch (attribute.type) {
@@ -479,6 +508,46 @@ RowLayout {
         Component {
             id: notComputedComponent
             AttributeControls.NotComputed {}
+        }
+
+        Component {
+            id: conversionStatusComponent
+            Rectangle {
+                id: conversionStatus
+                readonly property string error: root.conversionNode.conversionError
+                implicitHeight: statusRow.implicitHeight
+                radius: 20
+                color: Qt.darker(palette.window, 1.1)
+
+                RowLayout {
+                    id: statusRow
+                    anchors.fill: parent
+                    spacing: 6
+
+                    MaterialLabel {
+                        leftPadding: 8
+                        text: MaterialIcons.error_outline
+                        color: Colors.red
+                    }
+                    Label {
+                        id: statusLabel
+                        Layout.fillWidth: true
+                        padding: 4
+                        elide: Text.ElideRight
+                        color: Colors.red
+                        text: conversionStatus.error
+                        ToolTip.text: text
+                        ToolTip.visible: truncated && statusMA.containsMouse
+
+                        MouseArea {
+                            id: statusMA
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            acceptedButtons: Qt.NoButton
+                        }
+                    }
+                }
+            }
         }
 
         Component {

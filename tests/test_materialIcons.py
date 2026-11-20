@@ -4,6 +4,8 @@ import re
 import subprocess
 import sys
 
+import pytest
+
 from meshroom.ui.components.materialIconsData import MATERIAL_ICONS
 
 GENERATOR = os.path.join(os.path.dirname(__file__), "..", "meshroom", "ui", "qml", "MaterialIcons",
@@ -44,3 +46,19 @@ def test_generator_writes_the_icons_dictionary(tmp_path):
         "goat": "\U0010fffd",
     }
 
+
+def test_create_material_icons_exposes_every_icon():
+    # Building the map loads the icon font, which needs PySide6.QtGui (and libEGL)
+    pytest.importorskip("PySide6.QtGui", exc_type=ImportError)
+    from PySide6.QtCore import QObject
+    from PySide6.QtGui import QGuiApplication
+    from meshroom.ui.components.materialIcons import createMaterialIcons
+
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    app = QGuiApplication.instance() or QGuiApplication([])
+    owner = QObject()
+    icons = createMaterialIcons(owner)
+    assert icons.value("fontFamily") == "Material Icons"
+    assert icons.value("camera") == MATERIAL_ICONS["camera"]
+    assert all(icons.value(name) == glyph for name, glyph in MATERIAL_ICONS.items())
+    assert app is not None

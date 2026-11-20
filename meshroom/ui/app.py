@@ -27,6 +27,7 @@ from meshroom.env import EnvVar, EnvVarHelpAction
 from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
 from meshroom.ui.components.filepath import FilepathHelper
+from meshroom.ui.components.materialIcons import createMaterialIcons
 from meshroom.ui.components.scene3D import Scene3DHelper, Transformations3DHelper
 from meshroom.ui.components.scriptEditor import ScriptEditorManager
 from meshroom.ui.components.thumbnail import ThumbnailCache
@@ -324,6 +325,8 @@ class MeshroomApp(QApplication):
         #  - qmlRegisterUncreatableType is not yet available in PySide2
         #  - declaring them as singleton in qmldir file causes random crash at exit
         # => expose them as context properties instead
+        # Icon glyphs and font family: MaterialIcons.<name>, MaterialIcons.fontFamily
+        self.engine.rootContext().setContextProperty("MaterialIcons", createMaterialIcons(parent=self))
         self.engine.rootContext().setContextProperty("Filepath", FilepathHelper(parent=self))
         self.engine.rootContext().setContextProperty("Scene3DHelper", Scene3DHelper(parent=self))
         self.engine.rootContext().setContextProperty("Transformations3DHelper", Transformations3DHelper(parent=self))

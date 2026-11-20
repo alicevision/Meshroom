@@ -97,6 +97,8 @@ class ComputeMeshroomScene(desc.CommandLineNode):
     """
 
     pythonExecutable = "python"
+    # Set to True to compute all the nodes of the scene in the same process
+    inCurrentEnv = False
     category = "Utils"
     commandLine = "{node.nodeDesc.pythonExecutable} " + shlex.quote(str(_MESHROOM_BATCH))
 
@@ -164,6 +166,8 @@ class ComputeMeshroomScene(desc.CommandLineNode):
                 cmd += f" --submitLabel {shlex.quote(node.submitLabel.value)}"
         else:
             cmd += " --compute yes"
+            if self.inCurrentEnv:
+                cmd += " --inCurrentEnv"
 
         return cmd
 

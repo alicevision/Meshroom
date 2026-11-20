@@ -111,6 +111,34 @@ def test_sceneAttributesAreExposedAndOverridden(tmp_path):
         }
 
 
+def test_inCurrentEnvIsPassedToMeshroomBatch(tmp_path):
+    class ComputeDccScene(ComputeMeshroomScene):
+        """ Compute a scene in a single process of a DCC interpreter. """
+        pythonExecutable = "mayapy"
+        inCurrentEnv = True
+
+    with registeredNodeTypes([ComputeMeshroomScene, ComputeDccScene, GraphInput, GraphOutput]):
+        scenePath = tmp_path / "scene.mg"
+        _saveScene(scenePath)
+        graph = Graph("")
+        defaultNode = graph.addNewNode("ComputeMeshroomScene", scene=str(scenePath))
+        dccNode = graph.addNewNode("ComputeDccScene", scene=str(scenePath))
+
+        def commandLine(node):
+            return shlex.split(node.nodeDesc.buildCommandLine(SimpleNamespace(node=node)))
+
+        # By default, each node of the scene is computed in its plugin's environment
+        assert "--inCurrentEnv" not in commandLine(defaultNode)
+
+        args = commandLine(dccNode)
+        assert args[0] == "mayapy"
+        assert "--inCurrentEnv" in args
+
+        # It only applies to a local computation
+        dccNode.submit.value = True
+        assert "--inCurrentEnv" not in commandLine(dccNode)
+
+
 def test_outputNodesAreNotExposed(tmp_path):
     with registeredNodeTypes([ComputeMeshroomScene, GraphInput, GraphOutput, OutputNodeTest]):
         scenePath = tmp_path / "scene.mg"

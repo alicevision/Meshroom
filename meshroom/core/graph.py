@@ -2136,9 +2136,9 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
 
 
 def submitGraph(graph: Graph, submitter, toNodes=None, submitLabel="{projectName}"):
+    # No transitive reduction (flowEdges) here: it runs on the full graph, so it can drop a dependency
+    # whose longer path goes through already computed nodes, absent from edgesToProcess.
     nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
-    flowEdges = graph.flowEdges(startNodes=toNodes)
-    edgesToProcess = set(edgesToProcess).intersection(flowEdges)
 
     # Filter nodes to only keep computable ones
     # For now we decide not to update the edges list because it will not have an impact

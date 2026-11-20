@@ -397,3 +397,33 @@ class TestDFS:
 
         assert len(nodes) == len(set(nodes)), "dfsOnDiscover returned duplicate nodes"
         assert set(nodes) == {A, B, C}
+
+
+def test_submit_keeps_dependency_reachable_through_computed_node(graphSavedOnDisk):
+    """
+    A dependency must be submitted even when a longer path to it exists through an already computed node.
+    """
+    from unittest.mock import MagicMock, patch
+    import meshroom.core
+    from meshroom.core.graph import submitGraph
+    from meshroom.core.node import Status
+
+    graph = graphSavedOnDisk
+    tC = graph.addNewNode("AppendText", inputText="echo C")
+    tB = graph.addNewNode("AppendText", inputText="echo B")
+    tE = graph.addNewNode("AppendFiles")
+    # C -> B (computed) -> E, and C -> E directly
+    tC.output.connectTo(tB.input)
+    tB.output.connectTo(tE.input)
+    tC.output.connectTo(tE.input2)
+    graph.update()
+    for chunk in tB.chunks:
+        chunk.status.status = Status.SUCCESS
+
+    submitter = MagicMock()
+    with patch.dict(meshroom.core.submitters, {"Dummy": submitter}):
+        submitGraph(graph, "Dummy", toNodes=[tE])
+
+    nodes, edges = submitter.submit.call_args[0][:2]
+    assert set(nodes) == {tC, tE}
+    assert (tE, tC) in set(edges)

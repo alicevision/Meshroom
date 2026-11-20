@@ -59,6 +59,7 @@ class ValueTypeErrors(Enum):
     TYPE = auto()  # Invalid type
     RANGE = auto()  # Invalid range
     DYNAMIC_OUTPUT = auto()  # Dynamic output not supported
+    AUTO_VALUE = auto()  # Invalid automatic value (wrong type or inside the range)
 
 """
 This object is used in group/commandLineGroup to check if
@@ -566,14 +567,49 @@ class BoolParam(Param):
         return "", ValueTypeErrors.NONE
 
 
-class IntParam(Param):
+class _AutoValueMixin:
+    """
+    Shared logic for numeric params with an optional "automatic value":
+    a special value outside the range (e.g. 0 meaning "automatic" or "no limit"),
+    stored as the attribute's regular value and toggled by a button in the UI.
+    """
+
+    def _isAutoValueValid(self, valueType) -> bool:
+        """ Return False if the automatic value has the wrong type or lies inside the range. """
+        autoValue = self._autoValue
+        if autoValue is None:
+            return True
+        if isinstance(autoValue, bool) or not isinstance(autoValue, valueType):
+            return False
+        bounds = self._range[:2]
+        # A range of the wrong type is reported separately (ValueTypeErrors.RANGE)
+        if len(bounds) == 2 and all(isinstance(b, (int, float)) for b in bounds) and bounds[0] <= autoValue <= bounds[1]:
+            return False
+        return True
+
+    #Override
+    def clone(self):
+        cloned = super().clone()
+        cloned._range = self._range
+        cloned._autoValue = self._autoValue
+        cloned._autoLabel = self._autoLabel
+        cloned._autoIcon = self._autoIcon
+        return cloned
+
+
+class IntParam(_AutoValueMixin, Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, name, label=None, description=None, value=None, range=None, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True,
-                 invalidate=True, semantic="", visible=True, exposed=False, validators=None):
+                 invalidate=True, semantic="", visible=True, exposed=False, validators=None,
+                 autoValue=None, autoLabel="Auto", autoIcon="motion_photos_auto"):
         self._range = range or []
+        # Special value outside the range, toggled by a button in the UI (e.g. 0 for "automatic" or "no limit")
+        self._autoValue = autoValue
+        self._autoLabel = autoLabel
+        self._autoIcon = autoIcon  # Name of a MaterialIcons icon
 
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
@@ -594,6 +630,9 @@ class IntParam(Param):
                              f"{value}, type: {type(value)})")
 
     def checkValueTypes(self):
+        # The automatic value is checked even without a default value
+        if not self._isAutoValueValid(int):
+            return self.name, ValueTypeErrors.AUTO_VALUE
         if self.value is None:
             return "", ValueTypeErrors.NONE
         if not isinstance(self.value, int):
@@ -603,16 +642,25 @@ class IntParam(Param):
         return "", ValueTypeErrors.NONE
 
     range = Property(VariantList, lambda self: self._range, constant=True)
+    autoValue = Property(Variant, lambda self: self._autoValue, constant=True)
+    autoLabel = Property(str, lambda self: self._autoLabel, constant=True)
+    autoIcon = Property(str, lambda self: self._autoIcon, constant=True)
+    hasAutoValue = Property(bool, lambda self: self._autoValue is not None, constant=True)
 
 
-class FloatParam(Param):
+class FloatParam(_AutoValueMixin, Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
     def __init__(self, name, label=None, description=None, value=None, range=None, keyable=False, keyType=None,
                  group="allParams", commandLineGroup=_setParamSentinel, advanced=False, enabled=True,
-                 invalidate=True, semantic="", visible=True, exposed=False, validators=None):
+                 invalidate=True, semantic="", visible=True, exposed=False, validators=None,
+                 autoValue=None, autoLabel="Auto", autoIcon="motion_photos_auto"):
         self._range = range or []
+        # Special value outside the range, toggled by a button in the UI (e.g. 0 for "automatic" or "no limit")
+        self._autoValue = autoValue
+        self._autoLabel = autoLabel
+        self._autoIcon = autoIcon  # Name of a MaterialIcons icon
         commandLineGroup = commandLineGroup if commandLineGroup is not _setParamSentinel else group
 
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value,
@@ -631,6 +679,9 @@ class FloatParam(Param):
                              f"{value}, type:{type(value)})")
 
     def checkValueTypes(self):
+        # The automatic value is checked even without a default value
+        if not self._isAutoValueValid(float):
+            return self.name, ValueTypeErrors.AUTO_VALUE
         if self.value is None:
             return "", ValueTypeErrors.NONE
         if not isinstance(self.value, float):
@@ -640,6 +691,10 @@ class FloatParam(Param):
         return "", ValueTypeErrors.NONE
 
     range = Property(VariantList, lambda self: self._range, constant=True)
+    autoValue = Property(Variant, lambda self: self._autoValue, constant=True)
+    autoLabel = Property(str, lambda self: self._autoLabel, constant=True)
+    autoIcon = Property(str, lambda self: self._autoIcon, constant=True)
+    hasAutoValue = Property(bool, lambda self: self._autoValue is not None, constant=True)
 
 
 class PushButtonParam(Param):

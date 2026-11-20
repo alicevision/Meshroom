@@ -318,6 +318,9 @@ class NodeDescProvider(BaseObject):
                 errorMessages.append(f" - 'value': Invalid type for parameter '{errMsg}'.")
             elif errType == ValueTypeErrors.RANGE:
                 errorMessages.append(f" - 'range': Invalid range value for parameter '{errMsg}'.")
+            elif errType == ValueTypeErrors.AUTO_VALUE:
+                errorMessages.append(f" - 'autoValue': Invalid automatic value for parameter '{errMsg}' "
+                                     "(wrong type or inside the range).")
             elif errType == ValueTypeErrors.DYNAMIC_OUTPUT:
                 errorMessages.append(f" - 'value': Unsupported dynamic output for parameter '{errMsg}'.")
             else:

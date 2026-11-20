@@ -18,7 +18,6 @@ Page {
     property alias headerBar: headerLayout.data
     readonly property color defaultHeaderColor: Qt.darker(palette.window, 1.15)
     property color headerColor: defaultHeaderColor
-    property Component titleComponent: null  // Allow custom component for title
     property alias footerContent: footerLayout.data
     property alias icon: iconPlaceHolder.data
     property alias loading: loadingIndicator.running
@@ -71,20 +70,11 @@ Page {
             }
 
             // Title
-            // Either we load the custom root.titleComponent or we just put the root.title
-            Loader {
-                id: titleLoader
-                sourceComponent: root.titleComponent !== null ? root.titleComponent : defaultTitleComponent
-                Layout.fillWidth: false
-            }
-            Component {
-                id: defaultTitleComponent
-                Label {
-                    text: root.title
-                    elide: Text.ElideRight
-                    topPadding: m.vPadding
-                    bottomPadding: m.vPadding
-                }
+            Label {
+                text: root.title
+                elide: Text.ElideRight
+                topPadding: m.vPadding
+                bottomPadding: m.vPadding
             }
 
             Item {

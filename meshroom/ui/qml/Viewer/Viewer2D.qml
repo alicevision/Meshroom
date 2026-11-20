@@ -348,13 +348,13 @@ FocusScope {
                 let [_, filesSeqs] = Filepath.resolveSequence(pathTemplate, includesSeqMissingFiles)
                 // Concat in one array all sequences in resolved
                 outputFiles = [].concat.apply([], filesSeqs)
-                let newFrameRange = [0, outputFiles.length - 1]
+                let newFrameRange = [0, Math.max(0, outputFiles.length - 1)]
 
                 if(frameRange.min != newFrameRange[0] || frameRange.max != newFrameRange[1]) {
                     frameRange.min = newFrameRange[0]
                     frameRange.max = newFrameRange[1]
                     // Change the current frame, only if the frame range is different
-                    currentFrame = frameRange.min
+                    sequencePlayer.setFrameSilently(frameRange.min)
                 }
 
                 enableSequencePlayerAction.checked = true
@@ -368,31 +368,39 @@ FocusScope {
                     // If there is one or several sequences, take the first one
                     outputFiles = filesSeqs[0]
                     newFrameRange = frameRanges[0]
+                }
 
-                    if(frameRange.min != newFrameRange[0] || frameRange.max != newFrameRange[1]) {
-                        frameRange.min = newFrameRange[0]
-                        frameRange.max = newFrameRange[1]
-                        // Change the current frame, only if the frame range is different
-                        currentFrame = frameRange.min
-                    }
+                if(frameRange.min != newFrameRange[0] || frameRange.max != newFrameRange[1]) {
+                    frameRange.min = newFrameRange[0]
+                    frameRange.max = newFrameRange[1]
+                    // Change the current frame, only if the frame range is different
+                    sequencePlayer.setFrameSilently(frameRange.min)
                 }
 
 
                 enableSequencePlayerAction.checked = true
             }
         } else {
+            // Sort like the ImageGallery (by file basename, full path as tie-breaker)
+            // so that the frame index matches the order of the images in the gallery
             let objs = []
             for (let i = 0; i < _currentScene.viewpoints.count; i++) {
-                objs.push(_currentScene.viewpoints.at(i))
+                let vp = _currentScene.viewpoints.at(i)
+                let path = vp.childAttribute("path").value
+                objs.push({ "vp": vp, "path": path, "basename": Filepath.basename(path) })
             }
-            objs.sort((a, b) => { return a.childAttribute("path").value < b.childAttribute("path").value ? -1 : 1; })
-            
+            objs.sort((a, b) => {
+                if (a.basename !== b.basename)
+                    return a.basename < b.basename ? -1 : 1
+                return a.path < b.path ? -1 : (a.path > b.path ? 1 : 0)
+            })
+
             for (let i = 0; i < objs.length; i++) {
-                outputFiles.push(Filepath.resolve(pathTemplate, objs[i]))
+                outputFiles.push(Filepath.resolve(pathTemplate, objs[i].vp))
             }
 
             frameRange.min = 0
-            frameRange.max = outputFiles.length - 1
+            frameRange.max = Math.max(0, outputFiles.length - 1)
         }
         return outputFiles
     }
@@ -451,7 +459,7 @@ FocusScope {
             root.source = ""
             root.sequence = getSequence()
             if (currentFrame > frameRange.max)
-                currentFrame = frameRange.min
+                sequencePlayer.setFrameSilently(frameRange.min)
         }
     }
 

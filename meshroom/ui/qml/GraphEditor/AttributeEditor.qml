@@ -19,6 +19,7 @@ ListView {
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
     signal showInViewer(var attribute)
+    signal tableRequested(var attribute)
 
     implicitHeight: contentHeight
 
@@ -56,6 +57,10 @@ ListView {
 
             onShowInViewer: function(attr) {
                 root.showInViewer(attr)
+            }
+
+            onTableRequested: function(attr) {
+                root.tableRequested(attr)
             }
         }
 

@@ -113,6 +113,12 @@ if not node._chunksCreated:
 node.createStatusFileIfMissing()
 
 # Get chunks to process in the current process
+# This fallback computation must be kept, even though creating a task per chunk is the expected behaviour:
+#  - submitters that cannot edit the tasks of a running job (no SubmitterOptionsEnum.EDIT_TASKS) have no
+#    other way to compute the chunks of a node with a dynamic size, which are only known once the job runs;
+#  - the submitter may not be available in the farm environment (e.g. not in MESHROOM_SUBMITTERS_PATH);
+#  - external submitters rely on this script's options (--inCurrentEnv, --forceStatus) and on this behaviour.
+# Removing it would make the jobs of these submitters fail instead of computing the node.
 chunksToProcess = []
 if submitter:
     if not submitter._options.includes(SubmitterOptionsEnum.EDIT_TASKS):

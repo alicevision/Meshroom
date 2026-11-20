@@ -2078,7 +2078,7 @@ def getAlreadySubmittedChunks(nodes):
     return out
 
 
-def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
+def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False, inCurrentEnv: bool = False):
     """
     """
     if forceCompute:
@@ -2113,7 +2113,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                 logging.warning(f"{node.name} is in Compatibility Mode and cannot be computed: {node.issueDetails}.")
                 continue
 
-            node.preprocess(forceCompute)
+            node.preprocess(forceCompute, inCurrentEnv)
             if not node._chunksCreated:
                 node.createChunks()
             multiChunks = len(node.chunks) > 1
@@ -2124,8 +2124,18 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
                         chunk=c+1, nbChunks=len(node.chunks), nodeName=node.nodeType))
                 else:
                     print(f'\n[{n + 1}/{len(nodes)}] {node.nodeType}')
-                chunk.process(forceCompute)
-            node.postprocess(forceCompute)
+                if inCurrentEnv and node.getMrNodeType() == meshroom.core.MrNodeType.NODE \
+                        and (forceCompute or not chunk.isFinished()):
+                    # Done by meshroom_compute when the chunk is computed in its own process.
+                    # Skipped for finished chunks, as preparing the logger clears their log.
+                    node.prepareLogger(chunk.range.iteration)
+                    try:
+                        chunk.process(forceCompute, inCurrentEnv)
+                    finally:
+                        node.restoreLogger()
+                else:
+                    chunk.process(forceCompute, inCurrentEnv)
+            node.postprocess(forceCompute, inCurrentEnv)
         except Exception as exc:
             logging.error(f"Error on node computation: {exc}")
             graph.clearSubmittedNodes()

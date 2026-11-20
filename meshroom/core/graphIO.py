@@ -1,3 +1,6 @@
+import json
+import logging
+import os
 from enum import Enum
 from typing import Any, Dict, List, Tuple, TYPE_CHECKING, Union
 
@@ -26,6 +29,10 @@ class GraphIO:
         CacheDir = "cacheDir"
         Graph = "graph"
         Template = "template"
+        # Template only: optional presentation metadata ("category", "icon", "label", "description", "order")
+        TemplateInfo = "templateInfo"
+        # Project only: the template it was created from ({"name": template key, "plugin": plugin name or None})
+        SourceTemplate = "sourceTemplate"
         NodeDescriptions = "nodeDescriptions"
 
     class Features(Enum):
@@ -64,6 +71,43 @@ class GraphIO:
         return tuple(features)
 
 
+def getTemplateSource(filepath) -> Dict[str, Any]:
+    """Return the reference to the template at `filepath`, stored in the header of the projects created from it.
+
+    The template key is stored rather than its path (which differs per install) so that its metadata
+    can be resolved at read time with `getTemplateInfo`.
+
+    Returns:
+        dict: {"name": template key, "plugin": name of the plugin providing it, or None}
+    """
+    path = os.path.realpath(filepath)
+    pluginName = next((plugin.name for plugin in meshroom.core.pluginManager.getPlugins().values()
+                       if any(os.path.realpath(p) == path for p in plugin.templates.values())), None)
+    return {"name": os.path.splitext(os.path.basename(path))[0], "plugin": pluginName}
+
+
+def getTemplateInfo(name: str, pluginName: str = None) -> Dict[str, Any]:
+    """Return the metadata ("category", "icon", ...) of the registered template `name`.
+
+    Args:
+        name: the template key.
+        pluginName: (optional) the plugin providing the template, looked up first.
+
+    Returns:
+        dict: the template metadata, empty if the template is not found or has none.
+    """
+    plugin = meshroom.core.pluginManager.getPlugin(pluginName) if pluginName else None
+    path = (plugin.templates.get(name) if plugin else None) or meshroom.core.pipelineTemplates.get(name)
+    if not path:
+        return {}
+    try:
+        with open(path) as file:
+            return json.load(file).get(GraphIO.Keys.Header, {}).get(GraphIO.Keys.TemplateInfo, {})
+    except (OSError, ValueError) as e:
+        logging.warning(f"Could not read the metadata of the template '{name}' ({path}): {e}")
+        return {}
+
+
 class GraphSerializer:
     """Standard Graph serializer."""
 
@@ -91,7 +135,7 @@ class GraphSerializer:
             - version of the software used to create it.
             - version of the file format.
             - version of the nodes types used in the graph.
-            - template flag.
+            - template the project was created from, if any.
         """
         header: Dict[str, Any] = {}
         header[GraphIO.Keys.ReleaseVersion] = meshroom.__version__
@@ -103,6 +147,9 @@ class GraphSerializer:
                 "absoluteCacheDir": self._graph._absoluteCacheDir,
                 "relativeCacheDir": self._graph._relativeCacheDir,
             }
+        sourceTemplate = self._graph.header.get(GraphIO.Keys.SourceTemplate)
+        if sourceTemplate:
+            header[GraphIO.Keys.SourceTemplate] = sourceTemplate
         return header
 
     def serializeNodeDescriptions(self) -> Dict[str, str]:
@@ -142,7 +189,11 @@ class TemplateGraphSerializer(GraphSerializer):
 
     def serializeHeader(self) -> dict:
         header = super().serializeHeader()
+        header.pop(GraphIO.Keys.SourceTemplate, None)
         header[GraphIO.Keys.Template] = True
+        templateInfo = self._graph.header.get(GraphIO.Keys.TemplateInfo)
+        if templateInfo:
+            header[GraphIO.Keys.TemplateInfo] = templateInfo
         return header
 
     def serializeNode(self, node: Node) -> dict:

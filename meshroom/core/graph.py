@@ -18,7 +18,7 @@ from meshroom.core import Version, submitters, hashValue
 from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
-from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
+from meshroom.core.graphIO import GraphIO, getTemplateSource, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode, GRAPH_INPUT_NODE_TYPE, GRAPH_OUTPUT_NODE_TYPE
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
@@ -298,6 +298,7 @@ class Graph(BaseObject):
             keepOutputNodes = copyOutputs
 
         self._deserialize(Graph._loadGraphData(filepath))
+        self.header[GraphIO.Keys.SourceTemplate] = getTemplateSource(filepath)
 
         # Creating nodes from a template is conceptually similar to explicit node creation,
         # therefore the nodes descriptors' "onNodeCreated" callback is triggered for each

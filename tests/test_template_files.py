@@ -9,6 +9,7 @@ from meshroom.core.files import (
 )
 from meshroom.core import pluginManager
 from meshroom.core.graph import Graph
+from meshroom.core.graphIO import getTemplateInfo
 from .utils import registeredPlugin
 
 
@@ -136,3 +137,90 @@ def test_template_version_check_falls_back_to_legacy_header(tmp_path):
     template_file.write_text(json.dumps(file_data))
 
     assert not checkTemplateVersions(str(template_file), nodesAlreadyLoaded=True)
+
+
+def test_template_info_is_kept_on_template_saves(tmp_path):
+    template_file = tmp_path / f"template{MESHROOM_TEMPLATE_EXTENSION}"
+    graph = Graph("Template")
+    graph.header["templateInfo"] = {"category": "Photogrammetry", "icon": "camera"}
+    graph.save(template_file, setupProjectFile=False, template=True)
+
+    resaved_file = tmp_path / f"resaved{MESHROOM_TEMPLATE_EXTENSION}"
+    loaded_graph = Graph("")
+    loaded_graph.initFromTemplate(template_file)
+    loaded_graph.save(resaved_file, setupProjectFile=False, template=True)
+
+    header = json.loads(resaved_file.read_text())["header"]
+    assert header["templateInfo"] == {"category": "Photogrammetry", "icon": "camera"}
+    assert "sourceTemplate" not in header
+
+
+def test_project_records_its_source_template(tmp_path):
+    template_file = tmp_path / f"myTemplate{MESHROOM_TEMPLATE_EXTENSION}"
+    graph = Graph("Template")
+    graph.header["templateInfo"] = {"category": "Utilities"}
+    graph.save(template_file, setupProjectFile=False, template=True)
+
+    project = Graph("")
+    project.initFromTemplate(template_file)
+    project_file = tmp_path / f"project{MESHROOM_PROJECT_EXTENSION}"
+    project.save(project_file)
+
+    header = json.loads(project_file.read_text())["header"]
+    assert header["sourceTemplate"] == {"name": "myTemplate", "plugin": None}
+    assert "templateInfo" not in header
+
+    # The source template is kept when re-saving the loaded project
+    reloaded = Graph("")
+    reloaded.load(project_file)
+    reloaded.save()
+    assert json.loads(project_file.read_text())["header"]["sourceTemplate"] == header["sourceTemplate"]
+
+    # Metadata is resolved from the registered template at read time
+    previous_templates = dict(meshroom.core.pipelineTemplates)
+    try:
+        meshroom.core.pipelineTemplates.clear()
+        assert getTemplateInfo("myTemplate") == {}
+        meshroom.core.loadPipelineTemplates(str(tmp_path))
+        assert getTemplateInfo("myTemplate") == {"category": "Utilities"}
+    finally:
+        meshroom.core.pipelineTemplates.clear()
+        meshroom.core.pipelineTemplates.update(previous_templates)
+
+
+def test_project_records_the_plugin_of_its_source_template(tmp_path):
+    meshroom_folder_path = tmp_path / "meshroom"
+    meshroom_folder_path.mkdir()
+    template_file = meshroom_folder_path / f"pluginTemplate{MESHROOM_TEMPLATE_EXTENSION}"
+    graph = Graph("Template")
+    graph.header["templateInfo"] = {"category": "HDR"}
+    graph.save(template_file, setupProjectFile=False, template=True)
+
+    with registeredPlugin("testSourceTemplatePlugin", str(tmp_path)):
+        project = Graph("")
+        project.initFromTemplate(str(template_file))
+        source = project.header["sourceTemplate"]
+        assert source == {"name": "pluginTemplate", "plugin": "testSourceTemplatePlugin"}
+        assert getTemplateInfo(source["name"], source["plugin"]) == {"category": "HDR"}
+
+
+def test_set_template_info_is_saved_with_the_template(tmp_path):
+    template_file = tmp_path / f"template{MESHROOM_TEMPLATE_EXTENSION}"
+    graph = Graph("Template")
+    assert graph.templateInfo == {}
+
+    graph.setTemplateInfo({"label": "My Template", "icon": "camera"})
+    assert graph.templateInfo == {"label": "My Template", "icon": "camera"}
+    graph.save(template_file, setupProjectFile=False, template=True)
+    assert json.loads(template_file.read_text())["header"]["templateInfo"] == {"label": "My Template", "icon": "camera"}
+
+    # An empty info removes it from the template
+    graph.setTemplateInfo({})
+    assert graph.templateInfo == {}
+    graph.save(template_file, setupProjectFile=False, template=True)
+    assert "templateInfo" not in json.loads(template_file.read_text())["header"]
+
+    # The returned info is a copy: editing it does not change the graph
+    graph.setTemplateInfo({"category": "Utilities"})
+    graph.templateInfo["category"] = "Other"
+    assert graph.templateInfo == {"category": "Utilities"}

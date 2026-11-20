@@ -97,6 +97,34 @@ Plugins without a `pyproject.toml` can still use a `./meshroom/config.json` file
 
 In `config.json`, a relative `path` value is resolved against the `meshroom` folder, not the plugin root folder.
 
+## Template Metadata
+
+A pipeline template can describe how it is presented in Meshroom with an optional `templateInfo` object in its file header. All keys are optional:
+
+```json
+{
+    "header": {
+        "template": true,
+        "templateInfo": {
+            "label": "Photogrammetry",
+            "category": "Photogrammetry",
+            "icon": "photo_camera",
+            "description": "Reconstruct a textured mesh from a set of images.",
+            "order": 0
+        }
+    }
+}
+```
+
+* `label`: the name shown for the template. Default: the file name split on capitals (`panoramaHdr` → "Panorama Hdr").
+* `category`: the group of the template. Its color comes from the built-in table [meshroom/ui/config/templateCategoryColors.json](meshroom/ui/config/templateCategoryColors.json), matched case-insensitively; any other category gets a color computed from its lower-case name (hue = `zlib.crc32(name.lower().encode("utf-8")) % 360`), the same on every machine.
+* `icon`: the name of a [Material Icon](https://fonts.google.com/icons) (e.g. `photo_camera`). Default: no icon.
+* `description`: shown as the tooltip of the template.
+
+In Meshroom, **File > Templates > Save As Template...** (or a click on the template badge of the Graph Editor when a template is open) edits this metadata while saving the `.mgt` file. Fields left empty are not written.
+
+Projects created from a template store its name and plugin (`sourceTemplate` in their header), so the metadata is always read from the installed template: updating it updates existing projects. Use `meshroom_info --pipeline <name>` to check it.
+
 ## Installing a Plugin
 
 A plugin can be installed in one of three ways:

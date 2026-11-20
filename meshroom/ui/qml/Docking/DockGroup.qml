@@ -138,6 +138,13 @@ Item {
             height: parent.height - y
             spacing: 2
 
+            // Tabs shrink (their titles elide) to leave room for the toolbar of the displayed panel
+            readonly property real maxTabWidth: {
+                var count = Math.max(tabRepeater.count, 1)
+                var available = header.width - x - toolBarHost.width - toolBarClip.anchors.leftMargin - toolBarHost.anchors.rightMargin
+                return Math.max((available - spacing * (count - 1)) / count, 48)
+            }
+
             Repeater {
                 id: tabRepeater
                 model: root.openPanelIds
@@ -150,7 +157,7 @@ Item {
                     readonly property bool displayed: panelId === root.displayedPanelId
 
                     // The room of the close button is kept when it is hidden, so the tabs do not move
-                    width: Math.min(tabLabel.implicitWidth + closeButton.width, 300)
+                    width: Math.min(tabLabel.implicitWidth + closeButton.width, 300, tabRow.maxTabWidth)
                     height: tabRow.height
                     color: displayed ? root.palette.window : Qt.darker(root.palette.window, 1.30)
                     border.color: Qt.darker(root.palette.window, 1.50)
@@ -230,12 +237,21 @@ Item {
             }
         }
 
-        // Toolbar of the displayed panel
-        Row {
-            id: toolBarHost
+        // Toolbar of the displayed panel, clipped on its left when even the shrunk tabs leave too little room
+        Item {
+            id: toolBarClip
+            anchors.left: tabRow.right
+            anchors.leftMargin: 4
             anchors.right: parent.right
-            anchors.rightMargin: 2
-            anchors.verticalCenter: parent.verticalCenter
+            height: parent.height
+            clip: true
+
+            Row {
+                id: toolBarHost
+                anchors.right: parent.right
+                anchors.rightMargin: 2
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
     }
 

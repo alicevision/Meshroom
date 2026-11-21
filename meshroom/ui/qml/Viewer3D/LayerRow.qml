@@ -9,6 +9,8 @@ import MaterialIcons 2.2
 /**
  * ListView delegate for one entry of a LayerList: selection bar, loading/remove button, label,
  * visibility / picking toggles and an optional expandable advanced section.
+ * While the entry waits for its file (e.g. its node is not computed), the label is grayed out and only
+ * the remove button is shown.
  *
  * @p advancedComponent root item must declare `property var entry`; it is bound to this row's entry.
  */
@@ -37,6 +39,7 @@ MouseArea {
     }
     readonly property var entryLayer: entry ? entry.layer : null
     readonly property bool loading: entry ? entry.loading : false
+    readonly property bool waiting: entry ? entry.waiting : false
     readonly property bool isCurrent: ListView.isCurrentItem
     // Active orbit motion of the target SceneView, or null while looking through an SfM camera
     readonly property var orbit: layerList && layerList.sceneView && layerList.sceneView.motionInfo instanceof OrbitMotionInfo
@@ -72,14 +75,24 @@ MouseArea {
             Label {
                 Layout.fillWidth: true
                 text: root.label.length > 0 ? root.label : Inspector3DUtils.randomLabel(root.index, root.layerList.typeName)
-                color: palette.text
+                color: root.waiting ? palette.mid : palette.text
                 elide: Text.ElideMiddle
                 font.weight: root.isCurrent ? Font.DemiBold : Font.Normal
+                font.italic: root.waiting
                 topPadding: 3
                 bottomPadding: topPadding
+
+                ToolTip.visible: root.waiting && labelHover.hovered
+                ToolTip.text: "Waiting for the node to be computed"
+                ToolTip.delay: 500
+
+                HoverHandler {
+                    id: labelHover
+                }
             }
 
             MaterialToolButton {
+                visible: !root.waiting
                 enabled: root.entryLayer !== null && !root.loading && root.orbit !== null
                 text: MaterialIcons.center_focus_strong
                 font.pointSize: 10
@@ -95,6 +108,7 @@ MouseArea {
             }
 
             ToggleIconButton {
+                visible: !root.waiting
                 enabled: root.entryLayer !== null
                 active: root.entryLayer ? root.entryLayer.visible : true
                 activeIcon: MaterialIcons.visibility
@@ -114,7 +128,7 @@ MouseArea {
             }
 
             ToggleIconButton {
-                visible: root.showPicking
+                visible: root.showPicking && !root.waiting
                 enabled: root.entryLayer !== null
                 active: root.entryLayer ? root.entryLayer.picking : true
                 activeIcon: MaterialIcons.touch_app
@@ -124,7 +138,7 @@ MouseArea {
             }
 
             ToggleIconButton {
-                visible: root.advancedComponent !== null
+                visible: root.advancedComponent !== null && !root.waiting
                 enabled: !root.loading
                 active: root.expanded
                 inactiveOpacity: 1.0
@@ -140,7 +154,8 @@ MouseArea {
             Layout.fillWidth: true
             Layout.leftMargin: 12
             Layout.rightMargin: 8
-            active: root.expanded && root.entry !== null
+            // Kept expanded while waiting: the section shows again once the entry is loaded
+            active: root.expanded && !root.waiting && root.entry !== null
             visible: active
             sourceComponent: root.advancedComponent
             onLoaded: item.entry = Qt.binding(() => root.entry)

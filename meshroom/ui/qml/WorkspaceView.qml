@@ -44,16 +44,19 @@ Item {
             if (panel3dViewerLoader.item) {
                 panel3dViewerLoader.item.viewer3D.collection.clear()
             }
+            Qt.callLater(viewSfM)
         }
-        function onSfmChanged() { viewSfM() }
-        function onSfmReportChanged() { viewSfM() }
+        // Deferred: Scene.onGraphChanged updates the SfM before onGraphChanged above clears the 3D viewer.
+        // Qt.callLater coalesces these calls, so the SfM is loaded once, after the clear.
+        function onSfmChanged() { Qt.callLater(viewSfM) }
+        function onSfmReportChanged() { Qt.callLater(viewSfM) }
     }
     Component.onCompleted: viewSfM()
 
-    // Load the current scene's SfM file
+    // Load the current scene's SfM file, only once computed (the active SfM node may be a non-computed node of a template)
     function viewSfM() {
         var activeNode = _currentScene.activeNodes ? _currentScene.activeNodes.get('sfm').node : null
-        if (!activeNode)
+        if (!activeNode || !activeNode.isComputed)
             return
         if (panel3dViewerLoader.item) {
             panel3dViewerLoader.item.viewer3D.viewAttribute(activeNode.attribute('output'))

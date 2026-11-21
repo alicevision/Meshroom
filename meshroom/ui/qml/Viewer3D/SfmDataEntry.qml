@@ -9,9 +9,13 @@ QtObject {
     id: root
 
     required property string source
+    /** Whether the file is available (e.g. its node is computed): the source is only loaded when ready. */
+    required property bool ready
+    /** True while waiting for the file to become available. */
+    readonly property bool waiting: !ready
 
     readonly property SfmDataObject dataObject: SfmDataObject {
-        source: root.source
+        source: root.ready ? root.source : ""
     }
 
     readonly property SfmDataLayer layer: SfmDataLayer {

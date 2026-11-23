@@ -2325,9 +2325,10 @@ class AnySet(GroupAttribute):
             return super().uid()
 
         # The children are user-defined: their names and structures are part of the AnySet definition,
-        # so they contribute to the UID along with the children values
+        # so they contribute to the UID along with the children values.
+        # The children are identified by their names, so they are sorted by name: their order does not count.
         uids = []
-        for child in self._value:
+        for child in sorted(self._value, key=lambda child: child.name):
             uids.append((child.name, AnySet._schemaKey(child.desc), child.uid()))
         return hashValue(uids)
 

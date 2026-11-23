@@ -54,7 +54,7 @@ Panel {
     signal showAttributeInViewer(var attribute)
     signal upgradeRequest()
 
-    title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" + (node.label !== node.defaultLabel ? " (" + node.defaultLabel + ")" : "") : "")
+    title: "Node Editor"
     icon: MaterialLabel { text: MaterialIcons.tune }
 
     onGlobalStatusChanged: {

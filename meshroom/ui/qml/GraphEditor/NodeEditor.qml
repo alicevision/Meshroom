@@ -165,21 +165,21 @@ Panel {
             Keys.onReturnPressed: {
                 if (!readOnly) {
                     root.validateNodeNameChange(text)
-                    endEdit()
+                    nodeNameField.endEdit()
                 }
             }
 
             Keys.onEnterPressed: {
                 if (!readOnly) {
                     root.validateNodeNameChange(text)
-                    endEdit()
+                    nodeNameField.endEdit()
                 }
             }
 
             Keys.onEscapePressed: {
                 if (!readOnly) {
                     root.cancelNodeNameChange()
-                    endEdit()
+                    nodeNameField.endEdit()
                 }
             }
 
@@ -187,7 +187,7 @@ Panel {
                 if (!activeFocus && !readOnly) {
                     // Focus lost without pressing Enter - discard changes
                     root.cancelNodeNameChange()
-                    endEdit()
+                    nodeNameField.endEdit()
                 }
             }
 
@@ -196,7 +196,7 @@ Panel {
                 function onSelectedNodeChanged() {
                     if (!activeFocus && !readOnly) {
                         root.cancelNodeNameChange()
-                        endEdit()
+                        nodeNameField.endEdit()
                     }
                 }
             }

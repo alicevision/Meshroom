@@ -47,6 +47,31 @@ def _captureExpressionTemplates(attr, value):
             except (KeyError, AttributeError):
                 logging.debug(f"Skipping expression template capture for {key} on {attr}.")
 
+
+def removeLegacyFlattenedItems(items: list) -> list:
+    """ Remove the copies of the descendants of the group items from the serialized items of a group.
+        Older versions serialized the items of a group flattened: each group item was followed by a copy
+        of all its descendants, which are already serialized as the (also flattened) items of this group item.
+
+    Args:
+        items: the serialized items of a group.
+
+    Returns:
+        The serialized direct items of the group.
+    """
+    directItems = []
+    index = 0
+    while index < len(items):
+        item = items[index]
+        directItems.append(item)
+        index += 1
+        descendants = item.get("items") if isinstance(item, dict) else None
+        # Only skip exact copies of the descendants, so that the items serialized by the current version are kept
+        if isinstance(descendants, list) and descendants and items[index:index + len(descendants)] == descendants:
+            index += len(descendants)
+    return directItems
+
+
 def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     """ Retrieve the corresponding Attribute Description from the given dictionary
     """
@@ -63,7 +88,9 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     values = descType.get('values')
     exclusive = descType.get('exclusive')
     keyable = descType.get('keyable')
+    keyType = descType.get('keyType')
     shape = descType.get('shape')
+    valueRange = descType.get('range')
 
     kwargs = {'name': name, 'label': label, 'description': description}
 
@@ -77,7 +104,7 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
         kwargs['elementDesc'] = attributeDescriptionFactory(elementDesc)
 
     if items is not None:
-        kwargs['items'] = [attributeDescriptionFactory(item) for item in items]
+        kwargs['items'] = [attributeDescriptionFactory(item) for item in removeLegacyFlattenedItems(items)]
 
     if values is not None:
         kwargs['values'] = values
@@ -85,8 +112,15 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     if exclusive is not None:
         kwargs['exclusive'] = exclusive
 
-    if keyable is not None:
+    # Only the keyable attributes accept the keyable arguments: as the attributes are not keyable by default,
+    # they are only passed for a keyable description
+    if keyable:
         kwargs['keyable'] = keyable
+        if keyType is not None:
+            kwargs['keyType'] = keyType
+
+    if valueRange is not None:
+        kwargs['range'] = valueRange
 
     if shape is not None:
         kwargs['shape'] = attributeDescriptionFactory(shape)
@@ -442,6 +476,8 @@ class Attribute(BaseObject):
             "type": self.desc.__class__.__name__,
             "value": self.getSerializedValue()
         }
+        if hasattr(self.desc, "range"):
+            serializedData["range"] = list(self.desc.range)
 
         return serializedData
 
@@ -976,6 +1012,13 @@ class ChoiceParam(Attribute):
         }
 
     # Override
+    def asDict(self) -> dict:
+        serializedData = super().asDict()
+        serializedData["values"] = list(self.desc.values)
+        serializedData["exclusive"] = self.desc.exclusive
+        return serializedData
+
+    # Override
     def shortDesc(self) -> dict:
         serializedData = super().shortDesc()
         serializedData["values"] = self.getValues()
@@ -1458,11 +1501,13 @@ class GroupAttribute(Attribute, Expandable):
 
     # Override
     def asDict(self) -> dict:
+        # Only the direct items are serialized, their own descendants being serialized by them.
+        # The value of the group is defined by the serialized values of its items (see AnySet._serializedAttributeValue).
         serializedData = {
             "name": self.name,
             "label": self.label,
             "type": self.desc.__class__.__name__,
-            "items": [ item.asDict() for item in self.flatStaticChildren ]
+            "items": [item.asDict() for item in self._value]
         }
         return serializedData
 
@@ -2058,6 +2103,24 @@ class AnySet(GroupAttribute):
         self._value.move(fromIndex, toIndex)
         self._onChildrenChanged()
 
+    @staticmethod
+    def _serializedAttributeValue(serializedAttribute: dict):
+        """ Return the value of a serialized attribute.
+            A group is serialized without its value, which is defined by the serialized values of its items:
+            the restored items only get their serialized value as default value, which does not restore
+            the elements of a list or the children of an AnySet, so the value of the group is rebuilt from them.
+
+        Args:
+            serializedAttribute: the serialization of the attribute, along with its description.
+
+        Returns:
+            The serialized value of the attribute, None if it has none.
+        """
+        if "value" in serializedAttribute or not isinstance(serializedAttribute.get("items"), list):
+            return serializedAttribute.get("value", None)
+        return {item["name"]: AnySet._serializedAttributeValue(item)
+                for item in removeLegacyFlattenedItems(serializedAttribute["items"]) if isinstance(item, dict) and "name" in item}
+
     def insertAttribute(self, serializedAttribute: dict, index: int) -> Attribute | None:
         """Restore a serialized child attribute at the requested position."""
         attributeDesc = attributeDescriptionFactory(serializedAttribute)
@@ -2066,7 +2129,7 @@ class AnySet(GroupAttribute):
 
         restoredAttribute = attributeFactory(
             description=attributeDesc,
-            value=serializedAttribute.get("value", None),
+            value=AnySet._serializedAttributeValue(serializedAttribute),
             isOutput=self.isOutput,
             node=self.node,
             root=self
@@ -2113,7 +2176,7 @@ class AnySet(GroupAttribute):
 
             childName = attrChildValue.get('name', None)
             childAttr = self._value.get(childName) if childName in self._value.keys() else None
-            serializedValue = attrChildValue.get('value', None)
+            serializedValue = AnySet._serializedAttributeValue(attrChildValue)
 
             if not childAttr:
                 attrDescType = attrChildValue.get('type', None)

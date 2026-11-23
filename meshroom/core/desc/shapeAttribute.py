@@ -29,13 +29,34 @@ class Shape(GroupAttribute):
         from meshroom.core.attribute import ShapeAttribute
         return ShapeAttribute
 
+    def _geometryValueDesc(self):
+        """
+        Return the description of the first geometry value, which holds the keyable state and the key type of the shape
+        (the first items are the user name and color, which are never keyable).
+        """
+        geometryValue = next(item for item in self.items if item.name == "geometry")
+        while isinstance(geometryValue, GroupAttribute):
+            geometryValue = geometryValue.items[0]
+        return geometryValue
+
     def shortDesc(self) -> dict:
         serializedData = {
             "type": self.__class__.__name__,
             "name": self.name,
         }
-        if self.items[0].keyable:
+        if self._geometryValueDesc().keyable:
             serializedData["keyable"] = True
+        return serializedData
+
+    # Override
+    def asDict(self):
+        serializedData = super().asDict()
+        # The items are built by the shape constructor from its keyable state, which is held by the geometry values
+        del serializedData["items"]
+        geometryValue = self._geometryValueDesc()
+        if geometryValue.keyable:
+            serializedData["keyable"] = True
+            serializedData["keyType"] = geometryValue.keyType
         return serializedData
 
 class ShapeList(ListAttribute):
@@ -59,7 +80,7 @@ class ShapeList(ListAttribute):
         return ShapeListAttribute
 
     def clone(self):
-        return self.__class__(shape=self.elementDesc,
+        return self.__class__(shape=self.elementDesc.clone(),
                               name=self.name,
                               label=self.label,
                               description=self.description,
@@ -69,6 +90,13 @@ class ShapeList(ListAttribute):
                               enabled=self.enabled,
                               visible=self.visible,
                               exposed=self.exposed)
+
+    # Override
+    def asDict(self):
+        serializedData = super().asDict()
+        # The element description is given to the constructor as the shape
+        serializedData["shape"] = serializedData.pop("elementDesc")
+        return serializedData
 
     # Override
     def shortDesc(self) -> dict:

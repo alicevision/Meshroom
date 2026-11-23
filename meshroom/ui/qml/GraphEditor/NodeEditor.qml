@@ -120,110 +120,96 @@ Panel {
         return defaultHeaderColor
     }
 
-    // Add custom title component for editing
-    titleComponent: Component {
-        RowLayout {
-            spacing: 4
+    headerBar: RowLayout {
+        TextField {
+            id: nodeNameField
+            visible: root.node !== null
+            text: root.displayNodeName
+            // For some reason the validator does not always work
+            validator: RegularExpressionValidator { regularExpression: /^[0-9A-Za-z]+$/ }
+            font.bold: true
+            readOnly: true
+            selectByMouse: false
+            verticalAlignment: Text.AlignVCenter
+            topPadding: 4
+            bottomPadding: 4
+            leftPadding: 4  // Room for the version-type background color
 
-            Label {
-                text: root.node === null ? "NodeEditor" : "Node -"
-                topPadding: 4
-                bottomPadding: 4
-                rightPadding: 0
+            background: Rectangle {
+                color: nodeNameField.readOnly ? root.headerColor : root.palette.base
+                border.color: nodeNameField.readOnly ? "transparent" : root.palette.highlight
+                border.width: 1
+                radius: 2
             }
 
-            TextField {
-                id: nodeNameField
-                visible: root.node !== null
-                text: root.displayNodeName
-                // For some reason the validator does not always work
-                validator: RegularExpressionValidator { regularExpression: /^[0-9A-Za-z]+$/ }
-                font.bold: true
-                readOnly: true
-                selectByMouse: false
-                verticalAlignment: Text.AlignVCenter
-                topPadding: 4
-                bottomPadding: 4
-                leftPadding: 0
+            // Leave the edit mode and display the current node name again
+            function endEdit() {
+                nodeNameField.text = Qt.binding(function() { return root.displayNodeName })
+                nodeNameField.readOnly = true
+                nodeNameField.selectByMouse = false
+            }
 
-                background: Rectangle {
-                    color: nodeNameField.readOnly ? "transparent" : root.palette.base
-                    border.color: nodeNameField.readOnly ? "transparent" : root.palette.highlight
-                    border.width: 1
-                    radius: 2
-                }
-
-                // Leave the edit mode and display the current node name again
-                function endEdit() {
-                    nodeNameField.text = Qt.binding(function() { return root.displayNodeName })
-                    nodeNameField.readOnly = true
-                    nodeNameField.selectByMouse = false
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: nodeNameField.readOnly
-                    onDoubleClicked: {
-                        if (root.node && !root.node.locked) {
-                            nodeNameField.readOnly = false
-                            nodeNameField.selectByMouse = true
-                            nodeNameField.forceActiveFocus()
-                            nodeNameField.selectAll()
-                        }
+            MouseArea {
+                anchors.fill: parent
+                enabled: nodeNameField.readOnly
+                onDoubleClicked: {
+                    if (root.node && !root.node.locked) {
+                        nodeNameField.readOnly = false
+                        nodeNameField.selectByMouse = true
+                        nodeNameField.forceActiveFocus()
+                        nodeNameField.selectAll()
                     }
                 }
+            }
 
-                Keys.onReturnPressed: {
-                    if (!readOnly) {
-                        root.validateNodeNameChange(text)
-                        endEdit()
-                    }
+            Keys.onReturnPressed: {
+                if (!readOnly) {
+                    root.validateNodeNameChange(text)
+                    endEdit()
                 }
+            }
 
-                Keys.onEnterPressed: {
-                    if (!readOnly) {
-                        root.validateNodeNameChange(text)
-                        endEdit()
-                    }
+            Keys.onEnterPressed: {
+                if (!readOnly) {
+                    root.validateNodeNameChange(text)
+                    endEdit()
                 }
+            }
 
-                Keys.onEscapePressed: {
-                    if (!readOnly) {
-                        root.cancelNodeNameChange()
-                        endEdit()
-                    }
+            Keys.onEscapePressed: {
+                if (!readOnly) {
+                    root.cancelNodeNameChange()
+                    endEdit()
                 }
+            }
 
-                onActiveFocusChanged: {
+            onActiveFocusChanged: {
+                if (!activeFocus && !readOnly) {
+                    // Focus lost without pressing Enter - discard changes
+                    root.cancelNodeNameChange()
+                    endEdit()
+                }
+            }
+
+            Connections {
+                target: _currentScene
+                function onSelectedNodeChanged() {
                     if (!activeFocus && !readOnly) {
-                        // Focus lost without pressing Enter - discard changes
                         root.cancelNodeNameChange()
                         endEdit()
                     }
                 }
-
-                Connections {
-                    target: _currentScene
-                    function onSelectedNodeChanged() {
-                        if (!activeFocus && !readOnly) {
-                            root.cancelNodeNameChange()
-                            endEdit()
-                        }
-                    }
-                }
-            }
-
-            // Show node type if the node name does not start with "nodeType_"
-            Label {
-                text: "(" + root.displayNodeType + ")"
-                visible: root.displayNodeType !== "" && _currentScene.selectedNode
-                topPadding: 4
-                bottomPadding: 4
             }
         }
-    }
 
-    headerBar: RowLayout {
+        // Show node type if the node name does not start with "nodeType_"
+        Label {
+            text: "(" + root.displayNodeType + ")"
+            visible: root.displayNodeType !== "" && _currentScene.selectedNode
+            topPadding: 4
+            bottomPadding: 4
+        }
+
         Label {
             id: computationInfo
             color: node && node.isComputableType ? Colors.statusColors[node.globalStatus] : palette.text

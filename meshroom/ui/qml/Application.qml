@@ -1629,6 +1629,7 @@ Page {
             title: "Node Editor"
 
             toolBar: nodeEditor.headerBarItem
+            headerColor: nodeEditor.headerColor
 
             NodeEditor {
                 id: nodeEditor

@@ -153,8 +153,11 @@ Panel {
                     radius: 2
                 }
 
-                function refreshText() {
+                // Leave the edit mode and display the current node name again
+                function endEdit() {
                     nodeNameField.text = Qt.binding(function() { return root.displayNodeName })
+                    nodeNameField.readOnly = true
+                    nodeNameField.selectByMouse = false
                 }
 
                 MouseArea {
@@ -173,27 +176,21 @@ Panel {
                 Keys.onReturnPressed: {
                     if (!readOnly) {
                         root.validateNodeNameChange(text)
-                        nodeNameField.refreshText()
-                        readOnly = true
-                        selectByMouse = false
+                        endEdit()
                     }
                 }
 
                 Keys.onEnterPressed: {
                     if (!readOnly) {
                         root.validateNodeNameChange(text)
-                        nodeNameField.refreshText()
-                        readOnly = true
-                        selectByMouse = false
+                        endEdit()
                     }
                 }
 
                 Keys.onEscapePressed: {
                     if (!readOnly) {
                         root.cancelNodeNameChange()
-                        nodeNameField.refreshText()
-                        readOnly = true
-                        selectByMouse = false
+                        endEdit()
                     }
                 }
 
@@ -201,9 +198,7 @@ Panel {
                     if (!activeFocus && !readOnly) {
                         // Focus lost without pressing Enter - discard changes
                         root.cancelNodeNameChange()
-                        nodeNameField.refreshText()
-                        readOnly = true
-                        selectByMouse = false
+                        endEdit()
                     }
                 }
 
@@ -212,9 +207,7 @@ Panel {
                     function onSelectedNodeChanged() {
                         if (!activeFocus && !readOnly) {
                             root.cancelNodeNameChange()
-                            nodeNameField.refreshText()
-                            nodeNameField.readOnly = true
-                            nodeNameField.selectByMouse = false
+                            endEdit()
                         }
                     }
                 }

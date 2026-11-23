@@ -478,6 +478,31 @@ def test_anyset_input_contributes_to_node_uid():
     assert dynamicNode._uid != uidBefore
 
 
+def test_anyset_children_order_does_not_contribute_to_node_uid():
+    """Nodes holding the same AnySet children in different orders have the same UID."""
+    graph = Graph("test")
+    srcNode = graph.addNewNode("AllAttributesNode")
+    firstNode = graph.addNewNode("DynamicNode")
+    secondNode = graph.addNewNode("DynamicNode")
+
+    for node, sourceAttributes in ((firstNode, (srcNode.intParam, srcNode.floatParam, srcNode.stringParam)),
+                                   (secondNode, (srcNode.stringParam, srcNode.floatParam, srcNode.intParam))):
+        for sourceAttribute in sourceAttributes:
+            node.ins.duplicateAttribute(sourceAttribute)
+        node.ins.intParam.value = 1
+        node.ins.floatParam.value = 2.0
+    graph.update()
+
+    assert [child.name for child in firstNode.ins.value] != [child.name for child in secondNode.ins.value]
+    assert firstNode.ins.uid() == secondNode.ins.uid()
+    assert firstNode._uid == secondNode._uid
+
+    # The values are still bound to the names: swapping them changes the UID
+    secondNode.ins.intParam.value = 2
+    secondNode.ins.floatParam.value = 1.0
+    assert firstNode._uid != secondNode._uid
+
+
 def test_anyset_uid_depends_on_children_types():
     """AnySets with children of different types but with the same name and string representation have different UIDs."""
     graph = Graph("test")
@@ -604,7 +629,7 @@ def assertInvalidatingAndEnabled(attribute):
 
 
 def test_anyset_structural_changes_update_node_uid():
-    """Adding, renaming, moving and removing AnySet children updates the node UID without an explicit update."""
+    """Adding, renaming and removing AnySet children updates the node UID without an explicit update, but moving them does not."""
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("AllAttributesNode")
 
@@ -622,7 +647,7 @@ def test_anyset_structural_changes_update_node_uid():
     uidBefore = dynamicNode._uid
     dynamicNode.ins.moveAttribute(dynamicNode.ins.floatParam, 0)
     assert [attribute.name for attribute in dynamicNode.ins.value] == ["floatParam", "renamedParam"]
-    assert dynamicNode._uid != uidBefore, "Moving a child should update the node UID"
+    assert dynamicNode._uid == uidBefore, "Moving a child should not update the node UID"
 
     uidBefore = dynamicNode._uid
     dynamicNode.ins.removeAttribute(dynamicNode.ins.floatParam)

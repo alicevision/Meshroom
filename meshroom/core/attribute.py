@@ -97,7 +97,8 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     # GroupAttribute descriptions have no default value: their value is defined by their items.
     # Groups serialized with an older version still hold a "value" that must not reach the constructor,
     # the runtime value is restored separately when the attribute is created.
-    if value is not None and not issubclass(attrClass, desc.GroupAttribute):
+    # The same goes for ShapeList descriptions, whose constructor has no default value.
+    if value is not None and not issubclass(attrClass, (desc.GroupAttribute, desc.ShapeList)):
         kwargs['value'] = value
 
     if elementDesc is not None:
@@ -478,6 +479,11 @@ class Attribute(BaseObject):
         }
         if hasattr(self.desc, "range"):
             serializedData["range"] = list(self.desc.range)
+        # The keyable state is part of the description restored from this serialization (e.g. for an AnySet child):
+        # without it, the key values of a keyable attribute would be restored on a non-keyable one
+        if self.keyable:
+            serializedData["keyable"] = True
+            serializedData["keyType"] = self.desc.keyType
 
         return serializedData
 
@@ -1860,6 +1866,14 @@ class ShapeAttribute(GroupAttribute):
             return self._getInputLink().asLinkExpr()
         return super().getSerializedValue()
 
+    # Override
+    def asDict(self) -> dict:
+        # The shape constructor builds its items from its keyable state: serialize the shape description,
+        # which holds this keyable state instead of the items, along with the value
+        serializedData = self.desc.asDict()
+        serializedData.update(name=self.name, label=self.label, value=self.getSerializedValue())
+        return serializedData
+
     def getShapeAsDict(self) -> dict:
         """
         Return the shape attribute as dict with the shape file structure.
@@ -1988,6 +2002,14 @@ class ShapeListAttribute(ListAttribute):
         self.shapeListChanged.emit()
 
     # Override
+    def asDict(self) -> dict:
+        # The ShapeList constructor expects its element description as a shape: serialize the ShapeList description,
+        # which holds it this way, along with the value
+        serializedData = self.desc.asDict()
+        serializedData.update(name=self.name, label=self.label, value=self.getSerializedValue())
+        return serializedData
+
+    # Override
     def shortDesc(self) -> dict:
         serializedData = {
             "type": self.desc.__class__.__name__,
@@ -2028,12 +2050,23 @@ class AnySet(GroupAttribute):
         attributeDesc._invalidate = True
         attributeDesc._enabled = True
         if isinstance(attributeDesc, desc.ListAttribute):
-            # The clone of a list shares its element description with the source one: clone it before modifying it
-            attributeDesc._elementDesc = attributeDesc.elementDesc.clone()
-            AnySet._makeInvalidatingAndEnabled(attributeDesc._elementDesc)
+            AnySet._makeInvalidatingAndEnabled(attributeDesc.elementDesc)
         elif isinstance(attributeDesc, desc.GroupAttribute):
             for item in attributeDesc.items:
                 AnySet._makeInvalidatingAndEnabled(item)
+
+    @staticmethod
+    def _setupOutputChild(attribute: Attribute):
+        """ Make a created output child a dynamic output: its value is written by the computation,
+            so its UID is derived from the node UID rather than from its value.
+            Every path creating a child (duplication, insertion, restoration from a graph file) must call it.
+
+        Args:
+            attribute: the created child, left unchanged if it is not an output.
+        """
+        if attribute.isOutput:
+            attribute._isOutput = True
+            attribute._desc._isDynamicValue = True
 
     def duplicateAttribute(self, attribute: Attribute, isOutput: bool|None=None) -> Attribute:
         """ Create an attribute as child of the current, with the same description as the given one.
@@ -2048,10 +2081,7 @@ class AnySet(GroupAttribute):
                                         isOutput=self.isOutput if isOutput is None else isOutput,
                                         node=self.node,
                                         root=self)
-
-        if newAttribute.isOutput:
-            newAttribute._isOutput = True
-            newAttribute._desc._isDynamicValue = True
+        AnySet._setupOutputChild(newAttribute)
 
         self._value.insert(self._value.count, newAttribute)
         self._onChildrenChanged()
@@ -2134,9 +2164,7 @@ class AnySet(GroupAttribute):
             node=self.node,
             root=self
         )
-        if restoredAttribute.isOutput:
-            restoredAttribute._isOutput = True
-            restoredAttribute._desc._isDynamicValue = True
+        AnySet._setupOutputChild(restoredAttribute)
         self._value.insert(index, restoredAttribute)
         self._onChildrenChanged()
         return restoredAttribute
@@ -2195,10 +2223,12 @@ class AnySet(GroupAttribute):
                     node = self.node,
                     root = self
                 )
+                AnySet._setupOutputChild(childAttr)
 
                 self._value.insert(self._value.count, childAttr)
 
-            elif serializedValue:
+            # A falsy value (False, 0, "", []) is a value to restore: only a missing value keeps the current one
+            elif serializedValue is not None:
                 childAttr.value = serializedValue
 
     # Override
@@ -2206,6 +2236,17 @@ class AnySet(GroupAttribute):
         return {
             "expanded": self.expanded,
             "children": [attr.asDict() for attr in self._value]
+        }
+
+    # Override
+    def asDict(self) -> dict:
+        # The children are user-defined: they are serialized as the value, from which they are restored,
+        # rather than as the items of a group description
+        return {
+            "name": self.name,
+            "label": self.label,
+            "type": self.desc.__class__.__name__,
+            "value": self.getSerializedValue()
         }
 
     # Override
@@ -2284,9 +2325,10 @@ class AnySet(GroupAttribute):
             return super().uid()
 
         # The children are user-defined: their names and structures are part of the AnySet definition,
-        # so they contribute to the UID along with the children values
+        # so they contribute to the UID along with the children values.
+        # The children are identified by their names, so they are sorted by name: their order does not count.
         uids = []
-        for child in self._value:
+        for child in sorted(self._value, key=lambda child: child.name):
             uids.append((child.name, AnySet._schemaKey(child.desc), child.uid()))
         return hashValue(uids)
 

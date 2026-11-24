@@ -142,6 +142,7 @@ def readMaterialIcons(path: str = MATERIAL_ICONS_FONT) -> dict:
     Returns:
         {name: glyph} sorted by name, the names being valid QML property names
         (see RENAMED_ICONS, and names starting with a digit get a leading underscore).
+        A name shared by several glyphs is indexed from its second occurrence, by increasing codepoint.
     """
     with open(path, "rb") as f:
         data = f.read()
@@ -153,14 +154,20 @@ def readMaterialIcons(path: str = MATERIAL_ICONS_FONT) -> dict:
         tables[tag] = offset
     codepoints = _readCodepoints(data, tables[b"cmap"])
     icons = {}
-    for components, glyph in _readLigatures(data, tables[b"GSUB"]):
+    # Sorted by codepoint, so that the duplicated names are indexed in a stable order
+    ligatures = sorted(_readLigatures(data, tables[b"GSUB"]), key=lambda ligature: codepoints[ligature[1]])
+    for components, glyph in ligatures:
         # The components are the glyphs of the letters of the name: turn them back into characters
         name = "".join(chr(codepoints[c]) for c in components)
         name = RENAMED_ICONS.get(name, name)
         # QML property names cannot start with a digit (e.g. "3d_rotation" becomes "_3d_rotation")
         if name[0].isdigit():
             name = "_" + name
-        icons[name] = chr(codepoints[glyph])
+        # A name shared by several glyphs gets an index from its second occurrence (e.g. "flourescent2")
+        uniqueName, index = name, 2
+        while uniqueName in icons:
+            uniqueName, index = f"{name}{index}", index + 1
+        icons[uniqueName] = chr(codepoints[glyph])
     return dict(sorted(icons.items()))
 
 

@@ -25,10 +25,17 @@ def test_material_icons_glyphs():
     assert MATERIAL_ICONS["goat"] == "\U0010fffd"
 
 
+def test_material_icons_duplicated_names():
+    # The font has two "flourescent" ligatures: the second glyph, by codepoint, gets an index
+    assert MATERIAL_ICONS["flourescent"] == "\uec31"
+    assert MATERIAL_ICONS["flourescent2"] == "\uf00d"
+    assert "flourescent3" not in MATERIAL_ICONS
+
+
 def test_read_material_icons_from_font():
     icons = readMaterialIcons(MATERIAL_ICONS_FONT)
     # Every glyph of the font with a ligature is read, sorted by name
-    assert len(icons) == 2234
+    assert len(icons) == 2235
     assert list(icons) == sorted(icons)
 
 

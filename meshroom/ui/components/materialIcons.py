@@ -1,17 +1,25 @@
 """
-MaterialIcons: icons read from the icon font.
+MaterialIcons QML singleton, generated at startup from the icons read from the icon font.
 
 The font has no list of icon names: each icon is a ligature (GSUB table) that turns the letters of its name
 into its glyph, and the character map (cmap table) gives the codepoint of each glyph.
 TrueType tables are big-endian, and all the offsets below are relative to the start of their parent table.
 """
 
+import base64
+import json
+import logging
 import os
 import struct
+
+from PySide6.QtCore import QUrl
+from PySide6.QtQml import qmlRegisterSingletonType
 
 from meshroom.env import meshroomFolder
 
 MATERIAL_ICONS_FONT = os.path.join(meshroomFolder, "ui", "qml", "MaterialIcons", "MaterialIcons-Regular.ttf")
+# Family of the icon font, used if it cannot be read from the font file
+DEFAULT_FONT_FAMILY = "Material Icons"
 
 # Icon names that are JavaScript keywords or clash with QtObject properties
 RENAMED_ICONS = {
@@ -154,3 +162,30 @@ def readMaterialIcons(path: str = MATERIAL_ICONS_FONT) -> dict:
             name = "_" + name
         icons[name] = chr(codepoints[glyph])
     return dict(sorted(icons.items()))
+
+
+def loadMaterialIconsFont(path: str = MATERIAL_ICONS_FONT) -> str:
+    """ Load the icon font in the application and return its family name. A QGuiApplication must exist. """
+    # Imported here so that reading the icons does not need PySide6.QtGui (and libEGL)
+    from PySide6.QtGui import QFontDatabase
+    fontId = QFontDatabase.addApplicationFont(path)
+    families = QFontDatabase.applicationFontFamilies(fontId) if fontId >= 0 else []
+    if not families:
+        logging.warning(f"Could not load the MaterialIcons font ({path}).")
+        return DEFAULT_FONT_FAMILY
+    return families[0]
+
+
+def registerMaterialIcons():
+    """ Load the icon font and register the MaterialIcons singleton in the MaterialIcons QML module (2.2):
+    `MaterialIcons.<name>` is the glyph of an icon and `MaterialIcons.fontFamily` the family of the icon font.
+    The singleton is a QtObject with one readonly property per icon, so its properties are looked up as fast
+    as the ones of a singleton written in a QML file. A QGuiApplication must exist.
+    """
+    glyphs = {"fontFamily": loadMaterialIconsFont(), **readMaterialIcons()}
+    # json.dumps gives valid JS string literals, including surrogate pairs beyond the Basic Multilingual Plane
+    properties = "\n".join(f"    readonly property string {name}: {json.dumps(glyph)}" for name, glyph in glyphs.items())
+    source = f"pragma Singleton\nimport QtQml\n\nQtObject {{\n{properties}\n}}\n"
+    # A data URL lets QML compile the generated source without writing it to a file
+    url = QUrl("data:text/plain;base64," + base64.b64encode(source.encode()).decode())
+    qmlRegisterSingletonType(url, "MaterialIcons", 2, 2, "MaterialIcons")

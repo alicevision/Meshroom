@@ -1,0 +1,10 @@
+{
+    "3D Reconstruction": "#3CC8DC",
+    "Gaussian Splattings": "#3CD69A",
+    "Camera Tracking": "#5B7BF0",
+    "HDR & Panorama": "#F0A33A",
+    "Photometric Stereo": "#B58CF0",
+    "Calibration": "#E8D44A",
+    "Image Processing": "#F07AB4",
+    "Segmentation": "#F0645A"
+}

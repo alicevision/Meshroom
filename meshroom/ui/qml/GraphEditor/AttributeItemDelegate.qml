@@ -28,6 +28,10 @@ RowLayout {
                                      !readOnly && !(attribute.keyable && _currentScene.selectedViewId === "-1")
     readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
     property var errorMessages: attribute.errorMessages
+    // Numeric attribute set to its descriptor's special "automatic value" (outside the range): label and slider are greyed out
+    readonly property bool hasAutoValue: !!attribute && !!attribute.desc && attribute.desc.hasAutoValue === true && !attribute.keyable
+    readonly property bool isAutoValue: hasAutoValue && attribute.value === attribute.desc.autoValue
+    property var lastManualValue: undefined  // Value to restore when the automatic value is turned off
 
     signal doubleClicked(var mouse, var attr)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
@@ -202,6 +206,8 @@ RowLayout {
                 text: attribute.isMandatory && attribute.isDefault ? `\* ${object.label}` : object.label
 
                 color: {
+                    if (root.isAutoValue)
+                        return palette.mid
                     if (object != undefined && (object.hasAnyOutputLinks || object.isLink) && !object.enabled)
                         return Colors.lightgrey
                     else
@@ -628,6 +634,8 @@ RowLayout {
                 end: (root.attribute.desc.range && root.attribute.desc.range[1]) || 0
                 step: (root.attribute.desc.range && root.attribute.desc.range[2]) || 0
                 editable: root.editable
+                // Dimmed but still editable with the automatic value: setting a value leaves the automatic mode
+                opacity: root.isAutoValue ? 0.5 : 1.0
                 onEditingFinished: (hasExprError, evaluatedValue, text, displayValue) => {
                     if (!hasExprError) {
                         setTextFieldAttribute(evaluatedValue)
@@ -880,6 +888,40 @@ RowLayout {
         text: MaterialIcons.fmd_bad
         ToolTip.text: root.errorMessages.join("\n")
         color: "orange"
+    }
+
+    // Toggle the descriptor's special "automatic value" (outside the range)
+    Loader {
+        active: root.hasAutoValue
+        visible: active
+        sourceComponent: MaterialToolButton {
+            readonly property var autoDesc: root.attribute && root.attribute.desc ? root.attribute.desc : null
+            font.pointSize: 11
+            // Icon named by the descriptor, falling back on the default one if the name is unknown
+            text: (autoDesc && MaterialIcons[autoDesc.autoIcon]) || MaterialIcons.motion_photos_auto
+            checkable: true
+            checked: root.isAutoValue
+            enabled: root.editable
+            ToolTip.text: autoDesc ? autoDesc.autoLabel + (root.isAutoValue ? " (click to set a value)" : "") : ""
+            onClicked: {
+                const desc = root.attribute.desc
+                if (!root.isAutoValue) {
+                    root.lastManualValue = root.attribute.value
+                    _currentScene.setAttribute(root.attribute, desc.autoValue)
+                } else {
+                    // Restore the last manual value, else the default value, else the start of the range
+                    // (or the value next to the automatic one without range), never the automatic value itself
+                    let value = root.lastManualValue
+                    if (typeof value !== "number" || value === desc.autoValue)
+                        value = desc.value
+                    if (typeof value !== "number" || value === desc.autoValue)
+                        value = (desc.range && desc.range.length) ? desc.range[0] : desc.autoValue + 1
+                    _currentScene.setAttribute(root.attribute, value)
+                }
+                // The click breaks the binding: restore it
+                checked = Qt.binding(function() { return root.isAutoValue })
+            }
+        }
     }
 
     // Add or remove key button for keyable attribute

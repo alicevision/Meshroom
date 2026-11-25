@@ -1628,9 +1628,13 @@ Page {
             panelId: "nodeEditor"
             title: "Node Editor"
 
+            toolBar: nodeEditor.headerBarItem
+            headerColor: nodeEditor.headerColor
+
             NodeEditor {
                 id: nodeEditor
                 anchors.fill: parent
+                headerVisible: false
 
                 node: _currentScene ? _currentScene.selectedNode : null
                 property bool computing: _currentScene ? _currentScene.computing : false

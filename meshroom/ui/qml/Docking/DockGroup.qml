@@ -237,13 +237,15 @@ Item {
             }
         }
 
-        // Toolbar of the displayed panel, clipped on its left when even the shrunk tabs leave too little room
-        Item {
+        // Toolbar of the displayed panel, clipped on its left when even the shrunk tabs leave too little room;
+        // its background takes the header color of the panel, so that the tabs keep their own colors
+        Rectangle {
             id: toolBarClip
             anchors.left: tabRow.right
             anchors.leftMargin: 4
             anchors.right: parent.right
             height: parent.height
+            color: root.displayedPanel ? root.displayedPanel.headerColor : "transparent"
             clip: true
 
             Row {

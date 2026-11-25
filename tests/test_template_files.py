@@ -1,4 +1,5 @@
 import json
+from contextlib import contextmanager
 
 import meshroom.core
 from meshroom.core.files import (
@@ -9,6 +10,7 @@ from meshroom.core.files import (
 )
 from meshroom.core import pluginManager
 from meshroom.core.graph import Graph
+from meshroom.core.graphIO import getTemplateInfo
 from .utils import registeredPlugin
 
 
@@ -136,3 +138,96 @@ def test_template_version_check_falls_back_to_legacy_header(tmp_path):
     template_file.write_text(json.dumps(file_data))
 
     assert not checkTemplateVersions(str(template_file), nodesAlreadyLoaded=True)
+
+
+def test_template_info_is_kept_on_template_saves(tmp_path):
+    template_file = tmp_path / f"template{MESHROOM_TEMPLATE_EXTENSION}"
+    graph = Graph("Template")
+    graph.header["templateInfo"] = {"category": "Photogrammetry", "icon": "camera"}
+    graph.save(template_file, setupProjectFile=False, template=True)
+
+    resaved_file = tmp_path / f"resaved{MESHROOM_TEMPLATE_EXTENSION}"
+    loaded_graph = Graph("")
+    loaded_graph.initFromTemplate(template_file)
+    loaded_graph.save(resaved_file, setupProjectFile=False, template=True)
+
+    header = json.loads(resaved_file.read_text())["header"]
+    assert header["templateInfo"] == {"category": "Photogrammetry", "icon": "camera"}
+    assert "sourceTemplate" not in header
+
+
+@contextmanager
+def registeredTemplates(folder):
+    """ Register only the pipeline templates of `folder` while in the context. """
+    previousTemplates = dict(meshroom.core.pipelineTemplates)
+    meshroom.core.pipelineTemplates.clear()
+    try:
+        meshroom.core.loadPipelineTemplates(str(folder))
+        yield
+    finally:
+        meshroom.core.pipelineTemplates.clear()
+        meshroom.core.pipelineTemplates.update(previousTemplates)
+
+
+def test_project_records_its_source_template(tmp_path):
+    template_file = tmp_path / f"myTemplate{MESHROOM_TEMPLATE_EXTENSION}"
+    graph = Graph("Template")
+    graph.header["templateInfo"] = {"category": "Utilities"}
+    graph.save(template_file, setupProjectFile=False, template=True)
+    project_file = tmp_path / f"project{MESHROOM_PROJECT_EXTENSION}"
+
+    with registeredTemplates(tmp_path):
+        project = Graph("")
+        project.initFromTemplate(template_file)
+        project.save(project_file)
+
+        header = json.loads(project_file.read_text())["header"]
+        assert header["sourceTemplate"] == {"name": "myTemplate", "plugin": None}
+        assert "templateInfo" not in header
+
+        # The source template is kept when re-saving the loaded project
+        reloaded = Graph("")
+        reloaded.load(project_file)
+        reloaded.save()
+        assert json.loads(project_file.read_text())["header"]["sourceTemplate"] == header["sourceTemplate"]
+
+        # Metadata is resolved from the registered template at read time
+        assert getTemplateInfo("myTemplate") == {"category": "Utilities"}
+    assert getTemplateInfo("myTemplate") == {}
+
+
+def test_unregistered_file_is_not_recorded_as_source_template(tmp_path):
+    # Same name as a registered template, but another file
+    template_file = tmp_path / f"myTemplate{MESHROOM_TEMPLATE_EXTENSION}"
+    Graph("Template").save(template_file, setupProjectFile=False, template=True)
+    registered_folder = tmp_path / "registered"
+    registered_folder.mkdir()
+    Graph("Template").save(registered_folder / template_file.name, setupProjectFile=False, template=True)
+
+    # A project file opened as a template: its own source template is not kept either
+    project_file = tmp_path / f"project{MESHROOM_PROJECT_EXTENSION}"
+    project = Graph("")
+    project.header["sourceTemplate"] = {"name": "myTemplate", "plugin": None}
+    project.save(project_file)
+
+    with registeredTemplates(registered_folder):
+        for path in (template_file, project_file):
+            graph = Graph("")
+            graph.initFromTemplate(path)
+            assert "sourceTemplate" not in graph.header
+
+
+def test_project_records_the_plugin_of_its_source_template(tmp_path):
+    meshroom_folder_path = tmp_path / "meshroom"
+    meshroom_folder_path.mkdir()
+    template_file = meshroom_folder_path / f"pluginTemplate{MESHROOM_TEMPLATE_EXTENSION}"
+    graph = Graph("Template")
+    graph.header["templateInfo"] = {"category": "HDR"}
+    graph.save(template_file, setupProjectFile=False, template=True)
+
+    with registeredPlugin("testSourceTemplatePlugin", str(tmp_path)):
+        project = Graph("")
+        project.initFromTemplate(str(template_file))
+        source = project.header["sourceTemplate"]
+        assert source == {"name": "pluginTemplate", "plugin": "testSourceTemplatePlugin"}
+        assert getTemplateInfo(source["name"], source["plugin"]) == {"category": "HDR"}

@@ -34,8 +34,11 @@ parser.add_argument('--node', metavar='NODE_NAME', type=str,
                     help='Process the node. It will generate an error if the dependencies are not already computed.')
 parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
                     help='Process the node with its dependencies.')
-parser.add_argument('--inCurrentEnv', help='Execute process in current env without creating a dedicated runtime environment.',
-                    action='store_true')
+parser.add_argument('--inCurrentEnv', action='store_true',
+                    help='Execute process in current env without creating a dedicated runtime environment. '
+                         'Without --node, all the nodes are computed in this process, so that they share its state '
+                         '(e.g. a scene opened in a DCC by a previous node): they must all be computable in the '
+                         'environment this process is launched in.')
 parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
                     action='store_true')
 parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
@@ -200,4 +203,5 @@ else:
     if args.toNode:
         toNodes = graph.findNodes([args.toNode])
 
-    meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
+    meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus,
+                                     inCurrentEnv=args.inCurrentEnv)

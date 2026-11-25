@@ -1,6 +1,8 @@
 import json
 from contextlib import contextmanager
 
+import pytest
+
 import meshroom.core
 from meshroom.core.files import (
     MESHROOM_PROJECT_EXTENSION,
@@ -231,3 +233,49 @@ def test_project_records_the_plugin_of_its_source_template(tmp_path):
         source = project.header["sourceTemplate"]
         assert source == {"name": "pluginTemplate", "plugin": "testSourceTemplatePlugin"}
         assert getTemplateInfo(source["name"], source["plugin"]) == {"category": "HDR"}
+
+
+def test_set_template_info_is_saved_with_the_template(tmp_path):
+    template_file = tmp_path / f"template{MESHROOM_TEMPLATE_EXTENSION}"
+    graph = Graph("Template")
+    assert graph.templateInfo == {}
+
+    graph.setTemplateInfo({"label": "My Template", "icon": "camera"})
+    assert graph.templateInfo == {"label": "My Template", "icon": "camera"}
+    graph.save(template_file, setupProjectFile=False, template=True)
+    assert json.loads(template_file.read_text())["header"]["templateInfo"] == {"label": "My Template", "icon": "camera"}
+
+    # An empty info removes it from the template
+    graph.setTemplateInfo({})
+    assert graph.templateInfo == {}
+    graph.save(template_file, setupProjectFile=False, template=True)
+    assert "templateInfo" not in json.loads(template_file.read_text())["header"]
+
+    # The returned info is a copy: editing it does not change the graph
+    graph.setTemplateInfo({"category": "Utilities"})
+    graph.templateInfo["category"] = "Other"
+    assert graph.templateInfo == {"category": "Utilities"}
+
+
+def test_invalid_template_info_is_reported_and_kept(tmp_path):
+    template_file = tmp_path / f"badInfo{MESHROOM_TEMPLATE_EXTENSION}"
+    Graph("Template").save(template_file, setupProjectFile=False, template=True)
+    data = json.loads(template_file.read_text())
+    data["header"]["templateInfo"] = "HDR"
+    template_file.write_text(json.dumps(data))
+
+    with registeredTemplates(tmp_path):
+        with pytest.raises(ValueError, match="badInfo"):
+            getTemplateInfo("badInfo")
+
+    graph = Graph("")
+    graph.initFromTemplate(template_file)
+    with pytest.raises(ValueError, match="templateInfo"):
+        graph.templateInfo
+    # The invalid metadata is neither overwritten nor removed, so that the user can fix it in the file
+    with pytest.raises(ValueError):
+        graph.setTemplateInfo({"category": "HDR"})
+    with pytest.raises(ValueError):
+        graph.setTemplateInfo({})
+    graph.save(template_file, setupProjectFile=False, template=True)
+    assert json.loads(template_file.read_text())["header"]["templateInfo"] == "HDR"

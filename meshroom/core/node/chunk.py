@@ -14,7 +14,7 @@ from meshroom.core.node.status import (
     ChunkIndex, ChunkStatusData, ExecMode, Status,
     getWritingFilepath, renameWritingToFinalPath
 )
-from meshroom.core.node.logManager import LogManager
+from meshroom.core.node.logManager import LogManager, redirectOutput
 
 if TYPE_CHECKING:
     from meshroom.core.node.node import Node
@@ -283,6 +283,22 @@ class NodeChunk(BaseObject):
             self.statThread.join()
             self.statistics = stats.Statistics()
             del runningProcesses[self.name]
+
+    def processInCurrentProcess(self, forceCompute=False):
+        """
+        Compute this chunk in the current process with its logs, standard output and error in its log file, as
+        meshroom_compute does when the chunk is computed in its own process.
+        A finished chunk is skipped unless 'forceCompute' is set, as preparing the logger clears its log.
+        """
+        if not forceCompute and self.isFinished():
+            logging.info(f"Node chunk already computed: {self.name}")
+            return
+        self.node.prepareLogger(self.range.iteration)
+        try:
+            with redirectOutput(self.getLogFile()):
+                self.process(forceCompute, inCurrentEnv=True)
+        finally:
+            self.node.restoreLogger()
 
     def _processInIsolatedEnvironment(self):
         """

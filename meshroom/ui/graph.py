@@ -583,6 +583,7 @@ class UIGraph(QObject):
     @Slot(QUrl)
     def saveAs(self, url):
         self._saveAs(url, extension=MESHROOM_PROJECT_EXTENSION)
+        self._undoStack.setClean()
 
     @Slot(QUrl)
     @Slot(QUrl, "QVariantMap")
@@ -604,9 +605,10 @@ class UIGraph(QObject):
         hadTemplateFile = bool(self._graph.templateFilepath)
         savedFile = self._saveAs(url, setupProjectFile=False, template=True, extension=MESHROOM_TEMPLATE_EXTENSION)
         # An open template now refers to the file just written, so that the next save suggests it.
-        # A project saved as a template stays a project (no template badge).
+        # A project saved as a template stays a project (no template badge) with its unsaved changes.
         if hadTemplateFile:
             self._graph.setTemplateFilepath(savedFile)
+            self._undoStack.setClean()
         if infoError:
             self.parent().showMessage(f"Template saved without the edited info: {infoError}", "error")
         else:
@@ -632,7 +634,6 @@ class UIGraph(QObject):
             localFile = url.toLocalFile()
         localFile = withExtension(localFile, extension)
         self._graph.save(localFile, setupProjectFile=setupProjectFile, template=template)
-        self._undoStack.setClean()
         # saving file on disk impacts cache folder location
         # => force re-evaluation of monitored status files paths
         self.updateChunkMonitor()
@@ -642,6 +643,7 @@ class UIGraph(QObject):
     def saveAsTemp(self):
         projectPath = generateTempProjectFilepath()
         self._saveAs(projectPath)
+        self._undoStack.setClean()
 
     @Slot()
     def save(self):

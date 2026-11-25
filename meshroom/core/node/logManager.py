@@ -1,10 +1,36 @@
 #!/usr/bin/env python
 
+import contextlib
 import logging
 import os
+import sys
 from typing import List
 
 from meshroom.core.mtyping import PathLike
+
+
+@contextlib.contextmanager
+def redirectOutput(logFile: PathLike):
+    """
+    Append the standard output and error of the current process to 'logFile', as when a chunk is computed in its
+    own process: both the Python ones (print) and the ones of native code (e.g. a DCC).
+    """
+    sys.stdout.flush()
+    sys.stderr.flush()
+    savedFds = (os.dup(1), os.dup(2))
+    try:
+        # Line buffered, so that the prints and the log records written to the same file stay in order
+        with open(logFile, "a", buffering=1) as f, contextlib.redirect_stdout(f), contextlib.redirect_stderr(f):
+            os.dup2(f.fileno(), 1)
+            os.dup2(f.fileno(), 2)
+            # shortcut: the C stdio buffers of native code are not flushed before the output is restored, so its
+            # last lines can reach the console instead; flush them with ctypes if a DCC loses log lines
+            yield
+    finally:
+        os.dup2(savedFds[0], 1)
+        os.dup2(savedFds[1], 2)
+        os.close(savedFds[0])
+        os.close(savedFds[1])
 
 
 class LogManager:

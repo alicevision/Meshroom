@@ -1086,6 +1086,9 @@ class BaseNode(BaseObject):
         if self.hasPreprocessChunk:
             if not self._preprocessChunk:
                 raise RuntimeError("Trying to process preprocess chunk but it doesn't exist")
+            if inCurrentEnv:
+                self._preprocessChunk.processInCurrentProcess(forceCompute)
+                return
             self.prepareLogger(ChunkIndex.PREPROCESS)
             self._preprocessChunk.process(forceCompute, inCurrentEnv)
             self.restoreLogger()
@@ -1103,6 +1106,9 @@ class BaseNode(BaseObject):
         if self.hasPostprocessChunk:
             if not self._postprocessChunk:
                 raise RuntimeError("Trying to process postprocess chunk but it doesn't exist")
+            if inCurrentEnv:
+                self._postprocessChunk.processInCurrentProcess(forceCompute)
+                return
             self.prepareLogger(ChunkIndex.POSTPROCESS)
             self._postprocessChunk.process(forceCompute, inCurrentEnv)
             self.restoreLogger()

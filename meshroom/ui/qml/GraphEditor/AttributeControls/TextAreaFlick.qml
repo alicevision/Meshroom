@@ -15,6 +15,9 @@ Rectangle {
     color: palette.base
     width: parent.width
     height: root.isLarge ? 400 : 70
+    radius: 2
+    border.width: textArea.activeFocus ? 2 : 1
+    border.color: textArea.activeFocus ? palette.highlight : palette.mid
     Flickable {
         width: parent.width
         height: parent.height
@@ -22,6 +25,7 @@ Rectangle {
         contentHeight: height
         ScrollBar.vertical: MScrollBar {}
         TextArea.flickable: TextArea {
+            id: textArea
             wrapMode: Text.WordWrap
             padding: 0
             rightPadding: 5
@@ -29,7 +33,7 @@ Rectangle {
             topPadding: 2
             readOnly: !root.editable
             onEditingFinished: root.editingFinished(text)
-            text: root.label
+            text: root.label.trim()
             selectByMouse: true
             background: Rectangle {
                 visible: errorMessages.length

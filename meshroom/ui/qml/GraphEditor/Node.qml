@@ -443,7 +443,6 @@ Item {
                             sourceComponent: AttributePin {
                                 id: flowInputsHeaderPin
                                 attribute: node.internalAttribute("flowInputs")
-                                nodeItem: root
                                 compact: true
                                 displayOutputPinForInput: false
                                 Layout.alignment: Qt.AlignVCenter
@@ -645,7 +644,6 @@ Item {
                             sourceComponent: AttributePin {
                                 id: flowOutHeaderPin
                                 attribute: node.internalAttribute("flowOutput")
-                                nodeItem: root
                                 compact: true
 
                                 // globalX/Y: root is in the draggable coordinate space.
@@ -767,7 +765,6 @@ Item {
 
                                     sourceComponent: AttributePin {
                                         id: outPin
-                                        nodeItem: root
                                         attribute: modelData
                                         expanded: Boolean(modelData.expanded)
 
@@ -851,7 +848,6 @@ Item {
 
                                     sourceComponent: AttributePin {
                                         id: inPin
-                                        nodeItem: root
                                         attribute: modelData
                                         expanded: Boolean(modelData.expanded)
 
@@ -967,7 +963,6 @@ Item {
 
                                         sourceComponent: AttributePin {
                                             id: inParamsPin
-                                            nodeItem: root
                                             attribute: modelData
                                             expanded: Boolean(modelData.expanded)
 

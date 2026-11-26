@@ -4,6 +4,7 @@ import glob
 import logging
 import os
 import re
+import shlex
 import sys
 
 from enum import Enum
@@ -68,13 +69,9 @@ class ProcessEnv(BaseObject):
         """ Return the environment dictionary if it has been modified, None otherwise. """
         return self._env
 
-    def getCommandPrefix(self) -> str:
-        """ Return the prefix to the command line that will be executed by the process. """
-        return ""
-
-    def getCommandSuffix(self) -> str:
-        """ Return the suffix to the command line that will be executed by the process. """
-        return ""
+    def wrapCommand(self, cmd: str) -> str:
+        """ Return the command line running the command line 'cmd' in this environment. """
+        return cmd
 
 
 class DirTreeProcessEnv(ProcessEnv):
@@ -148,7 +145,7 @@ class DirTreeProcessEnv(ProcessEnv):
 class RezProcessEnv(ProcessEnv):
     """
     A ProcessEnv built by resolving a Rez environment for the plugin's subrequires, activated
-    through a "rez env" command prefix/suffix wrapped around the node's command line.
+    through a "rez env" command wrapped around the node's command line.
     """
 
     REZ_DELIMITER_PATTERN = re.compile(r"-|==|>=|>|<=|<")
@@ -225,7 +222,7 @@ class RezProcessEnv(ProcessEnv):
         logging.debug("Packages for the execution environment: " + ", ".join(packages))
         return packages
 
-    def getCommandPrefix(self):
+    def wrapCommand(self, cmd: str) -> str:
         # TODO: make Windows-compatible
 
         # Use the PYTHONPATH from the subrequires' environment (which will only be resolved once
@@ -233,7 +230,5 @@ class RezProcessEnv(ProcessEnv):
         # to it
         pythonPaths = f"{os.pathsep.join(['$PYTHONPATH', f'{_MESHROOM_ROOT}', f'{self._folder}'])}"
 
-        return f"rez env {' '.join(self.resolveRezSubrequires())} -c 'PYTHONPATH={pythonPaths} "
-
-    def getCommandSuffix(self):
-        return "'"
+        # The command is run by the shell of "rez env": quote it as a whole, its own quotes included
+        return f"rez env {' '.join(self.resolveRezSubrequires())} -c " + shlex.quote(f"PYTHONPATH={pythonPaths} {cmd}")

@@ -651,7 +651,7 @@ class Node(BaseNode):
 
     def processChunkInEnvironment(self, chunk):
         meshroomComputeCmd = f"{chunk.node.nodeDesc.pythonExecutable} {_MESHROOM_COMPUTE}" + \
-                             f" \"{chunk.node.graph.filepath}\" --node {chunk.node.name}" + \
+                             f" {shlex.quote(chunk.node.graph.filepath)} --node {chunk.node.name}" + \
                               " --extern --inCurrentEnv"
         if chunk.isPreprocess:
             meshroomComputeCmd += f" --preprocess"
@@ -661,9 +661,7 @@ class Node(BaseNode):
             meshroomComputeCmd += f" --iteration {chunk.range.iteration}"
 
         runtimeEnv = chunk.node.nodeDesc.provider.runtimeEnv
-        cmdPrefix = chunk.node.nodeDesc.provider.commandPrefix
-        cmdSuffix = chunk.node.nodeDesc.provider.commandSuffix
-        self.executeChunkCommandLine(chunk, cmdPrefix + meshroomComputeCmd + cmdSuffix,
+        self.executeChunkCommandLine(chunk, chunk.node.nodeDesc.provider.wrapCommand(meshroomComputeCmd),
                                      env=runtimeEnv)
 
 
@@ -692,13 +690,6 @@ class CommandLineNode(BaseNode):
 
     def buildCommandLine(self, chunk) -> str:
         cmdLineVars = chunk.node.createCmdLineVars()
-        cmdPrefix = ""
-        cmdSuffix = ""
-        if chunk.node.nodeDesc.provider:
-            cmdPrefix = chunk.node.nodeDesc.provider.commandPrefix
-            cmdSuffix = chunk.node.nodeDesc.provider.commandSuffix
-        if chunk.node.isParallelized and chunk.node.size > 1:
-            cmdSuffix = " " + self.commandLineRange.format(**chunk.range.toDict()) + " " + cmdSuffix
 
         # In the case of a lambda, we want a single "node" argument and not the node descriptor "self".
         # Therefore, we use getattr_static to retrieve the raw lambda instead of a bound method, which
@@ -708,7 +699,11 @@ class CommandLineNode(BaseNode):
             cmd = commandLineValue(chunk.node)
         else:
             cmd = commandLineValue.format(**chunk.node._expVars, **chunk.node._staticExpVars, **cmdLineVars)
-        return cmdPrefix + cmd + cmdSuffix
+        if chunk.node.isParallelized and chunk.node.size > 1:
+            cmd += " " + self.commandLineRange.format(**chunk.range.toDict())
+        if chunk.node.nodeDesc.provider:
+            cmd = chunk.node.nodeDesc.provider.wrapCommand(cmd)
+        return cmd
 
     def processChunk(self, chunk):
         cmd = self.buildCommandLine(chunk)

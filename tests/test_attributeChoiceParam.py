@@ -74,6 +74,16 @@ class NodeWithTypedChoices(desc.Node):
     ]
 
 
+class NodeWithScalarInputs(desc.Node):
+    inputs = [
+        desc.IntParam(name="intIn", value=0, range=None),
+        desc.FloatParam(name="floatIn", value=0.0, range=None),
+        desc.StringParam(name="stringIn", value=""),
+        desc.BoolParam(name="boolIn", value=False),
+        desc.ListAttribute(name="stringListIn", elementDesc=desc.StringParam(name="string", value="")),
+    ]
+
+
 class TestChoiceParam:
 
     @classmethod
@@ -359,3 +369,102 @@ class TestChoiceParamScalarLinks:
             loadedNodeB = loadedGraph.node(nodeB.name)
 
             assert loadedNodeB.intChoice.inputLink == loadedNodeA.intOut
+
+
+class TestChoiceParamToScalarLinks:
+    """
+    Tests for connecting an exclusive ChoiceParam to the matching scalar Param type (IntParam/FloatParam/StringParam).
+    """
+
+    @pytest.mark.parametrize(
+        "srcAttrName,dstAttrName,expectedValue",
+        [
+            ("intChoice", "intIn", 1),
+            ("floatChoice", "floatIn", 1.0),
+            ("stringChoice", "stringIn", "a"),
+        ],
+    )
+    def test_choiceConnectsToMatchingScalarParam(self, srcAttrName, dstAttrName, expectedValue):
+        with registeredNodeTypes([NodeWithTypedChoices, NodeWithScalarInputs]):
+            graph = Graph("")
+            nodeA = graph.addNewNode(NodeWithTypedChoices.__name__)
+            nodeB = graph.addNewNode(NodeWithScalarInputs.__name__)
+
+            getattr(nodeA, srcAttrName).connectTo(getattr(nodeB, dstAttrName))
+
+            dstAttr = getattr(nodeB, dstAttrName)
+            assert dstAttr.isLink
+            assert dstAttr.value == expectedValue
+            assert type(dstAttr.value) is type(expectedValue)
+
+    def test_linkedValueUpdatesLive(self):
+        with registeredNodeTypes([NodeWithTypedChoices, NodeWithScalarInputs]):
+            graph = Graph("")
+            nodeA = graph.addNewNode(NodeWithTypedChoices.__name__)
+            nodeB = graph.addNewNode(NodeWithScalarInputs.__name__)
+
+            nodeA.stringChoice.connectTo(nodeB.stringIn)
+            nodeA.stringChoice.value = "b"
+
+            assert nodeB.stringIn.value == "b"
+            assert nodeB.stringIn.getValueStr() == '"b"'
+            assert nodeB.stringIn.uid() == nodeA.stringChoice.uid()
+
+    @pytest.mark.parametrize(
+        "srcAttrName,dstAttrName",
+        [
+            ("stringChoice", "intIn"),
+            ("floatChoice", "intIn"),
+            ("intChoice", "stringIn"),
+            ("intChoice", "floatIn"),
+            ("intChoice", "boolIn"),
+            ("intChoiceMulti", "stringIn"),
+            ("stringChoice", "stringListIn"),
+        ],
+    )
+    def test_mismatchedTypesRaiseInvalidEdgeError(self, srcAttrName, dstAttrName):
+        with registeredNodeTypes([NodeWithTypedChoices, NodeWithScalarInputs]):
+            graph = Graph("")
+            nodeA = graph.addNewNode(NodeWithTypedChoices.__name__)
+            nodeB = graph.addNewNode(NodeWithScalarInputs.__name__)
+
+            with pytest.raises(InvalidEdgeError):
+                getattr(nodeA, srcAttrName).connectTo(getattr(nodeB, dstAttrName))
+
+    def test_validateIncomingConnectionDirect(self):
+        with registeredNodeTypes([NodeWithTypedChoices, NodeWithScalarInputs]):
+            graph = Graph("")
+            nodeA = graph.addNewNode(NodeWithTypedChoices.__name__)
+            nodeB = graph.addNewNode(NodeWithScalarInputs.__name__)
+
+            assert nodeB.stringIn.validateIncomingConnection(nodeA.stringChoice) is True
+            assert nodeB.stringIn.validateIncomingConnection(nodeA.intChoice) is False
+            assert nodeB.stringIn.validateIncomingConnection(nodeA.intChoiceMulti) is False
+
+    def test_disconnectResetsToDefaultValue(self):
+        with registeredNodeTypes([NodeWithTypedChoices, NodeWithScalarInputs]):
+            graph = Graph("")
+            nodeA = graph.addNewNode(NodeWithTypedChoices.__name__)
+            nodeB = graph.addNewNode(NodeWithScalarInputs.__name__)
+
+            nodeA.stringChoice.connectTo(nodeB.stringIn)
+            nodeB.stringIn.disconnectEdge()
+
+            assert not nodeB.stringIn.isLink
+            assert nodeB.stringIn.value == ""
+
+    def test_connectionIsSerialized(self, graphSavedOnDisk):
+        with registeredNodeTypes([NodeWithTypedChoices, NodeWithScalarInputs]):
+            graph: Graph = graphSavedOnDisk
+            nodeA = graph.addNewNode(NodeWithTypedChoices.__name__)
+            nodeB = graph.addNewNode(NodeWithScalarInputs.__name__)
+
+            nodeA.stringChoice.connectTo(nodeB.stringIn)
+            graph.save()
+
+            loadedGraph = loadGraph(graph.filepath)
+            loadedNodeA = loadedGraph.node(nodeA.name)
+            loadedNodeB = loadedGraph.node(nodeB.name)
+
+            assert loadedNodeB.stringIn.inputLink == loadedNodeA.stringChoice
+            assert loadedNodeB.stringIn.value == "a"

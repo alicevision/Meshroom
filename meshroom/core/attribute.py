@@ -744,7 +744,11 @@ class Attribute(BaseObject):
         Returns:
             True if the connection is valid, False otherwise.
         """
-        return self.baseType == connectingAttribute.baseType
+        if self.baseType == connectingAttribute.baseType:
+            return True
+
+        # An exclusive ChoiceParam holds a single value, which can be read by the scalar Param matching its value type
+        return isinstance(connectingAttribute, ChoiceParam) and connectingAttribute.isLinkableToScalarParam(self)
 
     def connectTo(self, dstAttribute: Attribute) -> tuple[list[list[Attribute]], list[list[Attribute]]]:
         """
@@ -949,7 +953,7 @@ class ChoiceParam(Attribute):
         super().__init__(node, attributeDesc, isOutput, root, parent)
         self._values = None
 
-    # Maps a ChoiceParam's value type to the scalar Param type allowed to connect to it.
+    # Maps a ChoiceParam's value type to the scalar Param type allowed to connect to it, or to be connected from it.
     _LINKABLE_PARAM_TYPES = {
         int: "IntParam",
         float: "FloatParam",
@@ -989,6 +993,25 @@ class ChoiceParam(Attribute):
 
         expectedBaseType = self._LINKABLE_PARAM_TYPES.get(self._desc._valueType)
         return expectedBaseType is not None and connectingAttribute.baseType == expectedBaseType
+
+    def isLinkableToScalarParam(self, scalarAttribute: Attribute) -> bool:
+        """
+        Whether this ChoiceParam can be connected to "scalarAttribute", a scalar Param (IntParam, FloatParam or
+        StringParam). Only an exclusive ChoiceParam can, as it holds a single value, and only to the scalar Param type
+        matching its value type (e.g. a ChoiceParam of strings to a StringParam).
+
+        Args:
+            scalarAttribute: the Attribute that would receive the connection from this ChoiceParam.
+
+        Returns:
+            True if the connection is valid, False otherwise.
+        """
+        if not self._desc.exclusive:
+            return False
+        expectedType = self._LINKABLE_PARAM_TYPES.get(self._desc._valueType)
+        # Compare with the exact type and not the base type, so that a ListAttribute of the matching scalar Param
+        # (whose base type is the one of its elements) does not receive a single value.
+        return expectedType is not None and scalarAttribute.type == expectedType
 
     def _conformValue(self, val):
         """

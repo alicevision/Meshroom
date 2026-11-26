@@ -17,7 +17,7 @@ import logging
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core import desc, pluginManager
 from meshroom.core.node import Status, ChunkIndex
-from .utils import registerNodeDesc, unregisterNodeDesc
+from .utils import registerNodeDesc, unregisterNodeDesc, waitUntil
 
 LOGGER = logging.getLogger("TestCompute")
 
@@ -263,7 +263,6 @@ class TestLockUpdates:
         is finished. Both the global status and the lock status should be updated throughout the process.
         """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -275,7 +274,8 @@ class TestLockUpdates:
         thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
         thread.start()
 
-        time.sleep(0.5)  # Wait for the process to start and update the status
+        # Wait for the process to start and lock the node (writing the status files can be slow on Windows)
+        waitUntil(lambda: node.locked, timeout=2.5)
         self.checkNodeStatusAndLock(node, Status.RUNNING, True)
 
         # Wait for the process to finish and update the status
@@ -307,7 +307,6 @@ class TestLockUpdates:
         node's status and lock.
         """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -318,7 +317,7 @@ class TestLockUpdates:
         thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
         thread.start()
 
-        time.sleep(0.5)
+        waitUntil(lambda: node.locked, timeout=2.5)
         self.checkNodeStatusAndLock(node, Status.RUNNING, True)
 
         # Duplicate the running & locked node
@@ -353,7 +352,6 @@ class TestLockUpdates:
         Test that when a graph is loaded while a node is running, the node's status and lock are not reset and that
         the node is still locked. """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -362,7 +360,7 @@ class TestLockUpdates:
 
         thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
         thread.start()
-        time.sleep(0.5)
+        waitUntil(lambda: node.locked, timeout=2.5)
         self.checkNodeStatusAndLock(node, Status.RUNNING, True)
 
         # Load the graph while the node is running and check that the node's status and lock are not reset
@@ -380,7 +378,6 @@ class TestLockUpdates:
         Test that when a node is running, its downstream nodes are not locked, and their status is not updated.
         """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -394,7 +391,7 @@ class TestLockUpdates:
         thread = threading.Thread(target=node.process, kwargs={"inCurrentEnv": True})
         thread.start()
 
-        time.sleep(0.5)
+        waitUntil(lambda: node.locked, timeout=2.5)
         self.checkNodeStatusAndLock(node, Status.RUNNING, True)
         self.checkNodeStatusAndLock(downstreamNode, Status.NONE, False)
 
@@ -407,7 +404,6 @@ class TestLockUpdates:
         Test that when a node is running, its upstream nodes are locked and their status remains unchanged.
         """
         import threading
-        import time
 
         graph: Graph = graphSavedOnDisk
         node = graph.addNewNode("PluginANodeA")
@@ -424,7 +420,7 @@ class TestLockUpdates:
 
         thread = threading.Thread(target=downstreamNode.process, kwargs={"inCurrentEnv": True})
         thread.start()
-        time.sleep(0.5)
+        waitUntil(lambda: node.locked, timeout=2.5)
         self.checkNodeStatusAndLock(node, Status.SUCCESS, True)
         self.checkNodeStatusAndLock(downstreamNode, Status.RUNNING, True)
 

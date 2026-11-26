@@ -2,6 +2,7 @@
 
 import json
 import os
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -62,9 +63,35 @@ class ParallelCount(desc.BaseNode):
         chunk.node.output.value = "c"
 
 
+class CountedInline(InlineAppend):
+    calls = Counter()  # Number of evaluations per node name
+
+    def process(self, node):
+        CountedInline.calls[node.name] += 1
+        super().process(node)
+
+
+class SizedCountedInline(CountedInline):
+    size = desc.DynamicNodeSize("input")
+
+
+class InlineJoin(desc.InlineNode):
+    inputs = [
+        desc.StringParam(name="first", label="First", description="", value=""),
+        desc.StringParam(name="second", label="Second", description="", value=""),
+    ]
+    outputs = _OUTPUTS
+
+    def process(self, node):
+        node.output.value = node.first.value + node.second.value
+
+
 @pytest.fixture(autouse=True)
 def nodeTypes():
-    with registeredNodeTypes([InlineAppend, InlineFail, SizedInlineAppend, RegularAppend, ParallelAppend, ParallelCount]):
+    nodeTypes = [InlineAppend, InlineFail, SizedInlineAppend, CountedInline, SizedCountedInline, InlineJoin,
+                 RegularAppend, ParallelAppend, ParallelCount]
+    CountedInline.calls.clear()
+    with registeredNodeTypes(nodeTypes):
         yield
 
 
@@ -202,3 +229,60 @@ def test_inlineNodeFailureWhenCreatingChunks(graphSavedOnDisk):
         executeGraph(graph)
 
     assert downstream.getGlobalStatus() == Status.ERROR
+
+
+def test_inlineNodeIsEvaluatedOnceForAllChunks(graphSavedOnDisk):
+    """ createChunks and each chunk of the downstream node must not evaluate the inline node again. """
+    graph = graphSavedOnDisk
+    upstream = graph.addNewNode("ParallelCount")
+    inline = graph.addNewNode("SizedCountedInline")
+    downstream = graph.addNewNode("ParallelAppend")
+    upstream.output.connectTo(inline.input)
+    inline.output.connectTo(downstream.input)
+    graph.save()
+
+    executeGraph(graph)
+
+    assert len(downstream.chunks) == 3
+    assert downstream.output.value == "cip"
+    assert CountedInline.calls[inline.name] == 1
+
+
+def test_sharedInlineNodeIsEvaluatedOnce(graphSavedOnDisk):
+    """ An inline node read through several inline paths is evaluated once. """
+    graph = graphSavedOnDisk
+    shared = graph.addNewNode("CountedInline")
+    left = graph.addNewNode("CountedInline")
+    right = graph.addNewNode("CountedInline")
+    join = graph.addNewNode("InlineJoin")
+    downstream = graph.addNewNode("RegularAppend")
+    shared.output.connectTo(left.input)
+    shared.output.connectTo(right.input)
+    left.output.connectTo(join.first)
+    right.output.connectTo(join.second)
+    join.output.connectTo(downstream.input)
+    graph.save()
+
+    executeGraph(graph)
+
+    assert downstream.output.value == "iiiir"
+    assert CountedInline.calls == {shared.name: 1, left.name: 1, right.name: 1}
+
+
+def test_inlineNodeIsEvaluatedAgainWhenInvalidated(graphSavedOnDisk):
+    graph = graphSavedOnDisk
+    upstream = graph.addNewNode("RegularAppend")
+    inline = graph.addNewNode("CountedInline")
+    downstream = graph.addNewNode("RegularAppend")
+    upstream.output.connectTo(inline.input)
+    inline.output.connectTo(downstream.input)
+    graph.save()
+    executeGraph(graph)
+    assert downstream.output.value == "rir"
+
+    upstream.input.value = "changed"
+    graph.update()
+    executeGraph(graph)
+
+    assert downstream.output.value == "changedrir"
+    assert CountedInline.calls[inline.name] == 2

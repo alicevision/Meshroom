@@ -152,9 +152,11 @@ class Node(BaseNode):
         """
         if not self.isComputableType:
             if self.isInlineNode:
-                # Inline nodes are not scheduled: nothing else sets their size or clears their last values
+                # Inline nodes are not scheduled: nothing else sets their size or clears their last values.
+                # This runs on every updateInternals (input or cache folder change), which invalidates the evaluation.
+                # The size is provisional: evaluateInline updates it once the upstream inline nodes are evaluated.
                 self._updateNodeSize()
-                self.resetOutputAttr()
+                self.resetInlineEvaluation()
             self._chunksCreated = True
             return
         for chunk in self._chunks:

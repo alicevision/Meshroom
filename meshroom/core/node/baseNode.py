@@ -89,6 +89,7 @@ class BaseNode(BaseObject):
         self._uid: str = uid
         self._expVars: dict = {}
         self._size: int = 0
+        self._inlineEvaluated: bool = False  # Inline nodes only: outputs evaluated since the last invalidation
         self._logManager: Optional[LogManager] = None
         self._position: Position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
@@ -1072,12 +1073,28 @@ class BaseNode(BaseObject):
         """ Evaluate the inline nodes this node depends on, so that its inputs can be read. """
         for inputNode in self.getInputNodes(recursive=False, dependenciesOnly=True):
             if inputNode.isInlineNode:
-                inputNode.processInlineInputs()
-                # Nodes scheduled on the task manager evaluate their size in createChunks, 
-                # right before they compute. Inline nodes are not scheduled, 
-                # so their size is evaluated here instead.
-                inputNode._updateNodeSize()
-                inputNode.nodeDesc.process(inputNode)
+                inputNode.evaluateInline()
+
+    def evaluateInline(self):
+        """
+        Evaluate this inline node, after the inline nodes it depends on.
+        It is evaluated once until it is invalidated (see resetInlineEvaluation): it is skipped when shared
+        by several paths or read again by each chunk of its downstream node.
+        """
+        if self._inlineEvaluated:
+            return
+        self.processInlineInputs()
+        # Nodes scheduled on the task manager evaluate their size in createChunks,
+        # right before they compute. Inline nodes are not scheduled,
+        # so their size is evaluated here instead.
+        self._updateNodeSize()
+        self.nodeDesc.process(self)
+        self._inlineEvaluated = True
+
+    def resetInlineEvaluation(self):
+        """ Clear the outputs of this inline node, so that it is evaluated again when read. """
+        self.resetOutputAttr()
+        self._inlineEvaluated = False
 
     def getLogHandlers(self):
         return self._handlers

@@ -151,6 +151,27 @@ def test_inlineNodesAreNotScheduled(graphSavedOnDisk):
     assert set(graph.flowEdges()) == expectedEdges
 
 
+def test_bypassedEdgesAreUnique(graphSavedOnDisk):
+    """ A node reading the same upstream node through several inline nodes depends on it once. """
+    graph = graphSavedOnDisk
+    upstream = graph.addNewNode("RegularAppend")
+    inlineA = graph.addNewNode("InlineAppend")
+    inlineB = graph.addNewNode("InlineAppend")
+    join = graph.addNewNode("InlineJoin")
+    downstream = graph.addNewNode("RegularAppend")
+    upstream.output.connectTo(inlineA.input)
+    upstream.output.connectTo(inlineB.input)
+    inlineA.output.connectTo(join.first)
+    inlineB.output.connectTo(join.second)
+    join.output.connectTo(downstream.input)
+    graph.save()
+
+    _, edges = graph.dfsToProcess()
+
+    assert edges == [(downstream, upstream)]
+    assert graph.flowEdges() == [(downstream, upstream)]
+
+
 def test_inlineNodeFailureIsReportedOnDownstreamNode(graphSavedOnDisk):
     graph = graphSavedOnDisk
     inline = graph.addNewNode("InlineFail")

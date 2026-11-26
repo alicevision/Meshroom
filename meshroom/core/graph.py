@@ -1428,7 +1428,7 @@ class Graph(BaseObject):
             edges: list of (node, inputNode) tuples.
 
         Returns:
-            list: the (node, inputNode) tuples between non-inline nodes.
+            list: the unique (node, inputNode) tuples between non-inline nodes.
         """
         inlineInputs = defaultdict(list)
         for node, inputNode in edges:
@@ -1440,7 +1440,9 @@ class Graph(BaseObject):
                 return [node]
             return [resolved for inputNode in inlineInputs[node] for resolved in resolve(inputNode)]
 
-        return [(node, resolved) for node, inputNode in edges if not node.isInlineNode for resolved in resolve(inputNode)]
+        # Several paths through inline nodes may lead to the same input node
+        return list(dict.fromkeys(
+            (node, resolved) for node, inputNode in edges if not node.isInlineNode for resolved in resolve(inputNode)))
 
     @Slot(Node, result=bool)
     def canComputeTopologically(self, node):

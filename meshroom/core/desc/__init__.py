@@ -45,6 +45,7 @@ from .node import (
     CommandLineNode,
     InputNode,
     InitNode,
+    InlineNode,
     InternalAttributesFactory,
     IONode,
     MrNodeType,

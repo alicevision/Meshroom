@@ -88,7 +88,8 @@ def computeSceneCommand(node) -> str:
     nodeDesc = node.nodeDesc
     scenePath = shlex.quote(nodeDesc._computedScenePath(node))
 
-    if node.submit.value:
+    # The submit attributes are hidden when the scene is computed in a single process: ignore their value
+    if node.submit.value and not nodeDesc.executeInSingleProcess:
         cmd = f"{nodeDesc.pythonExecutable} {shlex.quote(str(_MESHROOM_SUBMIT))} {scenePath}"
         if node.submitter.value:
             cmd += f" --submitter {shlex.quote(node.submitter.value)}"
@@ -99,7 +100,17 @@ def computeSceneCommand(node) -> str:
     cmd = f"{nodeDesc.pythonExecutable} {shlex.quote(str(_MESHROOM_COMPUTE))} {scenePath}"
     if node.forceCompute.value:
         cmd += " --forceCompute"
+    if nodeDesc.executeInSingleProcess:
+        cmd += " --inCurrentEnv"
     return cmd
+
+
+def canSubmit(node) -> bool:
+    """
+    Return whether the scene of a ComputeMeshroomScene node can be submitted: a submitter is available, and its
+    nodes are not computed in a single process, as the farm computes each node in its own process.
+    """
+    return bool(node.nodeDesc.SUBMITTERS) and not node.nodeDesc.executeInSingleProcess
 
 
 class ComputeMeshroomScene(desc.CommandLineNode):
@@ -108,6 +119,8 @@ class ComputeMeshroomScene(desc.CommandLineNode):
     """
 
     pythonExecutable = "python"
+    # Set to True to compute all the nodes of the scene in the same process (the scene cannot be submitted then)
+    executeInSingleProcess = False
     category = "Utils"
     commandLine = computeSceneCommand
 
@@ -229,7 +242,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             label="Submit",
             description="Set True to submit, False to compute locally.",
             value=False,
-            enabled=len(SUBMITTERS) > 0
+            enabled=canSubmit
         ),
         desc.ChoiceParam(
             name="submitter",
@@ -237,7 +250,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             description="Select submitter. An empty string will select the default one.",
             value="",
             values=[""] + SUBMITTERS,
-            enabled=lambda node: node.submit.value is True
+            enabled=lambda node: canSubmit(node) and node.submit.value is True
         ),
         desc.StringParam(
             name="submitLabel",
@@ -249,7 +262,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
                 "- projectName: the name of the scene file"
             ),
             value="",
-            enabled=len(SUBMITTERS) > 0
+            enabled=canSubmit
         ),
         desc.BoolParam(
             name="useOnlyGraphIONodes",

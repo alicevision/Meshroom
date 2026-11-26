@@ -111,6 +111,37 @@ def test_sceneAttributesAreExposedAndOverridden(tmp_path):
         assert Path(args[2]) == scenePath
 
 
+def test_executeInSingleProcessIsPassedToMeshroomCompute(tmp_path):
+    class ComputeDccScene(ComputeMeshroomScene):
+        """ Compute a scene in a single process of a DCC interpreter. """
+        pythonExecutable = "mayapy"
+        executeInSingleProcess = True
+
+    with registeredNodeTypes([ComputeMeshroomScene, ComputeDccScene, GraphInput, GraphOutput]):
+        scenePath = tmp_path / "scene.mg"
+        _saveScene(scenePath)
+        graph = Graph("")
+        defaultNode = graph.addNewNode("ComputeMeshroomScene", scene=str(scenePath))
+        dccNode = graph.addNewNode("ComputeDccScene", scene=str(scenePath))
+
+        def commandLine(node):
+            return shlex.split(node.nodeDesc.buildCommandLine(SimpleNamespace(node=node)))
+
+        # By default, each node of the scene is computed in its plugin's environment
+        assert "--inCurrentEnv" not in commandLine(defaultNode)
+
+        args = commandLine(dccNode)
+        assert args[0] == "mayapy"
+        assert "--inCurrentEnv" in args
+
+        # The farm computes each node in its own process: such a scene cannot be submitted, so it is computed
+        dccNode.submit.value = True
+        assert not dccNode.submit.enabled and not dccNode.submitter.enabled and not dccNode.submitLabel.enabled
+        assert Path(commandLine(dccNode)[1]).name == "meshroom_compute"
+        defaultNode.submit.value = True
+        assert Path(commandLine(defaultNode)[1]).name == "meshroom_submit"
+
+
 def test_argumentsAreInTheCommandRunInThePluginEnv(tmp_path):
     rezEnv = RezProcessEnv("/plugin", {}, "mayaPlugin", None)
     with registeredNodeTypes([ComputeMeshroomScene, GraphInput, GraphOutput]), \

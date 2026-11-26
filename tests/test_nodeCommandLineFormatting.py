@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+import shlex
+from unittest.mock import PropertyMock, patch
+
 from meshroom.core.graph import Graph
 from meshroom.core import desc
+from meshroom.core.plugins.base import NodeDescProvider
+from meshroom.core.plugins.env import RezProcessEnv
 
 from .utils import registerNodeDesc, unregisterNodeDesc
 
@@ -157,3 +162,18 @@ class TestCommandLineFormatting:
         assert cmdNL == cmdNF
         assert cmdN == cmdNL
         assert cmdN == cmdV
+
+    def test_commandLine_quotesAreKeptInRezEnv(self):
+        graph = Graph("")
+        node = graph.addNewNode("NodeWithCommandLineFormatting_usingNodeAndLambda")
+        node.input.value = shlex.quote("/my shots/it's.jpg")
+        rezEnv = RezProcessEnv("/plugin", {}, "myPlugin", None)
+        with patch.object(NodeDescProvider, "processEnv", new_callable=PropertyMock, return_value=rezEnv), \
+                patch.object(RezProcessEnv, "resolveRezSubrequires", return_value=["myPackage"]):
+            cmd = node.nodeDesc.buildCommandLine(node.chunks[0])
+
+        # The command run by "rez env" keeps its own quotes
+        args = shlex.split(cmd)
+        assert args[:4] == ["rez", "env", "myPackage", "-c"]
+        assert len(args) == 5
+        assert shlex.split(args[4])[3] == "/my shots/it's.jpg"

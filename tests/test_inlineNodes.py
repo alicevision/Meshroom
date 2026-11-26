@@ -307,3 +307,49 @@ def test_inlineNodeIsEvaluatedAgainWhenInvalidated(graphSavedOnDisk):
 
     assert downstream.output.value == "changedrir"
     assert CountedInline.calls[inline.name] == 2
+
+
+def test_leafInlineNodeIsEvaluatedOnceItsInputsAreComputed(graphSavedOnDisk):
+    """ The graph evaluates inline nodes outside of a compute, even with no downstream node. """
+    graph = graphSavedOnDisk
+    upstream = graph.addNewNode("RegularAppend")
+    inline = graph.addNewNode("CountedInline")
+    upstream.output.connectTo(inline.input)
+    graph.save()
+
+    graph.evaluateInlineNodes()
+    assert inline.output.value is None
+    assert CountedInline.calls[inline.name] == 0
+
+    executeGraph(graph)
+    graph.evaluateInlineNodes()
+    graph.evaluateInlineNodes()
+
+    assert inline.output.value == "ri"
+    assert CountedInline.calls[inline.name] == 1
+
+
+def test_inlineNodeWithoutComputableInputIsEvaluated(graphSavedOnDisk):
+    graph = graphSavedOnDisk
+    inlineA = graph.addNewNode("InlineAppend")
+    inlineB = graph.addNewNode("InlineAppend")
+    inlineA.output.connectTo(inlineB.input)
+
+    graph.evaluateInlineNodes()
+
+    assert inlineB.output.value == "ii"
+
+
+def test_inlineNodeFailureIsReportedOnComputeAfterEvaluation(graphSavedOnDisk):
+    """ A failure when the graph evaluates inline nodes is ignored, and still reported by the downstream compute. """
+    graph = graphSavedOnDisk
+    inline = graph.addNewNode("InlineFail")
+    downstream = graph.addNewNode("RegularAppend")
+    inline.output.connectTo(downstream.input)
+    graph.save()
+
+    graph.evaluateInlineNodes()
+
+    with pytest.raises(RuntimeError, match="Inline failure"):
+        executeGraph(graph)
+    assert downstream.getGlobalStatus() == Status.ERROR

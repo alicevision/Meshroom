@@ -460,6 +460,7 @@ class UIGraph(QObject):
 
         # Update and connect chunks when the graph is set for the first time
         self.updateChunks()
+        self._graph.evaluateInlineNodes()
 
         # Perform auto-layout if graph does not provide nodes positions
         if GraphIO.Features.NodesPositions not in self._graph.fileFeatures:
@@ -480,6 +481,8 @@ class UIGraph(QObject):
         """ Callback to any kind of attribute modification. """
         # TODO: handle this with a better granularity
         self.updateChunks()
+        # Inline nodes are not computed: evaluate the ones whose inputs have changed or can now be read
+        self._graph.evaluateInlineNodes()
 
     def updateChunks(self):
         dfsNodes: list[Node] = self._graph.dfsOnFinish(None)[0]
@@ -929,6 +932,9 @@ class UIGraph(QObject):
             self._computingLocally = computingLocally
             self._submitted = submitted
             self.computeStatusChanged.emit()
+
+        # The inline nodes reading nodes that have just been computed can now be evaluated
+        self._graph.evaluateInlineNodes()
 
     def isComputing(self):
         """ Whether is graph is being computed, either locally or externally. """

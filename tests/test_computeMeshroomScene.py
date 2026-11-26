@@ -102,8 +102,13 @@ def test_sceneAttributesAreExposedAndOverridden(tmp_path):
         assert Path(args[1]).name == "meshroom_compute"
         assert Path(args[2]) == computedScenePath
 
-        # The given scene is not modified
+        # The given scene is not modified, unless it is overwritten
         assert computedValues(scenePath) == ("/data/my shots/a.jpg", 3)
+        node.overwriteSceneGraph.value = True
+        node.nodeDesc.preprocess(node)
+        assert computedValues(scenePath) == ("/data/other shots/b.jpg", 5)
+        args = shlex.split(node.nodeDesc.buildCommandLine(SimpleNamespace(node=node)))
+        assert Path(args[2]) == scenePath
 
 
 def test_argumentsAreInTheCommandRunInThePluginEnv(tmp_path):
@@ -116,6 +121,7 @@ def test_argumentsAreInTheCommandRunInThePluginEnv(tmp_path):
         graph = Graph("")
         node = graph.addNewNode("ComputeMeshroomScene")
         node.scene.value = str(scenePath)
+        node.overwriteSceneGraph.value = True
 
         args = shlex.split(node.nodeDesc.buildCommandLine(SimpleNamespace(node=node)))
         # The meshroom_compute arguments are part of the command run by "rez env", with their quotes kept
@@ -123,7 +129,7 @@ def test_argumentsAreInTheCommandRunInThePluginEnv(tmp_path):
         assert len(args) == 5
         commandArgs = shlex.split(args[4])
         assert commandArgs[0].startswith("PYTHONPATH=$PYTHONPATH")
-        assert Path(commandArgs[3]) == Path(node.nodeDesc._computedScenePath(node))
+        assert Path(commandArgs[3]) == scenePath
 
 
 def test_sceneValuesAreTheDefaultsOfTheExposedInputs(tmp_path):

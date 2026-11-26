@@ -2,13 +2,14 @@
 # coding:utf-8
 
 import threading
-import time
 
 from pathlib import Path
 
 from meshroom.core.plugins.local.service import PluginService, PluginServiceError
 from meshroom.core.plugins.local.task import PluginTask, PluginTaskKind, PluginTaskStatus
 from meshroom.core.plugins.local.taskQueue import PluginTaskQueue
+
+from ..utils import waitUntil
 
 
 class FakeService(PluginService):
@@ -44,14 +45,6 @@ class SignalRecorder:
 
     def onEmit(self, *args):
         self.calls.append(args)
-
-
-def waitUntil(predicate, timeout=2.0):
-    """ Poll "predicate" until it returns True, or "timeout" seconds have passed. """
-    deadline = time.monotonic() + timeout
-    while not predicate() and time.monotonic() < deadline:
-        time.sleep(0.01)
-    return predicate()
 
 
 def task(service=None, pluginName="myPlugin"):

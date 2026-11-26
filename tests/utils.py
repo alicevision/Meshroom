@@ -8,7 +8,16 @@ from meshroom.core import desc, pluginManager
 from meshroom.core.plugins.base import NodeDescProvider
 
 import os
+import time
 import zipfile
+
+
+def waitUntil(predicate, timeout=2.0):
+    """ Poll "predicate" until it returns True, or "timeout" seconds have passed. """
+    deadline = time.monotonic() + timeout
+    while not predicate() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    return predicate()
 
 
 def writeFile(filePath: Path, content: str = "") -> Path:

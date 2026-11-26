@@ -585,7 +585,7 @@ class BoolParam(Param):
         return "", ValueTypeErrors.NONE
 
 
-class _AutoValueMixin:
+class AutoValueMixin:
     """
     Shared logic for numeric params with an optional "automatic value":
     a special value outside the range (e.g. 0 meaning "automatic" or "no limit"),
@@ -608,14 +608,13 @@ class _AutoValueMixin:
     #Override
     def clone(self):
         cloned = super().clone()
-        cloned._range = self._range
         cloned._autoValue = self._autoValue
         cloned._autoLabel = self._autoLabel
         cloned._autoIcon = self._autoIcon
         return cloned
 
 
-class IntParam(_AutoValueMixin, Param):
+class IntParam(AutoValueMixin, Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")
@@ -678,7 +677,7 @@ class IntParam(_AutoValueMixin, Param):
     hasAutoValue = Property(bool, lambda self: self._autoValue is not None, constant=True)
 
 
-class FloatParam(_AutoValueMixin, Param):
+class FloatParam(AutoValueMixin, Param):
     """
     """
     @deprecated.depreciateParam("group", "Param 'group' on {name} should not be used anymore. Please use 'commandLineGroup' instead")

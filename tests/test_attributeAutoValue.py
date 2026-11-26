@@ -83,7 +83,7 @@ def test_cloneKeepsRangeAndAutoValue():
     for param in (desc.IntParam(name="a", value=0, range=(1, 10, 1), autoValue=0, autoLabel="All"),
                   desc.FloatParam(name="f", value=0.5, range=(0.0, 1.0, 0.1), autoValue=-1.0, autoLabel="None")):
         cloned = param.clone()
-        assert cloned.range == param.range
+        assert list(cloned.range) == list(param.range)
         assert cloned.autoValue == param.autoValue
         assert cloned.autoLabel == param.autoLabel
 

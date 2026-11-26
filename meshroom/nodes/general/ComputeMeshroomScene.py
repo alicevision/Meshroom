@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "2.0"
+__version__ = "2.1"
 
 import os
 import re
@@ -134,17 +134,25 @@ class ComputeMeshroomScene(desc.CommandLineNode):
 
     @staticmethod
     def _computedScenePath(node) -> str:
-        """ Return the path where the scene is saved before being computed, with its cache folder next to it. """
+        """
+        Return the path where the scene is saved before being computed, with its cache folder next to it:
+        the given scene itself if it is overwritten, otherwise a copy in the node's folder.
+        """
+        if node.overwriteSceneGraph.value:
+            return node.scene.value
         return os.path.join(node.internalFolder, "scene.mg")
 
     def preprocess(self, node):
         """
-        Save the scene to compute in the node's folder, with the values of the exposed inputs that differ from the
-        given scene, which is left untouched. It is loaded as a template, without its output nodes.
+        Save the scene to compute, with the values of the exposed inputs that differ from the given scene.
+        Unless the given scene is overwritten, it is loaded as a template, without its output nodes.
         """
         scene = Graph(name=node.scene.value)
         try:
-            scene.initFromTemplate(node.scene.value)
+            if node.overwriteSceneGraph.value:
+                scene.load(node.scene.value)
+            else:
+                scene.initFromTemplate(node.scene.value)
         except Exception as e:
             raise RuntimeError(f"Cannot read the scene '{node.scene.value}': {e}") from e
 
@@ -195,6 +203,17 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             validators=[
                 isValidSceneFileValidator
             ]
+        ),
+        desc.BoolParam(
+            name="overwriteSceneGraph",
+            label="Overwrite Scene Graph",
+            description="Compute the given scene as it is, output nodes included: the overridden inputs are saved in "
+                        "it, and its cache folder is used.\n"
+                        "Otherwise, the scene is copied in the node's folder and computed there, with its cache next "
+                        "to it.\n"
+                        "Never overwrite a scene used by another node that can be computed at the same time: "
+                        "their inputs and outputs would get mixed.",
+            value=False,
         ),
         desc.BoolParam(
             name="forceCompute",
@@ -402,8 +421,8 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             attributes = flattenAttributes(inputNode.getAttributes(), lambda attr: not attr.isInput or attr.isLink)
             self._exposeAttributes(node.inputs, attributes)
 
-        # Only GraphOutput nodes are exposed: the output nodes are removed from the computed scene, and their
-        # attributes are export settings rather than results
+        # Only GraphOutput nodes are exposed: the output nodes are removed from the computed scene (unless it is
+        # overwritten), and their attributes are export settings rather than results
         graphOutputNode = graph.findGraphOutputNode()
         if graphOutputNode:
             self._exposeAttributes(node.outputs, flattenAttributes(graphOutputNode.getAttributes()))

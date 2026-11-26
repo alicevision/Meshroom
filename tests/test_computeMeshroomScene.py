@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # coding:utf-8
 
-import re
 import shlex
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import PropertyMock, patch
 
 import pytest
 
 from meshroom.core import desc
+from meshroom.core.plugins.base import NodeDescProvider
+from meshroom.core.plugins.env import RezProcessEnv
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.nodes.general.ComputeMeshroomScene import ComputeMeshroomScene, decodeAttributeName, encodeAttributeName
 from meshroom.nodes.general.GraphIO import GraphInput, GraphOutput
@@ -17,10 +19,6 @@ from meshroom.nodes.general.PathJoin import PathJoin
 
 from .nodes.test.OutputNode import OutputNodeTest
 from .utils import registeredNodeTypes
-
-
-# Same expression as meshroom_batch to parse the --paramOverrides arguments
-_PARAM_OVERRIDE_RE = re.compile(r'(\w+)([:.])(\w[\w.]*)=(.*)')
 
 
 class FileProducer(desc.Node):
@@ -75,6 +73,7 @@ def test_sceneAttributesAreExposedAndOverridden(tmp_path):
         graphInput, graphOutput = _saveScene(scenePath)
 
         graph = Graph("")
+        graph.save(str(tmp_path / "project.mg"))
         node = graph.addNewNode("ComputeMeshroomScene")
         node.scene.value = str(scenePath)
 
@@ -88,36 +87,43 @@ def test_sceneAttributesAreExposedAndOverridden(tmp_path):
         ]
         assert [decodeAttributeName(attr.name) for attr in node.outputs.value] == [f"{graphOutput.name}.outs.result"]
 
-        # Without any change, no input is overridden, and the given scene is not overwritten either
-        args = shlex.split(node.nodeDesc.buildCommandLine(SimpleNamespace(node=node)))
-        assert "--paramOverrides" not in args
-        assert Path(args[args.index("--save") + 1]) != scenePath
+        def computedValues(path):
+            ins = loadGraph(str(path)).node(graphInput.name).ins
+            return ins.value.get("inputFile").value, ins.value.get("count_").value
 
+        # The preprocess saves the scene with the modified inputs in the node's folder, which is computed
         node.inputs.value.get(encodeAttributeName(f"{graphInput.name}.ins.inputFile")).value = "/data/other shots/b.jpg"
         node.inputs.value.get(encodeAttributeName(f"{graphInput.name}.ins.count_")).value = 5
-        cmd = node.nodeDesc.buildCommandLine(SimpleNamespace(node=node))
-        args = shlex.split(cmd)
+        node.nodeDesc.preprocess(node)
+        computedScenePath = Path(node.nodeDesc._computedScenePath(node))
+        assert computedScenePath != scenePath
+        assert computedValues(computedScenePath) == ("/data/other shots/b.jpg", 5)
+        args = shlex.split(node.nodeDesc.buildCommandLine(SimpleNamespace(node=node)))
+        assert Path(args[1]).name == "meshroom_compute"
+        assert Path(args[2]) == computedScenePath
 
-        # The given scene is not overwritten with the overrides (paths are compared as Paths, as File values use "/")
-        assert Path(args[args.index("-p") + 1]) == scenePath
-        assert Path(args[args.index("--save") + 1]) != scenePath
+        # The given scene is not modified
+        assert computedValues(scenePath) == ("/data/my shots/a.jpg", 3)
 
-        # Each modified input is overridden and resolves to the scene attribute, as in meshroom_batch
-        scene = loadGraph(str(scenePath))
-        overrides = args[args.index("--paramOverrides") + 1:]
-        overrides = overrides[:next((i for i, arg in enumerate(overrides) if arg.startswith("--")), len(overrides))]
-        values = {}
-        for override in overrides:
-            nodeName, separator, param, value = _PARAM_OVERRIDE_RE.match(override).groups()
-            assert separator == "."
-            attribute = scene.findNode(nodeName).attribute(param)
-            assert attribute is not None
-            values[attribute.fullName] = value
 
-        assert values == {
-            f"{graphInput.name}.ins.inputFile": "/data/other shots/b.jpg",
-            f"{graphInput.name}.ins.count_": "5",
-        }
+def test_argumentsAreInTheCommandRunInThePluginEnv(tmp_path):
+    rezEnv = RezProcessEnv("/plugin", {}, "mayaPlugin", None)
+    with registeredNodeTypes([ComputeMeshroomScene, GraphInput, GraphOutput]), \
+            patch.object(NodeDescProvider, "processEnv", new_callable=PropertyMock, return_value=rezEnv), \
+            patch.object(RezProcessEnv, "resolveRezSubrequires", return_value=["mayaPackage"]):
+        scenePath = tmp_path / "my scene.mg"
+        _saveScene(scenePath)
+        graph = Graph("")
+        node = graph.addNewNode("ComputeMeshroomScene")
+        node.scene.value = str(scenePath)
+
+        args = shlex.split(node.nodeDesc.buildCommandLine(SimpleNamespace(node=node)))
+        # The meshroom_compute arguments are part of the command run by "rez env", with their quotes kept
+        assert args[:4] == ["rez", "env", "mayaPackage", "-c"]
+        assert len(args) == 5
+        commandArgs = shlex.split(args[4])
+        assert commandArgs[0].startswith("PYTHONPATH=$PYTHONPATH")
+        assert Path(commandArgs[3]) == Path(node.nodeDesc._computedScenePath(node))
 
 
 def test_sceneValuesAreTheDefaultsOfTheExposedInputs(tmp_path):
@@ -150,7 +156,7 @@ def test_outputNodesAreNotExposed(tmp_path):
     with registeredNodeTypes([ComputeMeshroomScene, GraphInput, GraphOutput, OutputNodeTest]):
         scenePath = tmp_path / "scene.mg"
         _, graphOutput = _saveScene(scenePath)
-        # Output nodes are removed from the scene computed by meshroom_batch: their attributes cannot be exposed
+        # Output nodes are removed from the computed scene: their attributes cannot be exposed
         scene = loadGraph(str(scenePath))
         scene.addNewNode("OutputNodeTest")
         scene.save(str(scenePath))
@@ -193,10 +199,8 @@ def test_exposedOutputsAreSetFromTheComputedScene(tmp_path):
         node = graph.addNewNode("ComputeMeshroomScene")
         node.scene.value = str(scenePath)
 
-        # Simulate meshroom_batch saving the scene in the node's folder before computing it
+        node.nodeDesc.preprocess(node)
         computedScenePath = Path(node.nodeDesc._computedScenePath(node))
-        computedScenePath.parent.mkdir(parents=True)
-        loadGraph(str(scenePath)).save(str(computedScenePath))
         node.nodeDesc._updateOutputs(node)
 
         # The exposed output points to the cache of the computed scene, not to the one of the given scene
@@ -225,10 +229,8 @@ def test_exposedOutputsAreEvaluatedOnInlineNodes(tmp_path):
         node = graph.addNewNode("ComputeMeshroomScene")
         node.scene.value = str(scenePath)
 
-        # Simulate meshroom_batch saving the scene in the node's folder before computing it
+        node.nodeDesc.preprocess(node)
         computedScenePath = Path(node.nodeDesc._computedScenePath(node))
-        computedScenePath.parent.mkdir(parents=True)
-        loadGraph(str(scenePath)).save(str(computedScenePath))
         node.nodeDesc._updateOutputs(node)
 
         outputPath = Path(list(node.outputs.value)[0].value)
@@ -293,7 +295,7 @@ def test_unreadableSceneFailsTheCompute(tmp_path):
         node = graph.addNewNode("ComputeMeshroomScene")
         node.scene.value = str(tmp_path / "missing.mg")
         with pytest.raises(RuntimeError, match="missing.mg"):
-            node.nodeDesc.buildCommandLine(SimpleNamespace(node=node))
+            node.nodeDesc.preprocess(node)
 
 
 def test_inputValuesAreKeptWhenUsingOnlyGraphIONodes(tmp_path):

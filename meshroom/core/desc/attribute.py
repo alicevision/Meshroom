@@ -608,7 +608,6 @@ class _AutoValueMixin:
     #Override
     def clone(self):
         cloned = super().clone()
-        cloned._range = self._range
         cloned._autoValue = self._autoValue
         cloned._autoLabel = self._autoLabel
         cloned._autoIcon = self._autoIcon

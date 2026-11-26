@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class FlattenFiles(desc.Node):
+class FlattenFiles(desc.InlineNode):
     """
     This node takes a list of lists of files as input and produces a single flat list of
     files as output.

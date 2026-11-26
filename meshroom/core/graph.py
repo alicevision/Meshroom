@@ -1394,6 +1394,8 @@ class Graph(BaseObject):
                 raise StopBranchVisit()
 
         def finishVertex(vertex: BaseNode, graph: Graph):
+            if vertex.isInlineNode:
+                return
             if not vertex.chunks:
                 # Chunks have not been initialized
                 nodes.append(vertex)
@@ -1406,7 +1408,7 @@ class Graph(BaseObject):
                 nodes.append(vertex)  # We could collect specific chunks
 
         def finishEdge(edge, graph: Graph):
-            if edge[0].isComputed or edge[1].isComputed:
+            if any(node.isComputed and not node.isInlineNode for node in edge):
                 return
             edges.append(edge)
 
@@ -1414,7 +1416,65 @@ class Graph(BaseObject):
         visitor.finishEdge = finishEdge
         visitor.discoverVertex = discoverVertex
         self.dfs(visitor=visitor, startNodes=startNodes)
-        return nodes, edges
+        return nodes, self._bypassInlineNodes(edges)
+
+    @staticmethod
+    def _bypassInlineNodes(edges):
+        """
+        Replace the paths going through inline nodes with direct edges: inline nodes are not
+        scheduled, but their downstream nodes must still wait for what these inline nodes read.
+
+        Args:
+            edges: list of (node, inputNode) tuples.
+
+        Returns:
+            list: the unique (node, inputNode) tuples between non-inline nodes.
+        """
+        inlineInputs = defaultdict(list)
+        for node, inputNode in edges:
+            if node.isInlineNode:
+                inlineInputs[node].append(inputNode)
+
+        def resolve(node):
+            if not node.isInlineNode:
+                return [node]
+            return [resolved for inputNode in inlineInputs[node] for resolved in resolve(inputNode)]
+
+        # Several paths through inline nodes may lead to the same input node
+        return list(dict.fromkeys(
+            (node, resolved) for node, inputNode in edges if not node.isInlineNode for resolved in resolve(inputNode)))
+
+    def evaluateInlineNodes(self):
+        """
+        Evaluate the inline nodes whose inputs can be read, so that their outputs are available outside
+        of a compute (e.g. to be displayed), including the ones with no downstream node.
+        The evaluated inline nodes whose inputs can no longer be read (e.g. their data was cleared) are reset.
+        An inline node that fails is left unevaluated: its error is reported when a downstream node computes.
+        """
+        inputNodesPerNode = self._getInputEdgesPerNode(dependenciesOnly=True)
+        inputsComputed = {}
+
+        def areInputsComputed(node) -> bool:
+            """ Whether the computable nodes read by 'node', directly or through other inline nodes, are computed. """
+            if node not in inputsComputed:
+                inputsComputed[node] = all(
+                    areInputsComputed(inputNode) if inputNode.isInlineNode else inputNode.isComputed
+                    for inputNode in inputNodesPerNode[node])
+            return inputsComputed[node]
+
+        for node in self._nodes:
+            if not node.isInlineNode:
+                continue
+            if not areInputsComputed(node):
+                if node._inlineEvaluated:
+                    node.resetInlineEvaluation()
+                continue
+            if node._inlineEvaluated:
+                continue
+            try:
+                node.evaluateInline()
+            except Exception as e:
+                logging.debug(f"Cannot evaluate the inline node {node.name}: {e}")
 
     @Slot(Node, result=bool)
     def canComputeTopologically(self, node):
@@ -1538,7 +1598,7 @@ class Graph(BaseObject):
             assert score != 0
             if score == 1:
                 flowEdges.append(link)
-        return flowEdges
+        return self._bypassInlineNodes(flowEdges)
 
     def getEdges(self, dependenciesOnly=False):
         if not dependenciesOnly:

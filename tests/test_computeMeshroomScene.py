@@ -13,6 +13,7 @@ from meshroom.core.graph import Graph, loadGraph
 from meshroom.nodes.general.ComputeMeshroomScene import ComputeMeshroomScene, decodeAttributeName, encodeAttributeName
 from meshroom.nodes.general.GraphIO import GraphInput, GraphOutput
 from meshroom.nodes.general.InputInt import InputInt
+from meshroom.nodes.general.PathJoin import PathJoin
 
 from .nodes.test.OutputNode import OutputNodeTest
 from .utils import registeredNodeTypes
@@ -27,6 +28,14 @@ class FileProducer(desc.Node):
     inputs = []
     outputs = [
         desc.File(name="output", label="Output", description="Output file.", value="{nodeCacheFolder}/out.txt"),
+    ]
+
+
+class FolderProducer(desc.Node):
+    """ A node giving its cache folder as a string. """
+    inputs = []
+    outputs = [
+        desc.StringParam(name="output", label="Output", description="Cache folder.", value="{nodeCacheFolder}"),
     ]
 
 
@@ -167,6 +176,37 @@ def test_exposedOutputsAreSetFromTheComputedScene(tmp_path):
         # The exposed output points to the cache of the computed scene, not to the one of the given scene
         outputPath = Path(list(node.outputs.value)[0].value)
         assert outputPath.name == "out.txt"
+        assert computedScenePath.parent in outputPath.parents
+
+
+def test_exposedOutputsAreEvaluatedOnInlineNodes(tmp_path):
+    """ Inline nodes are not computed with the scene: the ones read by the GraphOutput are evaluated afterwards. """
+    with registeredNodeTypes([ComputeMeshroomScene, GraphOutput, FolderProducer, PathJoin]):
+        scene = Graph("")
+        producer = scene.addNewNode("FolderProducer")
+        pathJoin = scene.addNewNode("PathJoin")
+        pathJoin.paths.extend(["", "sub.txt"])
+        scene.addEdge(producer.output, pathJoin.paths.at(0))
+        graphOutput = scene.addNewNode("GraphOutput")
+        result = graphOutput.outs.insertAttribute({"name": "result", "label": "Result", "type": "File", "value": ""}, 0)
+        scene.addEdge(pathJoin.outputPath, result)
+        scenePath = tmp_path / "scene" / "scene.mg"
+        scenePath.parent.mkdir()
+        scene.save(str(scenePath))
+
+        graph = Graph("")
+        graph.save(str(tmp_path / "project.mg"))
+        node = graph.addNewNode("ComputeMeshroomScene")
+        node.scene.value = str(scenePath)
+
+        # Simulate meshroom_batch saving the scene in the node's folder before computing it
+        computedScenePath = Path(node.nodeDesc._computedScenePath(node))
+        computedScenePath.parent.mkdir(parents=True)
+        loadGraph(str(scenePath)).save(str(computedScenePath))
+        node.nodeDesc._updateOutputs(node)
+
+        outputPath = Path(list(node.outputs.value)[0].value)
+        assert outputPath.name == "sub.txt"
         assert computedScenePath.parent in outputPath.parents
 
 

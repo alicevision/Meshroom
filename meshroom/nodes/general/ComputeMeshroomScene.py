@@ -177,6 +177,10 @@ class ComputeMeshroomScene(desc.CommandLineNode):
         They are saved with the other dynamic output values once the chunk is processed.
         """
         scene = loadGraph(self._computedScenePath(node))
+        # Inline nodes are not computed with the scene: evaluate the ones read by its GraphOutput
+        graphOutput = scene.findGraphOutputNode()
+        if graphOutput:
+            graphOutput.processInlineInputs()
         for attr in node.outputs.value:
             sceneAttr = self._sceneAttribute(scene, attr.name)
             if sceneAttr is None:

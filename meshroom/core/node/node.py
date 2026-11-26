@@ -151,6 +151,12 @@ class Node(BaseNode):
         # TODO : Maybe do not delete chunks if we will recreate them as before ?
         """
         if not self.isComputableType:
+            if self.isInlineNode:
+                # Inline nodes are not scheduled: nothing else sets their size or clears their last values.
+                # This runs on every updateInternals (input or cache folder change), which invalidates the evaluation.
+                # The size is provisional: evaluateInline updates it once the upstream inline nodes are evaluated.
+                self._updateNodeSize()
+                self.resetInlineEvaluation()
             self._chunksCreated = True
             return
         for chunk in self._chunks:
@@ -253,6 +259,7 @@ class Node(BaseNode):
         # Grab current chunk information
         logging.debug(f"Creating chunks for node: {self.name}")
         try:
+            self.processInlineInputs()
             size = self.evaluateSize()
             self.setSize(size)
             ranges = self.nodeDesc.parallelization.getRanges(self)
@@ -261,6 +268,7 @@ class Node(BaseNode):
             logging.error(f"Failed to create chunks for {self.name}: {e}")
             self._chunks.clear()
             self._chunksCreated = False
+            self.upgradeStatusTo(Status.ERROR)
             raise e
         # Update status
         self._nodeStatus.setChunks(self._chunks)

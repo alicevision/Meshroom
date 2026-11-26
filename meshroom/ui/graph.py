@@ -1305,6 +1305,8 @@ class UIGraph(QObject):
         """ Clear data from 'nodes'. """
         for n in nodes:
             n.clearData()
+        # Clearing data does not change the chunk statuses: reset the inline nodes reading the cleared nodes
+        self._graph.evaluateInlineNodes()
 
     @Slot(list)
     def clearDataFrom(self, nodes: list[Node]):

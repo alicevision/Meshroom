@@ -329,6 +329,33 @@ def test_leafInlineNodeIsEvaluatedOnceItsInputsAreComputed(graphSavedOnDisk):
     assert CountedInline.calls[inline.name] == 1
 
 
+def test_inlineNodeIsResetWhenItsInputsAreNoLongerComputed(graphSavedOnDisk):
+    """ The values of an inline node are cleared with the data of the nodes it reads, and evaluated again once recomputed. """
+    graph = graphSavedOnDisk
+    upstream = graph.addNewNode("RegularAppend")
+    inlineA = graph.addNewNode("CountedInline")
+    inlineB = graph.addNewNode("CountedInline")
+    upstream.output.connectTo(inlineA.input)
+    inlineA.output.connectTo(inlineB.input)
+    graph.save()
+    executeGraph(graph)
+    graph.evaluateInlineNodes()
+    assert inlineB.output.value == "rii"
+
+    upstream.clearData()
+    graph.evaluateInlineNodes()
+
+    assert inlineA.output.value is None
+    assert inlineB.output.value is None
+
+    executeGraph(graph)
+    graph.evaluateInlineNodes()
+
+    assert inlineB.output.value == "rii"
+    assert CountedInline.calls[inlineA.name] == 2
+    assert CountedInline.calls[inlineB.name] == 2
+
+
 def test_inlineNodeWithoutComputableInputIsEvaluated(graphSavedOnDisk):
     graph = graphSavedOnDisk
     inlineA = graph.addNewNode("InlineAppend")

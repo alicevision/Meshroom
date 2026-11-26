@@ -143,7 +143,7 @@ Only attributes declared in `outputAttributes` can be set through these targeted
 
 Use `desc.InlineNode` for cheap, side-effect-free Python logic, such as string or path manipulation. An inline node is not scheduled: it has no chunks, status, logs or cache folder, and no job on the farm. Its `process` method runs in the process of each downstream node, right before that node computes.
 
-Its dynamic output values are not persisted, so they are only available to the downstream nodes during their computation, and to the exposed outputs of `ComputeMeshroomScene` when the `GraphOutput` of the computed scene reads them. In the UI, an inline node is also evaluated as soon as the nodes it reads are computed, so that its outputs can be displayed, even with no downstream node. An inline node is evaluated once until its inputs change, even if it is read by several chunks or through several paths. Its `process` method must only rely on the current environment, and it must not produce files.
+Its dynamic output values are not persisted, so they are only available to the downstream nodes during their computation, and to the exposed outputs of `ComputeMeshroomScene` when the `GraphOutput` of the computed scene reads them. In the UI, an inline node is also evaluated as soon as the nodes it reads are computed, so that its outputs can be displayed, even with no downstream node, and its outputs are cleared when these nodes are no longer computed. An inline node is evaluated once until its inputs change, even if it is read by several chunks or through several paths. Its `process` method must only rely on the current environment, and it must not produce files.
 
 ```python
 import os

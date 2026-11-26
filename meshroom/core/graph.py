@@ -1448,35 +1448,33 @@ class Graph(BaseObject):
         """
         Evaluate the inline nodes whose inputs can be read, so that their outputs are available outside
         of a compute (e.g. to be displayed), including the ones with no downstream node.
+        The evaluated inline nodes whose inputs can no longer be read (e.g. their data was cleared) are reset.
         An inline node that fails is left unevaluated: its error is reported when a downstream node computes.
         """
+        inputNodesPerNode = self._getInputEdgesPerNode(dependenciesOnly=True)
         inputsComputed = {}
+
+        def areInputsComputed(node) -> bool:
+            """ Whether the computable nodes read by 'node', directly or through other inline nodes, are computed. """
+            if node not in inputsComputed:
+                inputsComputed[node] = all(
+                    areInputsComputed(inputNode) if inputNode.isInlineNode else inputNode.isComputed
+                    for inputNode in inputNodesPerNode[node])
+            return inputsComputed[node]
+
         for node in self._nodes:
-            if not node.isInlineNode or node._inlineEvaluated:
+            if not node.isInlineNode:
                 continue
-            if not self._inlineInputsComputed(node, inputsComputed):
+            if not areInputsComputed(node):
+                if node._inlineEvaluated:
+                    node.resetInlineEvaluation()
+                continue
+            if node._inlineEvaluated:
                 continue
             try:
                 node.evaluateInline()
             except Exception as e:
                 logging.debug(f"Cannot evaluate the inline node {node.name}: {e}")
-
-    @staticmethod
-    def _inlineInputsComputed(node, cache: dict) -> bool:
-        """
-        Return whether the computable nodes an inline node reads, directly or through other inline nodes,
-        are all computed.
-
-        Args:
-            node: the inline node.
-            cache: the results of the previous calls, by node, shared by the calls of a same evaluation.
-        """
-        if node not in cache:
-            cache[node] = all(
-                Graph._inlineInputsComputed(inputNode, cache) if inputNode.isInlineNode
-                else inputNode.isComputed
-                for inputNode in node.getInputNodes(recursive=False, dependenciesOnly=True))
-        return cache[node]
 
     @Slot(Node, result=bool)
     def canComputeTopologically(self, node):

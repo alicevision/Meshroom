@@ -22,6 +22,44 @@ def edgeNames(graph):
     return sorted((edge.src.fullName, edge.dst.fullName) for edge in graph.edges.values())
 
 
+def test_add_child_can_be_undone_and_redone(graph, undoStack):
+    node = graph.addNewNode("DynamicNode")
+
+    undoStack.tryAndPush(commands.AddAnySetAttributeCommand(graph, node.ins, "IntParam"))
+    assert node.ins.int.type == "IntParam"
+
+    undoStack.undo()
+    assert node.ins.value.count == 0
+
+    undoStack.redo()
+    assert node.ins.int.type == "IntParam"
+
+
+def test_discarded_add_leaves_no_trace_in_the_history(graph, undoStack):
+    node = graph.addNewNode("DynamicNode")
+    command = commands.AddAnySetAttributeCommand(graph, node.ins, "IntParam")
+    undoStack.tryAndPush(command)
+
+    assert undoStack.discardLastCommand(command)
+
+    assert node.ins.value.count == 0
+    assert undoStack.count() == 0
+
+
+def test_edit_child_can_be_undone_and_keeps_its_edge(graph, undoStack):
+    node = graph.addNewNode("DynamicNode")
+    srcNode = graph.addNewNode("DynamicNode")
+    child = node.ins.insertAttribute(node.ins.getNewAttributeData("StringParam"), 0)
+    srcNode.code.connectTo(child)
+
+    undoStack.tryAndPush(commands.EditAnySetAttributeCommand(graph, child, {"name": "renamed", "label": "Renamed"}))
+    assert node.ins.renamed.inputLink is srcNode.code
+
+    undoStack.undo()
+    assert node.ins.string.inputLink is srcNode.code
+    assert node.ins.renamed is None
+
+
 def test_remove_list_child_can_be_undone_with_the_edges_of_its_elements(graph, undoStack):
     node = graph.addNewNode("DynamicNode")
     srcNode = graph.addNewNode("DynamicNode")

@@ -145,6 +145,9 @@ if args.node:
         print(f"InitNode: No computation to do.")
         sys.exit(0)
 
+    # Nodes with static chunks may reach this point without any status file written
+    node.createStatusFileIfMissing()
+
     if args.preprocess:
         chunks = [node.preprocessChunk]
     elif args.postprocess:
@@ -171,7 +174,7 @@ if args.node:
         
     if args.iteration == ChunkIndex.NONE:
         # Process the whole node
-        if node.nodeStatus.status == Status.STOPPED:
+        if node.getGlobalStatus() == Status.STOPPED:
             print(f"Node {node}: status is STOPPED")
             killRunningJob(node)
         node.createChunks()

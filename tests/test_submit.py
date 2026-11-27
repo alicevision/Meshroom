@@ -35,10 +35,16 @@ def get_submitter() -> LocalFarmSubmitter:
     raise RuntimeError("LocalFarm submitter not found")
 
 
-def getJobEnv():
-    """ Required to have meshroom recognize the test plugin """
+def getJobEnv(submittersAvailable=False):
+    """
+    Required to have meshroom recognize the test plugin.
+
+    Args:
+        submittersAvailable (bool): whether the farm tasks can find the LocalFarm submitter. If they can,
+            meshroom_createChunks creates a farm task per chunk; otherwise, it computes the chunks itself.
+    """
     pluginFolder = os.path.join(os.path.dirname(__file__), "plugins", "pluginSubmitter")
-    return {
+    env = {
         "MESHROOM_PLUGINS_PATH": pluginFolder,
         # Disable all rez variables that could lead to using rez in the test env
         "REZ_RESOLVE": "",
@@ -49,6 +55,14 @@ def getJobEnv():
         "REZ_USED_REQUEST": "",
         "REZ_MESHROOM_VERSION": ""
     }
+    if submittersAvailable:
+        env["MESHROOM_SUBMITTERS_PATH"] = os.path.join(meshroomFolder, "submitters")
+    return env
+
+
+def getChunkTaskIterations(tasks):
+    """ Get the sorted iterations of the farm tasks that compute a single chunk. """
+    return sorted(t["metadata"]["iteration"] for t in tasks if isinstance(t["metadata"].get("iteration"), int))
 
 
 def checkTask(task, taskType, nbDependencies):
@@ -87,9 +101,12 @@ def waitForNodeCompletion(job: LocalFarmJob, node: Node, timeout=30):
             break
 
 
-def processSubmit(node: Node, graph, tmp_path):
+def processSubmit(node: Node, graph, tmp_path, jobEnv=None):
     """
     Actual function that test the submit process
+
+    Returns:
+        list[dict]: the tasks of the farm job once the node is computed.
     """
     # Save graph
     tmp_path = str(tmp_path)
@@ -101,12 +118,13 @@ def processSubmit(node: Node, graph, tmp_path):
     farmLauncher.start()
     time.sleep(1)
     error = None
+    tasks = []
     try:
         print(f"submit {node}")
         submitter = get_submitter()
         submitter.disabled_rez = True
         submitter.setFarmPath(tmp_path)
-        submitter.setJobEnv(getJobEnv())
+        submitter.setJobEnv(jobEnv or getJobEnv())
         nodesToProcess, edgesToProcess = [node], []
         # Update nodes status
         for node in nodesToProcess:
@@ -119,6 +137,7 @@ def processSubmit(node: Node, graph, tmp_path):
         assert res.__class__.__name__ == "LocalFarmJob", "Submitted job is not a LocalFarmJob"
         jobManager.addJob(res, nodesToProcess)
         waitForNodeCompletion(res, node)
+        tasks = list(res.localfarmTasks.values())
     except Exception as e:
         error = e
     finally:
@@ -128,6 +147,7 @@ def processSubmit(node: Node, graph, tmp_path):
         raise error
     else:
         farmLauncher.clean()
+    return tasks
 
 
 class TestNodeSubmit:
@@ -261,9 +281,23 @@ class TestNodeSubmit:
         # Submit
         processSubmit(node, graph, tmp_path)
 
-    def test_submitDynamicSize(self, tmp_path):
+    def test_submitDynamicSizeChunkTasks(self, tmp_path):
+        """ meshroom_createChunks finds the submitter and creates a farm task for each chunk. """
         graph = Graph("")
         graph._cacheDir = os.path.join(tmp_path, "cache")
-        node = self.addNewNode(graph, "PluginSubmitterC")
+        node = self.addNewNode(graph, "PluginSubmitterC", {"nbChunks": 3})
         # Submit
-        processSubmit(node, graph, tmp_path)
+        tasks = processSubmit(node, graph, tmp_path, getJobEnv(submittersAvailable=True))
+        assert getChunkTaskIterations(tasks) == [0, 1, 2]
+        assert node.getGlobalStatus() == Status.SUCCESS
+
+    def test_submitDynamicSizeFallback(self, tmp_path):
+        """ meshroom_createChunks cannot find the submitter and computes all the chunks itself. """
+        graph = Graph("")
+        graph._cacheDir = os.path.join(tmp_path, "cache")
+        node = self.addNewNode(graph, "PluginSubmitterC", {"nbChunks": 3})
+        # Submit
+        tasks = processSubmit(node, graph, tmp_path, getJobEnv(submittersAvailable=False))
+        assert getChunkTaskIterations(tasks) == []
+        assert node.getGlobalStatus() == Status.SUCCESS
+        assert len(node.chunks) == 3

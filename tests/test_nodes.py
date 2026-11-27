@@ -24,7 +24,7 @@ TEST_RESOURCES = Path(__file__).parent / "resources"
 
 
 def processNode(node: BaseNode):
-    """ Process a non-parallelized node and check that it succeed """
+    """ Process a non-parallelized node and check that it succeeds """
     cache = Path(node.internalFolder)
     cache.mkdir(parents=True)
     print("cache", cache)
@@ -33,15 +33,15 @@ def processNode(node: BaseNode):
     logFile.touch()
     node.prepareLogger(-1)
     node.preprocess()
-    node.process(True, True)
+    node.process(forceCompute=True, inCurrentEnv=True)
     node.postprocess()
     node.restoreLogger()
-    # Check output
+    # Check output: the global status is read back from the chunks' status files
+    node.updateStatusFromCache()
+    assert node.getGlobalStatus().name == "SUCCESS"
+
     nodeStatusFile = cache / "nodeStatus"
     assert nodeStatusFile.exists()
-    with open(str(nodeStatusFile), "r") as f:
-        c = json.load(f)
-    assert c.get("status") == "SUCCESS"
     return True
 
 

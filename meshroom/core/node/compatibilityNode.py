@@ -4,6 +4,7 @@ import copy
 import json
 import logging
 import os
+import re
 from enum import Enum
 
 from meshroom.common import Property
@@ -12,6 +13,7 @@ from meshroom.core.attribute import attributeFactory, attributeDescriptionFactor
 from meshroom.core.desc.node import InternalAttributesFactory
 from meshroom.core.exception import NodeUpgradeError
 from meshroom.core.node.chunk import NodeChunk
+from meshroom.core.node.status import Status
 from meshroom.core.node.baseNode import BaseNode
 from meshroom.core.node.node import Node
 
@@ -478,6 +480,50 @@ class CompatibilityNode(BaseNode):
                 attr._populateFromDynamicValue(value)
             else:
                 attr.value = value
+
+    def _getStatusFromChunkFiles(self):
+        """
+        Get the node global status from the status files of its chunks, as the chunks of a
+        CompatibilityNode are never created and the node status file is not updated by the chunks.
+
+        Returns:
+            Status or None: the global status, or None if it cannot be deduced from the chunk status files.
+        """
+        folder = os.path.dirname(self.nodeStatusFile)
+        if not os.path.isdir(folder):
+            return None
+        chunksStatus = []
+        prePostStatus = {}
+        for filename in os.listdir(folder):
+            match = re.fullmatch(r"(\d+|preprocess|postprocess)\.status", filename)
+            if not match:
+                continue
+            try:
+                with open(os.path.join(folder, filename)) as jsonFile:
+                    status = Status[json.load(jsonFile)["status"]]
+            except Exception as e:
+                logging.warning(f"CompatibilityNode: cannot read the chunk status file '{filename}' of {self.name}: {e}")
+                continue
+            if match.group(1).isdigit():
+                chunksStatus.append(status)
+            else:
+                prePostStatus[match.group(1)] = status
+        if chunksStatus:
+            return self.aggregateChunksStatus(chunksStatus + list(prePostStatus.values()))
+        # No chunk has been created yet: only a failing or running preprocess defines the global status
+        preprocessStatus = prePostStatus.get("preprocess")
+        if preprocessStatus in self.dominantChunkStatuses:
+            return preprocessStatus
+        return None
+
+    # Override
+    def updateNodeStatusFromCache(self):
+        """ Update the node status from the cache, using the status files of the chunks when available. """
+        chunksRangeHasChanged = super().updateNodeStatusFromCache()
+        status = self._getStatusFromChunkFiles()
+        if status is not None:
+            self._nodeStatus.status = status
+        return chunksRangeHasChanged
 
     # Override
     def updateStatusFromCache(self):

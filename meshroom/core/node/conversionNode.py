@@ -70,6 +70,9 @@ class ConversionNode(Node):
         if self.graph:
             for edge in self.graph.outEdges(output):
                 edge.dst.valueChanged.emit()
+                # The conversion error is reported on the converted attribute (see Attribute.getErrorMessages)
+                edge.dst.errorMessageChanged.emit()
+                edge.dst.node.hasInvalidAttributeChanged.emit()
 
     # The attribute holding the value to convert.
     inputAttribute = Property(Attribute, lambda self: self.attribute(self.nodeDesc.inputAttributeName), constant=True)

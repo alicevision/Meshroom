@@ -273,6 +273,17 @@ class TestConversionValue:
             # The same error is only logged once
             assert len([r for r in caplog.records if "Conversion error" in r.getMessage()]) == 1
 
+    def test_conversionErrorMakesTheConvertedAttributeInvalid(self):
+        with registeredNodeTypes([FailingConversion]):
+            graph = Graph("")
+            target = graph.addNewNode(IntTarget.__name__)
+            source = graph.addNewNode(FloatSource.__name__)
+            assert not source.hasInvalidAttribute
+            graph.connectWithConversion(target.value, source.value, FailingConversion.__name__)
+
+            assert source.value.errorMessages == ["Conversion error (FailingConversion): Conversion error"]
+            assert source.hasInvalidAttribute
+
     def test_noConversionErrorWhileInputIsNotComputed(self):
         graph = Graph("")
         source = graph.addNewNode(FloatSource.__name__)

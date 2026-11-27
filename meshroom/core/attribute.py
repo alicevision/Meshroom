@@ -657,6 +657,12 @@ class Attribute(BaseObject):
             for errorMessage in errorMessages:
                 result.append(errorMessage)
 
+        # A failed conversion gives no value: report it so that the node is not computed silently with None
+        for conversionNode in self._getConversionNodes():
+            conversionError = conversionNode.conversionError
+            if conversionError:
+                result.append(f"Conversion error ({conversionNode.nodeType}): {conversionError}")
+
         return result
 
     def _isValid(self) -> bool:

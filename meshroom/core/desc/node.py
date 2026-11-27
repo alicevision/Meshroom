@@ -670,6 +670,8 @@ class ConversionNode(BaseNode):
     # Names of the attributes holding the value to convert and the converted value
     inputAttributeName: ClassVar[str] = "input"
     outputAttributeName: ClassVar[str] = "output"
+    # Conversion node types with a higher priority are proposed first when connecting attributes
+    priority: ClassVar[int] = 0
     # Whether the conversion may lose information (e.g. float to int), shown on the converted attribute's pin
     lossy: ClassVar[bool] = False
 

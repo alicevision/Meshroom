@@ -1448,6 +1448,48 @@ class UIGraph(QObject):
             dst = attributeFactory(dst.desc.elementDesc, None, dst.isOutput, dst.node, dst)
         return bool(self._graph.getConversionNodeTypes(src, dst))
 
+    @Slot(Node, result=list)
+    def getConversionNodeTypes(self, node: Node) -> list[str]:
+        """
+        Return the conversion node types available to convert the value between the attributes connected
+        by the conversion `node` (including its own type), or an empty list if it is not connected.
+        """
+        if not node or not node.isConversionNode:
+            return []
+        src, dsts = node.inputAttribute.inputLink, node.outputAttribute.outputLinks
+        if src is None or not dsts:
+            return []
+        return self._graph.getConversionNodeTypes(src, dsts[0])
+
+    @Slot(Node, str, result=QObject)
+    def replaceConversionNode(self, node: Node, nodeType: str) -> Optional[Node]:
+        """
+        [Undoable]
+        Replace the conversion `node` with a new conversion node of type `nodeType`, connected
+        to the same attributes. If `node` was selected, the new node is selected instead.
+
+        Returns:
+            The new conversion node, or None if `nodeType` cannot replace `node`.
+        """
+        if nodeType == node.nodeType or nodeType not in self.getConversionNodeTypes(node):
+            return None
+        # A conversion node converts a single edge: one source, one destination
+        src, dst = node.inputAttribute.inputLink, node.outputAttribute.outputLinks[0]
+        position = node.position
+        wasSelected = self.selectedNode is node
+        if wasSelected:
+            # Do not keep a reference to the removed node
+            self.selectedNode = None
+        with self.groupedGraphModification(f"Replace Conversion '{node.name}' with {nodeType}"):
+            # Disconnect the output explicitly, so that a destination list element is not removed with the node
+            self.push(commands.RemoveEdgeCommand(self._graph, self._graph.edge(dst)))
+            self.push(commands.RemoveNodeCommand(self._graph, node))
+            newNode = self._addConversionNode(nodeType, src, dst, position)
+        if wasSelected:
+            self.selectNodes([newNode])
+            self.selectedNode = newNode
+        return newNode
+
     @Slot(Edge)
     def removeEdge(self, edge):
         # Ignore edges that are not part of the graph anymore (e.g. removed with a conversion node)

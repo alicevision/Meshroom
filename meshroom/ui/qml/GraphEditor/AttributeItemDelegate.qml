@@ -35,6 +35,14 @@ RowLayout {
     readonly property bool hasAutoValue: !!attribute && !!attribute.desc && attribute.desc.hasAutoValue === true && !attribute.keyable
     readonly property bool isAutoValue: hasAutoValue && attribute.value === attribute.desc.autoValue
     property var lastManualValue: undefined  // Value to restore when the automatic value is turned off
+    // Conversion node providing the value of this attribute, if any
+    readonly property var conversionNode: {
+        if (!attribute)
+            return null
+        if (attribute.isOutput && attribute.node.isConversionNode)
+            return attribute.node
+        return null
+    }
 
     signal doubleClicked(var mouse, var attr)
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
@@ -357,6 +365,9 @@ RowLayout {
         sourceComponent: {
             // PushButtonParam always has value == undefined, so it needs to be excluded from this check
             if (attribute.type != "PushButtonParam" && attribute.type != "Flow" && !attribute.keyable && attribute.value === undefined) {
+                // Show why the converted value is missing
+                if (root.conversionNode && root.conversionNode.conversionError)
+                    return conversionErrorComponent
                 return notComputedComponent
             }
             switch (attribute.type) {
@@ -393,6 +404,23 @@ RowLayout {
         Component {
             id: notComputedComponent
             AttributeControls.NotComputed {}
+        }
+
+        Component {
+            id: conversionErrorComponent
+            // Same look as the read-only text fields, showing the conversion error in red
+            TextField {
+                readOnly: true
+                selectByMouse: true
+                text: root.conversionNode.conversionError
+                color: Colors.red
+                ToolTip.text: text
+                ToolTip.visible: hovered
+                background: Rectangle {
+                    color: Qt.darker(palette.window, 1.2)
+                    radius: 2
+                }
+            }
         }
 
         Component {

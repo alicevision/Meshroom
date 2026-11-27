@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "2.0"
+__version__ = "2.1"
 
 import os
 import re
@@ -12,7 +12,7 @@ from meshroom.core.attribute import AnySet, Attribute, GroupAttribute, ListAttri
 from meshroom.core.desc.validators import success
 from meshroom.core.desc.validators import error
 from meshroom.core.exception import InvalidEdgeError
-from meshroom.core.graph import loadGraph
+from meshroom.core.graph import Graph, GraphModification, loadGraph
 from meshroom.core import desc
 
 from meshroom import _MESHROOM_ROOT
@@ -23,7 +23,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-_MESHROOM_BATCH = Path(_MESHROOM_ROOT) / "bin" / "meshroom_batch"
+_MESHROOM_COMPUTE = Path(_MESHROOM_ROOT) / "bin" / "meshroom_compute"
+_MESHROOM_SUBMIT = Path(_MESHROOM_ROOT) / "bin" / "meshroom_submit"
 
 
 def isValidSceneFileValidator(node, _) -> Tuple[bool, List[str]]:
@@ -82,13 +83,34 @@ def resolvedValue(attr: Attribute):
     return attr.evalValue
 
 
-def overrideValue(attr: Attribute) -> str:
-    """ Return the value of an attribute as expected by meshroom_batch --paramOverrides. """
-    value = attr.value
-    # Non-exclusive choices are given as comma-separated values
-    if isinstance(value, (list, tuple)):
-        return ",".join(str(v) for v in value)
-    return str(value)
+def computeSceneCommand(node) -> str:
+    """ Return the command computing or submitting the scene saved by the preprocess of a ComputeMeshroomScene node. """
+    nodeDesc = node.nodeDesc
+    scenePath = shlex.quote(nodeDesc._computedScenePath(node))
+
+    # The submit attributes are hidden when the scene is computed in a single process: ignore their value
+    if node.submit.value and not nodeDesc.executeInSingleProcess:
+        cmd = f"{nodeDesc.pythonExecutable} {shlex.quote(str(_MESHROOM_SUBMIT))} {scenePath}"
+        if node.submitter.value:
+            cmd += f" --submitter {shlex.quote(node.submitter.value)}"
+        if node.submitLabel.value:
+            cmd += f" --submitLabel {shlex.quote(node.submitLabel.value)}"
+        return cmd
+
+    cmd = f"{nodeDesc.pythonExecutable} {shlex.quote(str(_MESHROOM_COMPUTE))} {scenePath}"
+    if node.forceCompute.value:
+        cmd += " --forceCompute"
+    if nodeDesc.executeInSingleProcess:
+        cmd += " --inCurrentEnv"
+    return cmd
+
+
+def canSubmit(node) -> bool:
+    """
+    Return whether the scene of a ComputeMeshroomScene node can be submitted: a submitter is available, and its
+    nodes are not computed in a single process, as the farm computes each node in its own process.
+    """
+    return bool(node.nodeDesc.SUBMITTERS) and not node.nodeDesc.executeInSingleProcess
 
 
 class ComputeMeshroomScene(desc.CommandLineNode):
@@ -97,8 +119,10 @@ class ComputeMeshroomScene(desc.CommandLineNode):
     """
 
     pythonExecutable = "python"
+    # Set to True to compute all the nodes of the scene in the same process (the scene cannot be submitted then)
+    executeInSingleProcess = False
     category = "Utils"
-    commandLine = "{node.nodeDesc.pythonExecutable} " + shlex.quote(str(_MESHROOM_BATCH))
+    commandLine = computeSceneCommand
 
     def __getSubmitters():
         from meshroom.core import submitters
@@ -123,49 +147,44 @@ class ComputeMeshroomScene(desc.CommandLineNode):
 
     @staticmethod
     def _computedScenePath(node) -> str:
-        """ Return the path where the scene is saved before being computed, with its cache folder next to it. """
+        """
+        Return the path where the scene is saved before being computed, with its cache folder next to it:
+        the given scene itself if it is overwritten, otherwise a copy in the node's folder.
+        """
+        if node.overwriteSceneGraph.value:
+            return node.scene.value
         return os.path.join(node.internalFolder, "scene.mg")
 
-    def buildCommandLine(self, chunk) -> str:
-        cmd = super().buildCommandLine(chunk)
-        node = chunk.node
-
-        # Only the inputs whose value differs from the scene are overridden
+    def preprocess(self, node):
+        """
+        Save the scene to compute, with the values of the exposed inputs that differ from the given scene.
+        Unless the given scene is overwritten, it is loaded as a template, without its output nodes.
+        """
+        scene = Graph(name=node.scene.value)
         try:
-            scene = loadGraph(node.scene.value)
+            if node.overwriteSceneGraph.value:
+                scene.load(node.scene.value)
+            else:
+                scene.initFromTemplate(node.scene.value)
         except Exception as e:
             raise RuntimeError(f"Cannot read the scene '{node.scene.value}': {e}") from e
-        sceneInputs = []
-        for attr in flattenAttributes(node.inputs.value):
-            sceneAttr = self._sceneAttribute(scene, attr.name)
-            if sceneAttr is None:
-                logger.warning(f"'{decodeAttributeName(attr.name)}' does not exist in the scene anymore: not overridden.")
-                continue
-            if overrideValue(attr) != overrideValue(sceneAttr):
-                # Each argument is quoted, as the command line is split with shlex before being executed
-                sceneInputs.append(shlex.quote(f"{decodeAttributeName(attr.name)}={overrideValue(attr)}"))
 
-        # The computed scene is saved in the node's folder so that the given scene file is left untouched
-        cmd += f" -p {shlex.quote(node.scene.value)} --save {shlex.quote(self._computedScenePath(node))}"
+        with GraphModification(scene):
+            for attr in flattenAttributes(node.inputs.value):
+                sceneAttr = self._sceneAttribute(scene, attr.name)
+                if sceneAttr is None:
+                    logger.warning(f"'{decodeAttributeName(attr.name)}' does not exist in the scene anymore: not overridden.")
+                    continue
+                if attr.value != sceneAttr.value:
+                    logger.info(f"Override {sceneAttr.fullName}={attr.value}")
+                    sceneAttr.value = attr.value
 
-        # ForceCompute
-        if node.forceCompute.value:
-            cmd += " --forceCompute"
+        if not scene.canComputeLeaves:
+            raise RuntimeError(f"The scene '{node.scene.value}' cannot be computed. Check for compatibility issues.")
 
-        if sceneInputs:
-            cmd += " --paramOverrides " + " ".join(sceneInputs)
-
-        # Compute or Submit
-        if node.submit.value:
-            cmd += " --submit"
-            if node.submitter.value:
-                cmd += f" --submitter {shlex.quote(node.submitter.value)}"
-            if node.submitLabel.value:
-                cmd += f" --submitLabel {shlex.quote(node.submitLabel.value)}"
-        else:
-            cmd += " --compute yes"
-
-        return cmd
+        scenePath = self._computedScenePath(node)
+        os.makedirs(os.path.dirname(scenePath), exist_ok=True)
+        scene.save(scenePath)
 
     def processChunk(self, chunk):
         super().processChunk(chunk)
@@ -199,6 +218,17 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             ]
         ),
         desc.BoolParam(
+            name="overwriteSceneGraph",
+            label="Overwrite Scene Graph",
+            description="Compute the given scene as it is, output nodes included: the overridden inputs are saved in "
+                        "it, and its cache folder is used.\n"
+                        "Otherwise, the scene is copied in the node's folder and computed there, with its cache next "
+                        "to it.\n"
+                        "Never overwrite a scene used by another node that can be computed at the same time: "
+                        "their inputs and outputs would get mixed.",
+            value=False,
+        ),
+        desc.BoolParam(
             name="forceCompute",
             label="Force Compute",
             description=(
@@ -212,7 +242,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             label="Submit",
             description="Set True to submit, False to compute locally.",
             value=False,
-            enabled=len(SUBMITTERS) > 0
+            enabled=canSubmit
         ),
         desc.ChoiceParam(
             name="submitter",
@@ -220,7 +250,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             description="Select submitter. An empty string will select the default one.",
             value="",
             values=[""] + SUBMITTERS,
-            enabled=lambda node: node.submit.value is True
+            enabled=lambda node: canSubmit(node) and node.submit.value is True
         ),
         desc.StringParam(
             name="submitLabel",
@@ -232,7 +262,7 @@ class ComputeMeshroomScene(desc.CommandLineNode):
                 "- projectName: the name of the scene file"
             ),
             value="",
-            enabled=len(SUBMITTERS) > 0
+            enabled=canSubmit
         ),
         desc.BoolParam(
             name="useOnlyGraphIONodes",
@@ -404,8 +434,8 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             attributes = flattenAttributes(inputNode.getAttributes(), lambda attr: not attr.isInput or attr.isLink)
             self._exposeAttributes(node.inputs, attributes)
 
-        # Only GraphOutput nodes are exposed: the output nodes are removed from the scene computed by meshroom_batch
-        # (without -o), and their attributes are export settings rather than results
+        # Only GraphOutput nodes are exposed: the output nodes are removed from the computed scene (unless it is
+        # overwritten), and their attributes are export settings rather than results
         graphOutputNode = graph.findGraphOutputNode()
         if graphOutputNode:
             self._exposeAttributes(node.outputs, flattenAttributes(graphOutputNode.getAttributes()))

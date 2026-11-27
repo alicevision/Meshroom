@@ -195,7 +195,7 @@ class TestNodeLogger:
             executed["env"] = env
 
         nodeDesc.executeChunkCommandLine = executeChunkCommandLine
-        plugin = SimpleNamespace(runtimeEnv=None, commandPrefix="", commandSuffix="")
+        plugin = SimpleNamespace(runtimeEnv=None, wrapCommand=lambda cmd: cmd)
         node = SimpleNamespace(
             name="TestNode_1",
             graph=SimpleNamespace(filepath=graphFilepath.as_posix()),
@@ -209,7 +209,6 @@ class TestNodeLogger:
 
         nodeDesc.processChunkInEnvironment(chunk)
 
-        assert f'"{graphFilepath.as_posix()}"' in executed["cmd"]
         assert shlex.split(executed["cmd"])[2] == graphFilepath.as_posix()
         assert "--iteration 1" in executed["cmd"]
 

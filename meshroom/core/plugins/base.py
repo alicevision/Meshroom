@@ -276,8 +276,6 @@ class NodeDescProvider(BaseObject):
                     be specific to this node descriptor provider, or be common for all the node
                     descriptor providers within the plugin
         runtimeEnv: the environment dictionary for the runtime, derived from processEnv
-        commandPrefix: the command prefix for the node provider's execution, derived from processEnv
-        commandSuffix: the command suffix for the node provider's execution, derived from processEnv
         fullEnv: the dictionary containing the environment variables of the plugin and os.environ
         timestamp: the timestamp corresponding to the last time the node description's file has been
                    modified
@@ -462,19 +460,11 @@ class NodeDescProvider(BaseObject):
         """ Return the environment dictionary for the runtime. """
         return self.processEnv.getEnvDict()
 
-    @property
-    def commandPrefix(self) -> str:
-        """ Return the command prefix for the NodeDescProvider's execution. """
+    def wrapCommand(self, cmd: str) -> str:
+        """ Return the command line running the command line 'cmd' in the NodeDescProvider's environment. """
         if not self.processEnv:
-            return ""
-        return self.processEnv.getCommandPrefix()
-
-    @property
-    def commandSuffix(self) -> str:
-        """ Return the command suffix for the NodeDescProvider's execution. """
-        if not self.processEnv:
-            return ""
-        return self.processEnv.getCommandSuffix()
+            return cmd
+        return self.processEnv.wrapCommand(cmd)
 
     @property
     def fullEnv(self) -> dict[str, str]:

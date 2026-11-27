@@ -27,7 +27,7 @@ from PySide6.QtCore import (
 from meshroom.core import sessionUid
 from meshroom.common import deprecated
 from meshroom.common.qt import QObjectListModel
-from meshroom.core.attribute import Attribute, AnySet, ListAttribute, ShapeAttribute
+from meshroom.core.attribute import Attribute, AnySet, ListAttribute, ShapeAttribute, attributeFactory
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, MESHROOM_TEMPLATE_EXTENSION, withExtension
 from meshroom.core.graph import Graph, Edge, generateTempProjectFilepath
 from meshroom.core.graphIO import GraphIO
@@ -340,6 +340,9 @@ class GraphLayout(QObject):
         zeroDepth = getDepth(self.graph.nodes.at(fromIndex)) if fromIndex > 0 else 0
         for i in range(fromIndex, toIndex + 1):
             n = self.graph.nodes.at(i)
+            if n.isConversionNode:
+                # Conversion nodes are not displayed: their edges go to the converted attributes
+                continue
             grid[getDepth(n) - zeroDepth].append(n)
 
         with self.graph.groupedGraphModification("Graph Auto-Layout"):
@@ -1110,19 +1113,23 @@ class UIGraph(QObject):
                 self.setAttribute(node.internalAttribute("nodeHeight"), height)
         return node
 
+    def _getSelectedMovableNodes(self) -> list[Node]:
+        """ Return the selected nodes that can be moved (conversion nodes are not displayed). """
+        return [node for node in self.iterSelectedNodes() if not node.isConversionNode]
+
     @Slot(QPoint)
     def moveSelectedNodesBy(self, offset: QPoint):
         """ Move all the selected nodes by the given `offset`. """
 
         with self.groupedGraphModification("Move Selected Nodes"):
-            for node in self.iterSelectedNodes():
+            for node in self._getSelectedMovableNodes():
                 position = Position(node.x + offset.x(), node.y + offset.y())
                 self.moveNode(node, position)
 
     def getMeanPosition(self):
         """ Get the average Position of selected nodes. """
         # Not great, would be better if Position was a non-tuple class
-        selectedNodes = self.getSelectedNodes()
+        selectedNodes = self._getSelectedMovableNodes()
         sum_pose = [0, 0]
         nb_tot = 0
         for selectedNode in selectedNodes:
@@ -1135,7 +1142,7 @@ class UIGraph(QObject):
     def alignHorizontally(self):
         """ All nodes are moved horizontally to the same position, on an average position of selected nodes. """
         nodePadding = 50
-        selectedNodes = self.getSelectedNodes()
+        selectedNodes = self._getSelectedMovableNodes()
         if len(selectedNodes) < 2:
             return
 
@@ -1155,7 +1162,7 @@ class UIGraph(QObject):
     @Slot()
     def alignVertically(self):
         """ All nodes are moved vertically to the same position, on an average position of selected nodes. """
-        selectedNodes = self.getSelectedNodes()
+        selectedNodes = self._getSelectedMovableNodes()
         if len(selectedNodes) < 2:
             return
 
@@ -1175,9 +1182,31 @@ class UIGraph(QObject):
         if any(n.locked for n in nodes):
             return
 
+        # Conversion nodes only exist along the edges they convert: remove the ones attached to the removed nodes.
+        # They are removed first, so that they are restored last on undo, once their connected nodes exist again.
+        nodes = self._getAttachedConversionNodes(nodes) + list(nodes)
+
         with self.groupedGraphModification("Remove Nodes"):
             for node in nodes:
                 self.push(commands.RemoveNodeCommand(self._graph, node))
+
+    def _getAttachedConversionNodes(self, nodes: Iterable[Node], inputs: bool = True, outputs: bool = True) -> list[Node]:
+        """
+        Return the conversion nodes, not part of `nodes`, connected to `nodes`.
+
+        Args:
+            nodes: the nodes to consider.
+            inputs: whether to return the conversion nodes connected to the inputs of `nodes`.
+            outputs: whether to return the conversion nodes connected to the outputs of `nodes`.
+        """
+        nodes = set(nodes)
+        conversionNodes = []
+        for edge in self._graph.edges:
+            if inputs and edge.src.node.isConversionNode and edge.dst.node in nodes:
+                conversionNodes.append(edge.src.node)
+            if outputs and edge.dst.node.isConversionNode and edge.src.node in nodes:
+                conversionNodes.append(edge.dst.node)
+        return [node for node in dict.fromkeys(conversionNodes) if node not in nodes]
 
     @Slot()
     def removeSelectedNodes(self):
@@ -1210,6 +1239,9 @@ class UIGraph(QObject):
         Returns:
             The list of duplicated nodes.
         """
+        # Conversion nodes are not displayed: they follow the nodes they feed, whose duplicates get their own
+        nodes = [node for node in nodes if not node.isConversionNode]
+        nodes += self._getAttachedConversionNodes(nodes, outputs=False)
         nPositions = [(n.x, n.y) for n in self._graph.nodes]
         # Enable updates between duplication and layout to get correct depths during layout
         with self.groupedGraphModification("Duplicate Selected Nodes", disableUpdates=False):
@@ -1339,13 +1371,93 @@ class UIGraph(QObject):
             self._addEdge(src, dst)
 
     def _addEdge(self, src, dst):
+        conversionNodeTypes = []
+        if not isinstance(src, AnySet) and not dst.validateIncomingConnection(src):
+            conversionNodeTypes = self._graph.getConversionNodeTypes(src, dst)
+        conversionNode = self._reusableConversionNode(dst, conversionNodeTypes)
+        if conversionNode:
+            # Reconnect the input of the conversion node in place, keeping its parameters
+            if conversionNode.inputAttribute.inputLink is not src:
+                self.push(commands.AddEdgeCommand(self._graph, src, conversionNode.inputAttribute))
+            return
         with self.groupedGraphModification(f"Connect '{src.fullName}'->'{dst.fullName}'"):
-            if dst in self._graph.edges.keys():
-                self.removeEdge(self._graph.edge(dst))
+            oldEdge = self._graph.edges.get(dst)
+            if oldEdge:
+                # Only disconnect `dst`: removeEdge would also remove it if it is a list element
+                self.push(commands.RemoveEdgeCommand(self._graph, oldEdge))
+                if oldEdge.src.node.isConversionNode:
+                    # A conversion node only exists along the edge it converts
+                    self.removeNodes([oldEdge.src.node])
+            if conversionNodeTypes:
+                # Attributes of different types: connect them through the first available conversion node
+                self._addConversionNode(conversionNodeTypes[0], src, dst)
+                return
             self.push(commands.AddEdgeCommand(self._graph, src, dst))
+
+    def _reusableConversionNode(self, dst: Attribute, conversionNodeTypes: list[str]) -> Optional[Node]:
+        """
+        Return the conversion node already converting the value of `dst` if it can be reused to convert
+        a new source, or None.
+
+        Args:
+            dst: the attribute being connected.
+            conversionNodeTypes: the conversion node types able to convert the new source for `dst`.
+        """
+        edge = self._graph.edges.get(dst)
+        if edge is None or not edge.src.node.isConversionNode:
+            return None
+        node = edge.src.node
+        return node if node.nodeType in conversionNodeTypes else None
+
+    def _addConversionNode(self, nodeType: str, src: Attribute, dst: Attribute,
+                           position: Optional[Position] = None) -> Node:
+        """
+        [Undoable]
+        Create a conversion node of type `nodeType`, converting the value of `src` for `dst`.
+
+        Args:
+            nodeType: the conversion node type.
+            src: the attribute providing the value to convert.
+            dst: the attribute receiving the converted value.
+            position: the position of the node. If None, the node is placed between `src` and `dst`.
+
+        Returns:
+            The created conversion node.
+        """
+        if position is None:
+            position = self._graph.getConversionNodePosition(src, dst)
+        with self.groupedGraphModification(f"Connect '{src.fullName}' through {nodeType}"):
+            node = self.push(commands.AddNodeCommand(self._graph, nodeType, position=position))
+            self.push(commands.AddEdgeCommand(self._graph, src, node.inputAttribute))
+            self.push(commands.AddEdgeCommand(self._graph, node.outputAttribute, dst))
+        return node
+
+    @Slot(Attribute, Attribute, result=bool)
+    def canConvert(self, src: Attribute, dst: Attribute) -> bool:
+        """
+        Return whether `src` can be connected to `dst` through a conversion node, following the list rules
+        of `addEdge`: a list connected to a single attribute (for loop) is converted from its first element,
+        and a single attribute connected to a list is converted into a new element of the list.
+        """
+        if isinstance(src, ListAttribute) and not isinstance(dst, ListAttribute):
+            if len(src) == 0:
+                return False
+            src = src.at(0)
+        elif isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
+            # Temporary element, matching the one that addEdge would append to the list
+            dst = attributeFactory(dst.desc.elementDesc, None, dst.isOutput, dst.node, dst)
+        return bool(self._graph.getConversionNodeTypes(src, dst))
 
     @Slot(Edge)
     def removeEdge(self, edge):
+        # Ignore edges that are not part of the graph anymore (e.g. removed with a conversion node)
+        if edge.dst is None or self._graph.edge(edge.dst) is not edge:
+            return
+        conversionNode = next((attr.node for attr in (edge.src, edge.dst) if attr.node.isConversionNode), None)
+        if conversionNode:
+            # A conversion node only exists along the edge it converts: remove it with all its edges
+            self.removeNodes([conversionNode])
+            return
         with self.groupedGraphModification(f"Remove Edge and Delete {edge.dst.fullName}"):
             if isinstance(edge.dst.root, ListAttribute):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
@@ -1375,8 +1487,12 @@ class UIGraph(QObject):
     @Slot(Edge, Attribute, Attribute, result=Edge)
     def replaceEdge(self, edge, newSrc, newDst):
         with self.groupedGraphModification(f"Replace Edge '{edge.src.fullName}'->'{edge.dst.fullName}' with '{newSrc.fullName}'->'{newDst.fullName}'"):
-            self.removeEdge(edge)
-            self.addEdge(newSrc, newDst)
+            if newDst is edge.dst and newDst.node.isConversionNode:
+                # Reconnect the input of the conversion node in place: removing the edge would remove the node
+                self.push(commands.AddEdgeCommand(self._graph, newSrc, newDst))
+            else:
+                self.removeEdge(edge)
+                self.addEdge(newSrc, newDst)
         return self._graph.edge(newDst)
 
     @Slot(Attribute, result=Edge)
@@ -1385,6 +1501,12 @@ class UIGraph(QObject):
 
     @Slot(Attribute, "QVariant")
     def setAttribute(self, attribute, value):
+        if isinstance(attribute, ListAttribute) and attribute.conversionNodes:
+            with self.groupedGraphModification(f"Set Attribute '{attribute.name}'"):
+                # The elements of the list are replaced: remove the conversion nodes feeding them
+                self._removeConversionNodesOf(attribute)
+                self.push(commands.SetAttributeCommand(self._graph, attribute, value))
+            return
         self.push(commands.SetAttributeCommand(self._graph, attribute, value))
 
     @Slot(Attribute)
@@ -1393,6 +1515,7 @@ class UIGraph(QObject):
         with self.groupedGraphModification(f"Reset Attribute '{attribute.name}'"):
             # if the attribute is a ListAttribute, remove all edges
             if isinstance(attribute, ListAttribute):
+                self._removeConversionNodesOf(attribute)
                 for edge in self._graph.edges:
                     # if the edge is connected to one of the ListAttribute's elements, remove it
                     if edge.src in attribute.value:
@@ -1464,7 +1587,11 @@ class UIGraph(QObject):
 
     @Slot(Attribute)
     def removeAttribute(self, attribute):
-        self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
+        with self.groupedGraphModification(f"Remove '{attribute.fullName}'"):
+            self._removeConversionNodesOf(attribute)
+            # Removing a conversion node also removes the list element it feeds
+            if attribute in list(attribute.root.value):
+                self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
     @Slot(Attribute, str, result=Attribute)
     def addAnySetAttribute(self, attribute, attributeType):
@@ -1528,7 +1655,20 @@ class UIGraph(QObject):
     def removeAnySetAttribute(self, attribute):
         if not isinstance(attribute.root, AnySet):
             return
-        self.push(commands.RemoveAnySetAttributeCommand(self._graph, attribute))
+        with self.groupedGraphModification(f"Remove '{attribute.fullName}'"):
+            self._removeConversionNodesOf(attribute)
+            self.push(commands.RemoveAnySetAttributeCommand(self._graph, attribute))
+
+    def _removeConversionNodesOf(self, attribute: Attribute):
+        """
+        [Undoable]
+        Remove the conversion nodes feeding `attribute` or its elements or children, before removing or
+        replacing it: they would otherwise stay in the graph, hidden and only connected to their source.
+        They are removed first, so that they are restored last on undo, once the attribute exists again.
+        """
+        conversionNodes = attribute.conversionNodes
+        if conversionNodes:
+            self.removeNodes(conversionNodes)
 
     @Slot(Attribute, int)
     def moveAnySetAttribute(self, attribute, offset):
@@ -1685,7 +1825,11 @@ class UIGraph(QObject):
         """
         if not self._nodeSelection.hasSelection():
             return ""
-        graphData = self._graph.serializePartial(self.getSelectedNodes())
+        # Conversion nodes are not displayed: only keep the ones between the copied nodes
+        nodes = [node for node in self.getSelectedNodes() if not node.isConversionNode]
+        nodes += [node for node in self._getAttachedConversionNodes(nodes, outputs=False)
+                  if node.inputAttribute.isLink and node.inputAttribute.inputLink.node in nodes]
+        graphData = self._graph.serializePartial(nodes)
         return json.dumps(graphData, indent=4)
 
     @Slot(str, QPoint, result=list)

@@ -80,6 +80,9 @@ Item {
         } else {
             nodes = uigraph.duplicateNodes(uigraph.getSelectedNodes())
         }
+        // Nothing is duplicated when only hidden conversion nodes are selected
+        if (nodes.length === 0)
+            return
         uigraph.selectedNode = nodes[0]
         uigraph.selectNodes(nodes)
     }
@@ -91,6 +94,14 @@ Item {
             Clipboard.clear()
             Clipboard.setText(nodeContent)
         }
+        return nodeContent !== ''
+    }
+
+    /// Copy the selected nodes to clipboard and remove them, only if something was copied
+    /// (a selection of hidden conversion nodes copies nothing: it must not be lost)
+    function cutNodes() {
+        if (copyNodes())
+            uigraph.removeSelectedNodes()
     }
 
     /// Paste content of clipboard to graph editor and create new node if valid
@@ -128,8 +139,7 @@ Item {
             duplicateNode(event.modifiers === Qt.AltModifier)
         } else if (event.key === Qt.Key_X) {
             if (event.modifiers === Qt.ControlModifier) {
-                copyNodes()
-                uigraph.removeSelectedNodes()
+                cutNodes()
             }
             else {
                 uigraph.disconnectSelectedNodes()
@@ -895,10 +905,7 @@ Item {
                         enabled: true
                         ToolTip.text: "Copy selection to the clipboard and remove it"
                         ToolTip.visible: hovered
-                        onTriggered: {
-                            copyNodes()
-                            uigraph.removeSelectedNodes()
-                        }
+                        onTriggered: cutNodes()
                     }
                     MenuItem {
                         text: "Copy Node(s)"

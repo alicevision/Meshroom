@@ -1250,6 +1250,8 @@ class UIGraph(QObject):
         """
         # Conversion nodes are not displayed: they follow the nodes they feed, whose duplicates get their own
         nodes = [node for node in nodes if not node.isConversionNode]
+        if not nodes:
+            return []
         nodes += self._getAttachedConversionNodes(nodes, outputs=False)
         nPositions = [(n.x, n.y) for n in self._graph.nodes]
         # Enable updates between duplication and layout to get correct depths during layout
@@ -1895,6 +1897,9 @@ class UIGraph(QObject):
         if not self._nodeSelection.hasSelection():
             return ""
         nodes = self._withInternalConversionNodes(self.getSelectedNodes())
+        if not nodes:
+            # Only hidden conversion nodes are selected: they cannot be copied on their own
+            return ""
         graphData = self._graph.serializePartial(nodes)
         return json.dumps(graphData, indent=4)
 

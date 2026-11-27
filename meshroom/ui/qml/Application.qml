@@ -624,10 +624,7 @@ Page {
         property string tooltip: "Cut Selected Node(s)"
         text: "Cut Node(s)"
         enabled: _currentScene ? _currentScene.nodeSelection.hasSelection : false
-        onTriggered: {
-            graphEditor.copyNodes()
-            graphEditor.uigraph.removeSelectedNodes()
-        }
+        onTriggered: graphEditor.cutNodes()
     }
 
     Action {

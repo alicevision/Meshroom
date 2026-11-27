@@ -941,7 +941,9 @@ class StringParam(Param):
         return "", ValueTypeErrors.NONE
 
     def clone(self):
-        return Attribute.clone(self)
+        cloned = Attribute.clone(self)
+        cloned._uidIgnoreValue = self._uidIgnoreValue
+        return cloned
 
 class ColorParam(Param):
     """

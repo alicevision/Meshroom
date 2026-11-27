@@ -850,6 +850,10 @@ def test_group_clone_keeps_validators():
     assert cloned.validators == validators
 
 
+def test_string_clone_keeps_uid_ignore_value():
+    assert desc.StringParam(name="s", value="", uidIgnoreValue="").clone().checkUidIgnoreValue("")
+
+
 def test_duplicated_number_keeps_range_after_edit():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("DynamicNode")

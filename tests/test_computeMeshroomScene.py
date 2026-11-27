@@ -139,6 +139,13 @@ def test_sceneValuesAreTheDefaultsOfTheExposedInputs(tmp_path):
         assert exposed.isDefault
 
 
+def test_exposedAttributesCannotBeEditedFromTheUI():
+    # The children of the inputs and outputs are created from the scene
+    anySets = [attr for attr in ComputeMeshroomScene.inputs + ComputeMeshroomScene.outputs if isinstance(attr, desc.AnySet)]
+    assert [attr.name for attr in anySets] == ["inputs", "outputs"]
+    assert not any(attr.editable for attr in anySets)
+
+
 def test_outputNodesAreNotExposed(tmp_path):
     with registeredNodeTypes([ComputeMeshroomScene, GraphInput, GraphOutput, OutputNodeTest]):
         scenePath = tmp_path / "scene.mg"

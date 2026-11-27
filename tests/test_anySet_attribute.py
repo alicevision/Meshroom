@@ -49,14 +49,18 @@ def test_anyset_desc_clone():
     """Cloning an AnySet descriptor creates a distinct AnySet descriptor with the same properties."""
     d = AnySetDesc(name="customInputs", label="Custom Inputs", description="Some description",
                    commandLineGroup="customGroup", advanced=True, semantic="someSemantic", enabled=False,
-                   visible=False, exposed=True)
+                   visible=False, exposed=True, editable=False)
     clone = d.clone()
 
     assert clone is not d
     assert isinstance(clone, AnySetDesc)
     for prop in ("name", "label", "description", "commandLineGroup", "advanced", "semantic", "enabled",
-                 "visible", "exposed", "items"):
+                 "visible", "exposed", "editable", "items"):
         assert getattr(clone, prop) == getattr(d, prop), prop
+
+
+def test_anyset_desc_is_editable_by_default():
+    assert AnySetDesc(name="customInputs").editable
 
 
 def test_duplicate_anyset_into_anyset():

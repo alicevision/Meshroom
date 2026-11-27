@@ -27,6 +27,9 @@ RowLayout {
     readonly property bool editable: !attribute.isOutput && !attribute.isLink &&
                                      !readOnly && !(attribute.keyable && _currentScene.selectedViewId === "-1")
     readonly property bool isAnySetChild: !!attribute && !!attribute.root && attribute.root.type === "AnySet"
+    // Whether the controls to edit or remove this AnySet child, or to add children to this AnySet, are shown
+    readonly property bool anySetEditable: isAnySetChild ? attribute.root.desc.editable
+                                                         : attribute.type === "AnySet" && attribute.desc.editable
     property var errorMessages: attribute.errorMessages
     // Numeric attribute set to its descriptor's special "automatic value" (outside the range): label and slider are greyed out
     readonly property bool hasAutoValue: !!attribute && !!attribute.desc && attribute.desc.hasAutoValue === true && !attribute.keyable
@@ -61,10 +64,15 @@ RowLayout {
                 enabled: AnySetUtils.canMoveBy(attribute, 1)
                 onTriggered: _currentScene.moveAnySetAttribute(attribute, 1)
             }
-            MenuSeparator {}
+            MenuSeparator {
+                visible: root.anySetEditable
+                height: visible ? implicitHeight : 0
+            }
             MenuItem {
+                visible: root.anySetEditable
+                height: visible ? implicitHeight : 0
                 text: "Edit Attribute..."
-                enabled: root.isAnySetChild && !root.readOnly
+                enabled: !root.readOnly
                 onTriggered: root.editAnySetAttributeRequested(attribute)
             }
         }
@@ -243,12 +251,12 @@ RowLayout {
                         }
 
                         MenuSeparator {
-                            visible: root.isAnySetChild
+                            visible: root.isAnySetChild && root.anySetEditable
                             height: visible ? implicitHeight : 0
                         }
 
                         MenuItem {
-                            visible: root.isAnySetChild
+                            visible: root.isAnySetChild && root.anySetEditable
                             height: visible ? implicitHeight : 0
                             text: "Edit Attribute..."
                             enabled: !root.readOnly
@@ -743,7 +751,7 @@ RowLayout {
 
                     ToolButton {
                         id: addAnySetAttributeButton
-                        visible: groupItem.isAnySet
+                        visible: groupItem.isAnySet && root.anySetEditable
                         enabled: !root.readOnly
                         text: MaterialIcons.add_circle_outline
                         font.family: MaterialIcons.fontFamily
@@ -879,7 +887,7 @@ RowLayout {
 
     // Remove button for AnySet children
     ToolButton {
-        visible: root.isAnySetChild
+        visible: root.isAnySetChild && root.anySetEditable
         enabled: !root.readOnly
         text: MaterialIcons.remove_circle_outline
         font.family: MaterialIcons.fontFamily

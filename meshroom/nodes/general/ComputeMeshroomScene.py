@@ -253,7 +253,9 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             name="inputs",
             label="Inputs",
             description="All the parameters exposed in the GraphInput of the given Scene file",
-            exposed=True
+            exposed=True,
+            # The children are created from the scene: user-added ones would not be part of it
+            editable=False
         )
     ]
 
@@ -262,7 +264,9 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             name="outputs",
             label="Outputs",
             description="All the parameters exposed in the GraphOutput of the given Scene file",
-            exposed=True
+            exposed=True,
+            # The children are created from the scene: user-added ones would not be part of it
+            editable=False
         )
     ]
 

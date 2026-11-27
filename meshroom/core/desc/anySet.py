@@ -14,7 +14,8 @@ class AnySet(GroupAttribute):
                  semantic="",
                  enabled=True,
                  visible=True,
-                 exposed=False):
+                 exposed=False,
+                 editable=True):
 
         super().__init__(items = items if items is not None else [],
                          name=name,
@@ -26,6 +27,7 @@ class AnySet(GroupAttribute):
                          enabled=enabled,
                          visible=visible,
                          exposed=exposed)
+        self._editable = editable
 
     def checkValueTypes(self):
         return "", ValueTypeErrors.NONE
@@ -48,7 +50,8 @@ class AnySet(GroupAttribute):
                               semantic=self.semantic,
                               enabled=self.enabled,
                               visible=self.visible,
-                              exposed=self.exposed)
+                              exposed=self.exposed,
+                              editable=self.editable)
 
     # Override
     def shortDesc(self) -> dict:
@@ -60,6 +63,10 @@ class AnySet(GroupAttribute):
         return serializedData
 
     isCustomAttribute = Property(bool, lambda _: True, constant=True)
+    # editable:
+    #   Whether children can be added, edited and removed from the UI.
+    #   Disabled when the children are managed by the node itself.
+    editable = Property(bool, lambda self: self._editable, constant=True)
     # Override
     # A GroupAttribute is invalidating if any of its items is, but an AnySet has no predefined items:
     # its children are user-defined, so it must always be taken into account in the node UID.

@@ -526,7 +526,8 @@ class MeshroomApp(QApplication):
         provider = pluginManager.getNodeDescProviders().get(nodeType)
         if provider is None:
             return True
-        return provider.nodeDescClass._mrNodeType in (MrNodeType.NODE, MrNodeType.COMMANDLINE)
+        # Same rule as BaseNode._isComputableType
+        return provider.nodeDescClass._mrNodeType not in (MrNodeType.INIT, MrNodeType.BACKDROP, MrNodeType.INLINE)
 
     @classmethod
     def _readProjectInfo(cls, path: str) -> dict:

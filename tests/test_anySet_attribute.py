@@ -826,6 +826,12 @@ def test_clone_keeps_number_ranges():
     assert desc.FloatParam(name="f", value=0.5, range=(0.0, 1.0, 0.1)).clone().range == [0.0, 1.0, 0.1]
 
 
+def test_choice_clone_keeps_values_override_and_join_char():
+    cloned = desc.ChoiceParam(name="c", value="a", values=["a"], saveValuesOverride=True, joinChar=",").clone()
+    assert cloned._saveValuesOverride
+    assert cloned.joinChar == ","
+
+
 def test_duplicated_number_keeps_range_after_edit():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("DynamicNode")

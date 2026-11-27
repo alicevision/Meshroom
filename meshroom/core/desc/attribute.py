@@ -883,6 +883,8 @@ class ChoiceParam(Param):
         clone._values = list(self._values)
         clone._exclusive = self._exclusive
         clone._valueType = self._valueType
+        clone._saveValuesOverride = self._saveValuesOverride
+        clone._joinChar = self._joinChar
         return clone
 
     # Override

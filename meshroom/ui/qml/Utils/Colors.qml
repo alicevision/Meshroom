@@ -24,6 +24,9 @@ QtObject {
     readonly property color lightgrey: "#999999"
     readonly property color warning: "#FF9800"
     readonly property color darkpurple: "#5c4885"
+    // Attributes converted by conversion nodes: a blue-violet, related to the Meshroom highlight blue (#2A82DA)
+    // but shifted in hue and lighter so that converted pins stand out from selected/highlighted ones
+    readonly property color conversion: "#A68CFF"
 
     readonly property var statusColors: {
         "NONE": "transparent",

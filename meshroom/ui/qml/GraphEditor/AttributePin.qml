@@ -33,6 +33,40 @@ RowLayout {
     readonly property bool isExpandable: attribute && attribute.isExpandable === true
     readonly property bool isDynamic: !!attribute.desc && !!attribute.desc.isCustomAttribute
     readonly property bool isConnected: attribute.hasAnyInputLinks || attribute.hasAnyOutputLinks
+    // Conversion nodes converting the value received by this attribute, by the elements of this list,
+    // or by the children of this group while it is folded (its pin then receives their edges)
+    readonly property var conversionNodes: {
+        if (!attribute || attribute.isOutput)
+            return []
+        if (isExpandable && expanded)
+            return attribute.isLink && attribute.inputLink.node.isConversionNode ? [attribute.inputLink.node] : []
+        return attribute.conversionNodes
+    }
+    readonly property bool hasConversionError: conversionNodes.some(node => node.conversionError !== "")
+    // A lossless conversion colors the inner dot, a lossy one colors the ring around it
+    readonly property bool hasLosslessConversion: conversionNodes.some(node => !node.isLossy)
+    readonly property bool hasLossyConversion: conversionNodes.some(node => node.isLossy)
+    // Whether the pin of a converted attribute is hovered, to highlight the converted edges
+    readonly property bool conversionHovered: conversionNodes.length > 0 && inputConnectMA.containsMouse
+
+    /// Return the description of the conversions of this attribute, displayed in its tooltip
+    function conversionsDescription() {
+        const lines = []
+        for (const node of conversionNodes) {
+            const src = node.inputAttribute.inputLink
+            const dsts = node.outputAttribute.outputLinks
+            // Name the converted element or child when the pin gathers several edges
+            let line = "Converted from " + (src ? src.fullName : "?") + " by " + node.nodeType
+            if (dsts.length > 0 && dsts[0] !== attribute)
+                line = dsts[0].fullName + ": " + line
+            if (node.isLossy)
+                line += " (may lose information)"
+            if (node.conversionError !== "")
+                line += "\nConversion error: " + node.conversionError
+            lines.push(line)
+        }
+        return lines.join("\n")
+    }
 
     signal childPinCreated(var childAttribute, var pin)
     signal childPinDeleted(var childAttribute, var pin)
@@ -57,7 +91,8 @@ RowLayout {
     }
 
     ToolTip {
-        text: attribute.fullName + ": " + attribute.type
+        text: attribute.fullName + ": " + attribute.type +
+              (root.conversionNodes.length > 0 ? "\n" + root.conversionsDescription() : "")
         visible: nameLabel.hovered
         delay: 500
 
@@ -93,7 +128,8 @@ RowLayout {
             radius: root.isList ? 0 : width / 2
             Layout.alignment: Qt.AlignVCenter
 
-            border.color: getCurrentAttributePinColor(innerInputAnchor.hasConnectedChildren)
+            border.color: root.hasLossyConversion && !root.hasConversionError ? Colors.conversion
+                                                                              : getCurrentAttributePinColor(innerInputAnchor.hasConnectedChildren)
             color: Colors.sysPalette.base
 
             Rectangle {
@@ -110,6 +146,10 @@ RowLayout {
                 color: {
                     if (inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop))
                         return Colors.sysPalette.highlight
+                    if (root.hasConversionError)
+                        return Colors.red
+                    if (root.hasLosslessConversion)
+                        return Colors.conversion
                     if (hasConnectedChildren)
                         return Colors.sysPalette.mid
                     if (root.isDynamic)

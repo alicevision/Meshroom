@@ -652,7 +652,10 @@ Item {
                                            src.attribute.type === "ListAttribute" &&
                                            dst.attribute.type != "ListAttribute"
 
-                    property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge === edge)
+                    // Hovering the pin of a converted attribute highlights the converted edges (to find them among
+                    // the edges of a list or a folded group)
+                    property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge === edge) ||
+                                           (toConversion && isValidEdge && Boolean(dst.conversionHovered))
 
                     edge: object
                     isForLoop: forLoop

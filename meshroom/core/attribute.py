@@ -2277,6 +2277,12 @@ class AnySet(GroupAttribute):
 
 
     # Override
+    def upgradeValue(self, exportedValue):
+        # Override the GroupAttribute behavior, which would remove the AnySet children:
+        # they are not part of the node description, so they are restored from their serialized data
+        self._setValue(exportedValue)
+
+    # Override
     def _populateFromDynamicValue(self, exportedValue):
         super()._setValue(exportedValue)  # Use the GroupAttribute usual setValue to restore values.json data
 

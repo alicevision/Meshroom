@@ -227,6 +227,30 @@ def test_move_anyset_attribute_updates_order():
 # Serialization / deserialization tests
 # ---------------------------------------------------------------------------
 
+def test_upgrading_compatibility_node_keeps_anyset_children_and_edges(tmp_path):
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    intChild = dynamicNode.ins.insertAttribute({"name": "int", "label": "Int", "type": "IntParam", "value": 0}, 0)
+    intChild.value = 7
+    stringChild = dynamicNode.ins.insertAttribute({"name": "string", "label": "String", "type": "StringParam", "value": ""}, 1)
+    srcNode.code.connectTo(stringChild)
+
+    # A UID that does not match the node makes it a compatibility node, as with a file saved by an older version
+    graphFile = tmp_path / "graph.mg"
+    graph.save(str(graphFile))
+    graphContent = json.loads(graphFile.read_text())
+    graphContent["graph"][dynamicNode.name]["uid"] = "olderUid"
+    graphFile.write_text(json.dumps(graphContent))
+
+    loadedGraph = loadGraph(str(graphFile))
+    assert isinstance(loadedGraph.node(dynamicNode.name), CompatibilityNode)
+
+    upgradedNode = loadedGraph.upgradeNode(dynamicNode.name)
+    assert [child.name for child in upgradedNode.ins.value] == ["int", "string"]
+    assert upgradedNode.ins.int.value == 7
+    assert upgradedNode.ins.string.inputLink is loadedGraph.node(srcNode.name).code
+
+
 def test_duplicated_attributes_are_added_at_the_end():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("AllAttributesNode")

@@ -486,17 +486,9 @@ class MeshroomApp(QApplication):
     def templateCategories(self) -> list:
         """ Return the categories offered for a template: the built-in ones, then those of the registered templates.
 
-        Each registered template file is read, so this is only called when the Save As Template dialog opens.
+        Read from the cached template list (see `_pipelineTemplateFiles`), invalid templates have no category.
         """
-        categories = []
-        for key in meshroom.core.pipelineTemplates:
-            try:
-                categories.append(getTemplateInfo(key).get("category"))
-            except ValueError as e:
-                # Template headers can be edited by hand: report the invalid ones, without their category
-                self.showMessage(str(e), "error")
-        # Ignore categories that are not text
-        usedCategories = sorted(c for c in categories if isinstance(c, str))
+        usedCategories = sorted(t["category"] for t in self.pipelineTemplateFiles)
         return templateInfo.mergeCategories(self._templateCategoryColors.keys(), usedCategories)
 
     @Slot(str, result=str)

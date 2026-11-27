@@ -295,6 +295,9 @@ class NodeChunk(BaseObject):
         try:
             with redirectOutput(self.getLogFile()):
                 self.process(forceCompute, inCurrentEnv=True)
+        except Exception:
+            logging.exception(f"Error on chunk {self.name}")
+            raise
         finally:
             self.node.restoreLogger()
 

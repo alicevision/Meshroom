@@ -156,6 +156,9 @@ def test_finishedChunkLogIsKeptWhenRecomputedInCurrentEnv(graphSavedOnDisk):
         with open(finishedChunk.getLogFile()) as f:
             log = f.read()
         assert log
+        # The error of the failed chunk is in its log
+        with open(node.chunks[1].getLogFile()) as f:
+            assert "First computation of the last chunk fails." in f.read()
 
         # Only the failed chunk is recomputed: the log of the finished one is untouched
         executeGraph(graph, inCurrentEnv=True)

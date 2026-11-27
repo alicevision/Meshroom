@@ -51,7 +51,7 @@ RowLayout {
             return "transparent"
         }
         if (hasChildrenConnected) {
-            return Colors.sysPalette.iconText
+            return Colors.sysPalette.text
         }
         return Colors.sysPalette.mid
     }

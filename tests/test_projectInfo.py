@@ -108,6 +108,14 @@ def test_projectInfoRunningChunkOutranksStoppedChunk(tmp_path):
     assert readProjectInfo(path, isComputable)["status"] == ProjectStatus.RUNNING
 
 
+def test_projectInfoPrefixedStatusOutranksLegacyStatus(tmp_path):
+    path = writeProject(tmp_path, GRAPH)
+    writeStatus(tmp_path, "CameraInit", "u1", "0.status", "SUCCESS")
+    writeStatus(tmp_path, "FeatureExtraction", "u2", "status", "ERROR")
+    writeStatus(tmp_path, "FeatureExtraction", "u2", "0.status", "SUCCESS")
+    assert readProjectInfo(path, isComputable)["status"] == ProjectStatus.COMPUTED
+
+
 def test_projectInfoUnexpectedContent(tmp_path):
     # Valid JSON that is not a project
     path = tmp_path / "list.mg"

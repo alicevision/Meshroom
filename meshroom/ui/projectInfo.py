@@ -65,9 +65,10 @@ def nodeStatus(nodeFolder: str) -> dict:
         files = os.listdir(nodeFolder)
     except OSError:
         return {"status": "NONE", "execMode": "NONE", "chunks": 1, "doneChunks": 0}
-    # Chunk status files are "<chunk>.status", or "status" for files computed before chunks were prefixed
-    chunks = [s for s in (_readStatus(os.path.join(nodeFolder, f)) for f in files
-                          if f == "status" or f.endswith(".status")) if s]
+    # Chunk status files are "<chunk>.status", or "status" for files computed before chunks were prefixed:
+    # like NodeChunk._getFile, the prefixed files win when both exist
+    statusFiles = [f for f in files if f.endswith(".status")] or [f for f in files if f == "status"]
+    chunks = [s for s in (_readStatus(os.path.join(nodeFolder, f)) for f in statusFiles) if s]
     if not chunks:
         # No chunk yet (e.g. submitted to a farm): the node status file holds the status
         statusData = _readStatus(os.path.join(nodeFolder, "nodeStatus")) or {}

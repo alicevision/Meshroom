@@ -74,6 +74,7 @@ class MrNodeType(enum.Enum):
     COMMANDLINE = enum.auto()
     INIT = enum.auto()
     BACKDROP = enum.auto()
+    CONVERSION = enum.auto()
 
 
 class StageSettings(SimpleNamespace):
@@ -254,6 +255,7 @@ class InternalAttributesFactory:
             MrNodeType.COMMANDLINE: cls.INVALIDATION + cls.BASIC,
             MrNodeType.INIT: cls.BASIC,
             MrNodeType.BACKDROP: cls.BASIC + cls.RESIZABLE,
+            MrNodeType.CONVERSION: cls.BASIC,
         }
 
         return paramMap.get(mrNodeType)
@@ -266,7 +268,7 @@ class InternalAttributesFactory:
         These are added to internal attributes so they appear as connection pins in
         the graph editor header while remaining separate from the regular attribute list.
         """
-        if mrNodeType == MrNodeType.BACKDROP:
+        if mrNodeType in (MrNodeType.BACKDROP, MrNodeType.CONVERSION):
             return []
         return cls.FLOW_IN
 
@@ -278,7 +280,7 @@ class InternalAttributesFactory:
         These are added to internal attributes so they appear as connection pins in
         the graph editor header while remaining separate from the regular attribute list.
         """
-        if mrNodeType == MrNodeType.BACKDROP:
+        if mrNodeType in (MrNodeType.BACKDROP, MrNodeType.CONVERSION):
             return []
         return cls.FLOW_OUT
 
@@ -631,6 +633,88 @@ class BackdropNode(BaseNode):
 
     def getMrNodeType(self):
         return self._mrNodeType
+
+    def processChunk(self, chunk):
+        pass
+
+    def process(self, node):
+        pass
+
+
+def _attributeDescTypes(attributeDesc: Attribute):
+    """
+    Return the (type, baseType) pair of an attribute description, matching the "type" and "baseType"
+    properties of the corresponding core Attribute.
+    """
+    if isinstance(attributeDesc, ListAttribute):
+        return attributeDesc.type, attributeDesc.elementDesc.type
+    return attributeDesc.type, attributeDesc.type
+
+
+class ConversionNode(BaseNode):
+    """
+    Node converting the value of an attribute into another attribute type.
+
+    A conversion node is inserted on a connection between two attributes of different types. It is not
+    displayed in the Graph Editor: the edge goes straight to the converted attribute, whose pin is colored.
+    It declares one input attribute named "input" (the type to convert from), one dynamic output attribute
+    (value=None) named "output" (the type to convert to), and optional parameters driving the conversion.
+    It is never computed: the output value is evaluated on-the-fly from the input value with `convert`.
+    """
+    _mrNodeType: MrNodeType = MrNodeType.CONVERSION
+    internalInputs = InternalAttributesFactory.getInternalAttributes(_mrNodeType)
+    internalFlowInputs = InternalAttributesFactory.getInternalFlowInputs(_mrNodeType)
+    internalFlowOutputs = InternalAttributesFactory.getInternalFlowOutputs(_mrNodeType)
+
+    category = "Conversion"
+    # Names of the attributes holding the value to convert and the converted value
+    inputAttributeName: ClassVar[str] = "input"
+    outputAttributeName: ClassVar[str] = "output"
+    # Whether the conversion may lose information (e.g. float to int), shown on the converted attribute's pin
+    lossy: ClassVar[bool] = False
+
+    def getMrNodeType(self):
+        return self._mrNodeType
+
+    @classmethod
+    def getInputDesc(cls) -> Optional[Attribute]:
+        """ Return the description of the attribute holding the value to convert, or None if missing. """
+        return next((attr for attr in cls.inputs if attr.name == cls.inputAttributeName), None)
+
+    @classmethod
+    def getOutputDesc(cls) -> Optional[Attribute]:
+        """ Return the description of the attribute holding the converted value, or None if missing. """
+        return next((attr for attr in cls.outputs if attr.name == cls.outputAttributeName), None)
+
+    @classmethod
+    def canConvert(cls, srcAttribute: "CoreAttribute", dstAttribute: "CoreAttribute") -> bool:
+        """
+        Return whether this node type converts the value of "srcAttribute" into a value for "dstAttribute".
+        By default, the types of both attributes must match the types of the "input" and "output"
+        attributes. It can be overridden to implement custom rules.
+
+        Args:
+            srcAttribute: the attribute providing the value to convert.
+            dstAttribute: the attribute receiving the converted value.
+        """
+        inputDesc, outputDesc = cls.getInputDesc(), cls.getOutputDesc()
+        if inputDesc is None or outputDesc is None:
+            return False
+        return (srcAttribute.type, srcAttribute.baseType) == _attributeDescTypes(inputDesc) and \
+            (dstAttribute.type, dstAttribute.baseType) == _attributeDescTypes(outputDesc)
+
+    def convert(self, node: "CoreNode", value: Any) -> Any:
+        """
+        Convert the value of the "input" attribute. Must be implemented by conversion node types.
+
+        Args:
+            node: the conversion node instance, giving access to the conversion parameters.
+            value: the value of the "input" attribute.
+
+        Returns:
+            The value of the "output" attribute.
+        """
+        raise NotImplementedError(f'No conversion implementation on node: "{node.name}"')
 
     def processChunk(self, chunk):
         pass

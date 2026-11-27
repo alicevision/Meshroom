@@ -24,6 +24,19 @@ QtObject {
     readonly property color lightgrey: "#999999"
     readonly property color warning: "#FF9800"
     readonly property color darkpurple: "#5c4885"
+    readonly property color meshroomBlue: "#0071BC"  // background of the animated logo
+
+    // Statuses of a project file on the homepage (see projectInfo.ProjectStatus)
+    readonly property var projectStatusColors: {
+        "notComputed": "#B4B6BB",
+        "partial": "#F2C94C",
+        "computed": "#6CC070",
+        "scheduled": "#5AA9F0",
+        "running": "#F2C94C",
+        "failed": "#FF7B72",
+        "unknown": "#B4B6BB",
+        "missing": "#A3A5AA"
+    }
 
     readonly property var statusColors: {
         "NONE": "transparent",

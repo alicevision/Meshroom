@@ -1,0 +1,4 @@
+module Home
+
+PipelineList 1.0 PipelineList.qml
+ProjectCard 1.0 ProjectCard.qml

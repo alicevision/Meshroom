@@ -25,6 +25,7 @@ from meshroom.core.plugins.base import NodeDescProviderStatus
 from meshroom.ui import commands
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
+from meshroom.ui.viewpointLookup import ViewpointLookup
 from meshroom.ui.components.filepath import FilepathHelper
 
 
@@ -381,6 +382,8 @@ class Scene(UIGraph):
         self._selectedViewId = "-1"
         self._selectedViewpoint = None
         self._pickedViewId = "-1"
+        self._viewpointLookup = ViewpointLookup(onInvalidated=self._onViewpointLookupInvalidated)
+        self._viewpointLookupRevision = 0
 
         self._currentViewPath = ""
 
@@ -404,6 +407,7 @@ class Scene(UIGraph):
     @Slot()
     def clear(self):
         self.clearActiveNodes()
+        self._viewpointLookup.clear()
         super().clear()
         self.setActive(False)
 
@@ -1176,7 +1180,7 @@ class Scene(UIGraph):
         self.setPickedViewId(viewId)
         vp = None
         if self.viewpoints:
-            vp = next((v for v in self.viewpoints if str(v.viewId.value) == self._selectedViewId), None)
+            vp = self._viewpointLookup.get(self.viewpoints, self._selectedViewId)
         self._setSelectedViewpoint(vp)
         self.selectedViewIdChanged.emit()
 
@@ -1199,8 +1203,23 @@ class Scene(UIGraph):
         """ Update the currently set viewpoint if the provided view ID corresponds to one. """
         vp = None
         if self.viewpoints:
-            vp = next((v for v in self.viewpoints if str(v.viewId.value) == viewId), None)
+            vp = self._viewpointLookup.get(self.viewpoints, viewId)
         self._setSelectedViewpoint(vp)
+
+    # Note: result is a QVariant as returning None from a QObject result crashes QML (PySide6 6.12)
+    @Slot(QObject, str, result="QVariant")
+    def getViewpointById(self, viewpoints, viewId):
+        """
+        Return the first viewpoint of 'viewpoints' whose viewId matches 'viewId', None if not found.
+        Same result as a linear search, without reading each viewpoint's viewId attribute on each call.
+
+        Bindings using it should also depend on 'viewpointLookupRevision' to be re-evaluated when a viewId is edited.
+        """
+        return self._viewpointLookup.get(viewpoints, viewId)
+
+    def _onViewpointLookupInvalidated(self):
+        self._viewpointLookupRevision += 1
+        self.viewpointLookupRevisionChanged.emit()
 
     def reconstructedCamerasCount(self):
         """ Get the number of reconstructed cameras in the current context. """
@@ -1271,6 +1290,9 @@ class Scene(UIGraph):
     selectedViewpoint = Property(ViewpointWrapper, lambda self: self._selectedViewpoint, notify=selectedViewpointChanged)
     pickedViewIdChanged = Signal()
     pickedViewId = Property(str, lambda self: self._pickedViewId, setPickedViewId, notify=pickedViewIdChanged)
+    # Incremented each time a viewId edit may change the result of getViewpointById
+    viewpointLookupRevisionChanged = Signal()
+    viewpointLookupRevision = Property(int, lambda self: self._viewpointLookupRevision, notify=viewpointLookupRevisionChanged)
 
     sfmChanged = Signal()
     sfm = Property(QObject, getSfm, setSfm, notify=sfmChanged)

@@ -854,6 +854,31 @@ def test_string_clone_keeps_uid_ignore_value():
     assert desc.StringParam(name="s", value="", uidIgnoreValue="").clone().checkUidIgnoreValue("")
 
 
+def test_edit_anyset_choice_keeps_type_of_values():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    choiceAttr = anySet.insertAttribute({"name": "choice", "label": "Choice", "type": "ChoiceParam", "value": 2, "values": [1, 2, 4]}, 0)
+
+    # The edition form sends the values as text
+    data = anySet.getEditedAttributeData(choiceAttr, {"defaultValue": 2, "values": ["1", "2", "4"]})
+    assert data == choiceAttr.asDict()
+
+    data = anySet.getEditedAttributeData(choiceAttr, {"defaultValue": 2, "values": ["1", "2", "8"]})
+    assert anySet.replaceAttribute(choiceAttr, data).desc.values == [1, 2, 8]
+
+    with pytest.raises(ValueError):
+        anySet.getEditedAttributeData(choiceAttr, {"values": ["1", "x"]})
+
+
+def test_edit_anyset_choice_without_type_keeps_values():
+    graph, dynamicNode = initGraphAndNode()
+    source = desc.ChoiceParam(name="choice", value=None, values=[])
+    choiceAttr = dynamicNode.ins.duplicateAttribute(SimpleNamespace(desc=source))
+
+    data = dynamicNode.ins.getEditedAttributeData(choiceAttr, {"values": ["a", "b"]})
+    assert data["values"] == ["a", "b"]
+
+
 def test_duplicated_number_keeps_range_after_edit():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("DynamicNode")

@@ -2259,7 +2259,8 @@ class AnySet(GroupAttribute):
             "label": stripped,
             "description": stripped,
             "advanced": bool,
-            "values": list,
+            # A choice without values nor default value has no type to convert its values to
+            "values": lambda values: list(values) if attributeDesc._valueType is type(None) else [attributeDesc.conformValue(value) for value in values],
             "defaultValue": attributeDesc.validateValue,
             "range": lambda valueRange: cls._validatedRange(attributeDesc, valueRange),
         }

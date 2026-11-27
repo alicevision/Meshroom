@@ -1306,17 +1306,33 @@ class UIGraph(QObject):
                 return False
         return True
 
+    @staticmethod
+    def _getConvertedAttribute(attribute: Attribute) -> Attribute:
+        """
+        Return the attribute receiving the converted value if `attribute` is the input of a conversion node
+        (the edge drawn in the Graph Editor ends there), `attribute` itself otherwise.
+        """
+        if attribute.node.isConversionNode:
+            outputLinks = attribute.node.outputAttribute.outputLinks
+            if outputLinks:
+                return outputLinks[0]
+        return attribute
+
     @Slot(Edge, result=Edge)
     def expandForLoop(self, currentEdge):
         """ Expand 'node' by creating all its output nodes. """
         with self.groupedGraphModification("Expand For Loop Node"):
             listAttribute = currentEdge.src.root
             dst = currentEdge.dst
+            # Duplicate the node fed by the loop, not the conversion node in between (duplicated along with it)
+            convertedDst = self._getConvertedAttribute(dst)
 
             for i in range(1, len(listAttribute)):
-                duplicates = self.duplicateNodesFrom([dst.node])
+                duplicates = self.duplicateNodesFrom([convertedDst.node])
                 newNode = duplicates[0]
-                previousEdge = self.graph.edge(newNode.attribute(dst.name))
+                previousEdge = self.graph.edge(newNode.attribute(convertedDst.name))
+                if previousEdge.src.node.isConversionNode:
+                    previousEdge = self.graph.edge(previousEdge.src.node.inputAttribute)
                 self.replaceEdge(previousEdge, listAttribute.at(i), previousEdge.dst)
 
             # Last, replace the edge with the first element of the list
@@ -1334,7 +1350,9 @@ class UIGraph(QObject):
                     continue
                 occurrence = allSrc.index(listAttribute.at(i)) if listAttribute.at(i) in allSrc else -1
                 if occurrence != -1:
-                    self.removeNodesFrom([self.graph.edges.at(occurrence).dst.node])
+                    # Remove the node fed by the loop: its conversion node is removed along with it
+                    dst = self._getConvertedAttribute(self.graph.edges.at(occurrence).dst)
+                    self.removeNodesFrom([dst.node])
                     # update the edges from allSrc
                     allSrc = [e.src for e in self._graph.edges.values()]
 

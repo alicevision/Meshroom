@@ -832,6 +832,16 @@ def test_choice_clone_keeps_values_override_and_join_char():
     assert cloned.joinChar == ","
 
 
+def test_list_clone_keeps_uid_ignore_value_and_validators():
+    from meshroom.core.desc.validators import NotEmptyValidator
+
+    validators = [NotEmptyValidator()]
+    cloned = desc.ListAttribute(elementDesc=desc.IntParam(name="e", value=1), name="l", value=[],
+                                uidIgnoreValueIfEmpty=True, validators=validators).clone()
+    assert cloned.checkUidIgnoreValue([])
+    assert cloned.validators == validators
+
+
 def test_duplicated_number_keeps_range_after_edit():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("DynamicNode")

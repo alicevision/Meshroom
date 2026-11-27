@@ -318,7 +318,9 @@ class ListAttribute(Attribute):
                               joinChar=self.joinChar,
                               visible=self.visible,
                               exposed=self.exposed,
-                              value=self.value
+                              value=self.value,
+                              uidIgnoreValueIfEmpty=self._uidIgnoreValueIfEmpty,
+                              validators=self.validators
                               )
 
     # Override

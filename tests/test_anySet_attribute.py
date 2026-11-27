@@ -842,6 +842,14 @@ def test_list_clone_keeps_uid_ignore_value_and_validators():
     assert cloned.validators == validators
 
 
+def test_group_clone_keeps_validators():
+    from meshroom.core.desc.validators import NotEmptyValidator
+
+    validators = [NotEmptyValidator()]
+    cloned = desc.GroupAttribute(items=[desc.IntParam(name="e", value=1)], name="g", validators=validators).clone()
+    assert cloned.validators == validators
+
+
 def test_duplicated_number_keeps_range_after_edit():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("DynamicNode")

@@ -462,7 +462,8 @@ class GroupAttribute(Attribute):
                               joinChar=self.joinChar,
                               brackets=self.brackets,
                               visible=self.visible,
-                              exposed=self.exposed)
+                              exposed=self.exposed,
+                              validators=self.validators)
 
     # Override
     def asDict(self):

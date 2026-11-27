@@ -1209,8 +1209,11 @@ class Graph(BaseObject):
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
-        dstAttr.inputLinksChanged.emit()
-        srcAttr.outputLinksChanged.emit()
+        # The parents also report the links of their elements and children (see Attribute.hasAnyInputLinks)
+        for attr in dstAttr._selfAndParents():
+            attr.inputLinksChanged.emit()
+        for attr in srcAttr._selfAndParents():
+            attr.outputLinksChanged.emit()
         return [edge.src, edge.dst], deletedEdge
 
     @changeTopology
@@ -1221,8 +1224,10 @@ class Graph(BaseObject):
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
-        dstAttr.inputLinksChanged.emit()
-        edge.src.outputLinksChanged.emit()
+        for attr in dstAttr._selfAndParents():
+            attr.inputLinksChanged.emit()
+        for attr in edge.src._selfAndParents():
+            attr.outputLinksChanged.emit()
         return [edge.src, dstAttr]
 
     def getDepth(self, node, minimal=False):

@@ -99,16 +99,8 @@ RowLayout {
             Rectangle {
                 id: innerInputAnchor
                 property bool linkEnabled: true
-                property bool hasConnectedChildren: {
-                    if (!isExpandable || root.isConnected || !attribute)
-                        return false
-                    for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
-                        if (attribute.flatStaticChildren[i].hasAnyInputLinks) {
-                            return true
-                        }
-                    }
-                    return false
-                }
+                // Unconnected group whose children are connected (hasAnyInputLinks includes the links of the children)
+                property bool hasConnectedChildren: Boolean(root.isExpandable && attribute && !attribute.isLink && attribute.hasAnyInputLinks)
                 visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || hasConnectedChildren ||
                         root.isDynamic ||
                         (root.attribute && root.attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
@@ -338,16 +330,9 @@ RowLayout {
         Rectangle {
             id: innerOutputAnchor
             property bool linkEnabled: true
-            property bool hasConnectedChildren: {
-                if (!root.isExpandable || root.isConnected)
-                    return false
-                for (var i = 0; i < attribute.flatStaticChildren.length; ++i) {
-                    if (attribute.flatStaticChildren[i].hasAnyOutputLinks) {
-                        return true
-                    }
-                }
-                return false
-            }
+            // Unconnected group whose children are connected (hasAnyOutputLinks includes the links of the children)
+            property bool hasConnectedChildren: Boolean(root.isExpandable && attribute && attribute.outputLinks.length === 0 &&
+                                                        attribute.hasAnyOutputLinks)
             visible: (root.attribute.hasAnyOutputLinks && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag || hasConnectedChildren
             radius: root.isList ? 0 : 2
             anchors.fill: parent

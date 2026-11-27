@@ -174,6 +174,8 @@ class Attribute(BaseObject):
     """
     """
     LINK_EXPRESSION_REGEX = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.\[\]]*\}$')
+    # Whether this attribute type holds child attributes (list elements or group children), whose links it reports
+    _hasChildAttributes = False
     VALID_IMAGE_SEMANTICS = ["image", "imageList", "sequence"]
     VALID_3D_EXTENSIONS = [".obj", ".stl", ".fbx", ".gltf", ".glb", ".abc", ".ply", ".usdc", ".usda", ".sfm"]
     VALID_TEXT_EXTENSIONS = [".txt", ".json", ".log", ".csv", ".md"]
@@ -715,36 +717,76 @@ class Attribute(BaseObject):
 
     def _getAllInputLinks(self) -> list[Attribute]:
         """
-        Return the list of upstream connected attributes for the attribute or any of its elements.
+        Return the list of upstream connected attributes for the attribute or any of its elements or children.
         """
-        inputLink = self._getInputLink()
-        if inputLink is None:
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
             return []
-        return [inputLink]
+        if not self._hasChildAttributes:
+            edge = self._getInputEdge()
+            return [edge.src] if edge else []
+        return [edge.src for edge in self.node.graph.edges.values() if self._isSelfOrAncestorOf(edge.dst)]
 
     def _getAllOutputLinks(self) -> list[Attribute]:
         """
-        Return the list of downstream connected attributes for the attribute or any of its elements.
+        Return the list of downstream connected attributes for the attribute or any of its elements or children.
         """
-        return self._getOutputLinks()
+        # Safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return []
+        if not self._hasChildAttributes:
+            return [edge.dst for edge in self.node.graph.edges.values() if edge.src is self]
+        return [edge.dst for edge in self.node.graph.edges.values() if self._isSelfOrAncestorOf(edge.src)]
+
+    def _getInputEdge(self):
+        """
+        Return the edge connected to this attribute as destination, or None.
+        Edges are indexed by their destination: this is a direct lookup.
+        """
+        return self.node.graph.edges.objects.get(self)
+
+    def _selfAndParents(self):
+        """
+        Iterate over this attribute and its parents (the lists or groups containing it), up to its root attribute.
+        """
+        attribute = self
+        while attribute is not None:
+            yield attribute
+            attribute = attribute._root() if attribute._root else None
+
+    def _isSelfOrAncestorOf(self, attribute: Attribute) -> bool:
+        """
+        Whether this attribute is `attribute` or one of its parents (list or group containing it).
+        """
+        if attribute is self:
+            return True
+        # Fast path for the most common case: a parent is always less deep than its elements and children
+        if attribute._depth <= self._depth:
+            return False
+        return any(parent is self for parent in attribute._selfAndParents())
 
     def _hasAnyInputLinks(self) -> bool:
         """
-        Whether the attribute or any of its elements is a link to another attribute.
+        Whether the attribute or any of its elements or children is a link to another attribute.
         """
         # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return False
-        return next((edge for edge in self.node.graph.edges.values() if edge.dst == self), None) is not None
+        if not self._hasChildAttributes:
+            return self._getInputEdge() is not None
+        # Going through the edges is faster than going through the children of large lists of groups
+        return any(self._isSelfOrAncestorOf(edge.dst) for edge in self.node.graph.edges.values())
 
     def _hasAnyOutputLinks(self) -> bool:
         """
-        Whether the attribute or any of its elements is linked by another attribute.
+        Whether the attribute or any of its elements or children is linked by another attribute.
         """
         # Safety check to avoid evaluation errors
         if not self.node.graph or not self.node.graph.edges:
             return False
-        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
+        if not self._hasChildAttributes:
+            return any(edge.src is self for edge in self.node.graph.edges.values())
+        return any(self._isSelfOrAncestorOf(edge.src) for edge in self.node.graph.edges.values())
 
     def _getFlatStaticChildren(self) -> list[Attribute]:
         """
@@ -918,13 +960,13 @@ class Attribute(BaseObject):
     inputLink = Property(BaseObject, _getInputLink, notify=inputLinksChanged)
     # The list of downstream connected attributes.
     outputLinks = Property(Variant, _getOutputLinks, notify=outputLinksChanged)
-    # The list of upstream connected attributes for the attribute or any of its elements.
+    # The list of upstream connected attributes for the attribute or any of its elements or children.
     allInputLinks = Property(Variant, _getAllInputLinks, notify=inputLinksChanged)
-    # The list of downstream connected attributes for the attribute or any of its elements.
+    # The list of downstream connected attributes for the attribute or any of its elements or children.
     allOutputLinks = Property(Variant, _getAllOutputLinks, notify=outputLinksChanged)
-    # Whether the attribute or any of its elements is a link to another attribute.
+    # Whether the attribute or any of its elements or children is a link to another attribute.
     hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=inputLinksChanged)
-    # Whether the attribute or any of its elements is linked by another attribute.
+    # Whether the attribute or any of its elements or children is linked by another attribute.
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
 
     # The list of attributes that refer to this one as their parent.
@@ -1059,6 +1101,8 @@ class ChoiceParam(Attribute):
 
 
 class ListAttribute(Attribute):
+
+    _hasChildAttributes = True
 
     # Sentinel to distinguish 'no pending dynamic value' from 'pending reset to empty'
     _NO_PENDING_VALUE = object()
@@ -1322,42 +1366,6 @@ class ListAttribute(Attribute):
             attr.updateInternals()
 
     # Override
-    def _getAllInputLinks(self) -> list[Attribute]:
-        """
-        Return the list of upstream connected attributes for the attribute or any of its elements.
-        """
-        # Safety check to avoid evaluation errors
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-        return [edge.src for edge in self.node.graph.edges.values() if edge.dst == self or edge.dst in self._value]
-
-    # Override
-    def _getAllOutputLinks(self) -> list[Attribute]:
-        """
-        Return the list of downstream connected attributes for the attribute or any of its elements.
-        """
-        # Safety check to avoid evaluation errors
-        if not self.node.graph or not self.node.graph.edges:
-            return []
-        return [edge.dst for edge in self.node.graph.edges.values() if edge.src == self or edge.src in self._value]
-
-    # Override
-    def _hasAnyInputLinks(self) -> bool:
-        """
-        Whether the attribute or any of its elements is a link to another attribute.
-        """
-        return super()._hasAnyInputLinks() or \
-               any(attribute.hasAnyInputLinks for attribute in self._value if hasattr(attribute, 'hasAnyInputLinks'))
-
-    # Override
-    def _hasAnyOutputLinks(self) -> bool:
-        """
-        Whether the attribute or any of its elements is linked by another attribute.
-        """
-        return super()._hasAnyOutputLinks() or \
-               any(attribute.hasAnyOutputLinks for attribute in self._value if hasattr(attribute, 'hasAnyOutputLinks'))
-
-    # Override
     def asDict(self):
         serializedData = super().asDict()
         serializedData['elementDesc'] = self.desc._elementDesc.asDict()
@@ -1376,14 +1384,10 @@ class ListAttribute(Attribute):
     isDefault = Property(bool, lambda self: self.value is None or len(self.value) == 0, notify=Attribute.valueChanged)
     baseType = Property(str, lambda self: self._desc.elementDesc.__class__.__name__, constant=True)
 
-    # Override attribute link properties
-    allInputLinks = Property(Variant, _getAllInputLinks, notify=Attribute.inputLinksChanged)
-    allOutputLinks = Property(Variant, _getAllOutputLinks, notify=Attribute.outputLinksChanged)
-    hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=Attribute.inputLinksChanged)
-    hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=Attribute.outputLinksChanged)
-
 
 class GroupAttribute(Attribute, Expandable):
+
+    _hasChildAttributes = True
 
     def __init__(self, node, attributeDesc: desc.GroupAttribute, isOutput: bool,
                  root=None, parent=None):

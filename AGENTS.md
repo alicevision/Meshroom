@@ -38,7 +38,7 @@ Where this map and the actual tree diverge, trust the tree — then update the m
 │   │                           #   status.py (Status, ExecMode, ChunkIndex, Node/ChunkStatusData), logManager.py,
 │   │                           #   chunk.py (NodeChunk), baseNode.py (BaseNode, Position), node.py (Node),
 │   │                           #   conversionNode.py (ConversionNode), backdropNode.py, compatibilityNode.py (CompatibilityNode, CompatibilityIssue)
-│   ├── nodes/                  # Concrete node types, grouped by category (e.g. general/)
+│   ├── nodes/                  # Concrete node types, grouped by category (e.g. general/, conversion/)
 │   ├── submitters/             # Built-in render-farm submitters (drive meshroom_submit; e.g. localFarm)
 │   ├── ui/                     # User Interface layer (PySide6 / QML-based components)
 │   │   ├── qml/                # QML design layouts (GraphEditor, NodeEditor, 3D/2D Viewers, RTI Viewer)

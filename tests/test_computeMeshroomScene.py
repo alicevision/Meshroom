@@ -120,6 +120,25 @@ def test_sceneAttributesAreExposedAndOverridden(tmp_path):
         }
 
 
+def test_sceneValuesAreTheDefaultsOfTheExposedInputs(tmp_path):
+    with registeredNodeTypes([ComputeMeshroomScene, GraphInput, GraphOutput]):
+        scenePath = tmp_path / "scene.mg"
+        scene = Graph("")
+        graphInput = scene.addNewNode("GraphInput")
+        graphInput.ins.insertAttribute({"name": "count_", "label": "Count", "type": "IntParam", "value": 3}, 0)
+        # The value set in the scene differs from the default of the scene attribute
+        graphInput.ins.value.get("count_").value = 7
+        scene.save(str(scenePath))
+
+        graph = Graph("")
+        node = graph.addNewNode("ComputeMeshroomScene")
+        node.scene.value = str(scenePath)
+
+        exposed = node.inputs.value.get(encodeAttributeName(f"{graphInput.name}.ins.count_"))
+        assert exposed.value == 7
+        assert exposed.isDefault
+
+
 def test_outputNodesAreNotExposed(tmp_path):
     with registeredNodeTypes([ComputeMeshroomScene, GraphInput, GraphOutput, OutputNodeTest]):
         scenePath = tmp_path / "scene.mg"

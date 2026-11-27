@@ -82,7 +82,8 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     name = descType.get('name')
     label = descType.get('label')
     description = descType.get('description')
-    value = descType.get('value')
+    # The default value is only serialized when it differs from the current value
+    value = descType['defaultValue'] if 'defaultValue' in descType else descType.get('value')
     elementDesc = descType.get('elementDesc')
     items = descType.get('items')
     values = descType.get('values')
@@ -90,6 +91,8 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
     keyable = descType.get('keyable')
     keyType = descType.get('keyType')
     shape = descType.get('shape')
+    advanced = descType.get('advanced')
+    semantic = descType.get('semantic')
     valueRange = descType.get('range')
 
     kwargs = {'name': name, 'label': label, 'description': description}
@@ -125,6 +128,13 @@ def attributeDescriptionFactory(descType: dict) -> AttributeDescription:
 
     if shape is not None:
         kwargs['shape'] = attributeDescriptionFactory(shape)
+
+    if advanced is not None:
+        kwargs['advanced'] = advanced
+
+    # Flow has no semantic
+    if semantic and not issubclass(attrClass, desc.Flow):
+        kwargs['semantic'] = semantic
 
     return attrClass(**kwargs)
 
@@ -484,6 +494,16 @@ class Attribute(BaseObject):
         if self.keyable:
             serializedData["keyable"] = True
             serializedData["keyType"] = self.desc.keyType
+        # Description parameters that can be edited on AnySet children
+        if self.desc.description:
+            serializedData["description"] = self.desc.description
+        if self.desc.advanced:
+            serializedData["advanced"] = True
+        if self.desc.semantic:
+            serializedData["semantic"] = self.desc.semantic
+        defaultValue = self.desc.value
+        if not callable(defaultValue) and defaultValue != serializedData["value"]:
+            serializedData["defaultValue"] = defaultValue
 
         return serializedData
 
@@ -1515,6 +1535,10 @@ class GroupAttribute(Attribute, Expandable):
             "type": self.desc.__class__.__name__,
             "items": [item.asDict() for item in self._value]
         }
+        if self.desc.description:
+            serializedData["description"] = self.desc.description
+        if self.desc.advanced:
+            serializedData["advanced"] = True
         return serializedData
 
     # Override
@@ -2345,8 +2369,8 @@ class AnySet(GroupAttribute):
 
     # Override
     # An AnySet's description has no predefined items: all its children are user-defined, so it is only
-    # at its default value when it is empty. Children created from serialized data get their serialized value
-    # as their default value, so checking whether all the children are at their default value is not relevant.
+    # at its default value when it is empty. Each child's own default comes from its serialized 'defaultValue'
+    # (or its value when not saved), which does not make the AnySet itself at its default value.
     isDefault = Property(bool, lambda self: self._value.count == 0, notify=Attribute.flatStaticChildrenChanged)
 
 

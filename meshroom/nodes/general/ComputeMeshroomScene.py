@@ -277,6 +277,8 @@ class ComputeMeshroomScene(desc.CommandLineNode):
         """ Append a copy of each scene attribute to 'anySet', named after its full name in the scene. """
         for attr in attributes:
             attrDesc = attr.asDict()
+            # The value set in the scene is the default of the exposed attribute, not the scene's own default
+            attrDesc.pop('defaultValue', None)
             attrDesc['name'] = encodeAttributeName(attr.fullName)
             if attr.isLink:
                 # A link expression refers to a node of the scene: copy the value it resolves to

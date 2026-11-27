@@ -259,6 +259,39 @@ def test_duplicated_attributes_are_added_at_the_end():
     assert [attribute.name for attribute in dynamicNode.ins.value] == ["stringParam", "intParam", "boolParam"]
 
 
+def test_anyset_group_values_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    groupAttr = dynamicNode.ins.duplicateAttribute(graph.addNewNode("Position").xyz)
+    groupAttr.x.value = 0.3
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedAttr = loadGraph(graphFile).node(dynamicNode.name).ins.xyz
+    assert loadedAttr.x.value == 0.3
+    assert loadedAttr.x.desc.value == 0.0
+
+
+def test_anyset_child_description_restored_after_load(tmp_path):
+    graph, dynamicNode = initGraphAndNode()
+    child = dynamicNode.ins.insertAttribute({
+        "name": "count", "label": "Count", "type": "IntParam", "value": 7, "defaultValue": 3,
+        "description": "Number of items", "advanced": True, "semantic": "custom"
+    }, 0)
+    assert child.desc.value == 3
+    assert child.value == 7
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedChild = loadGraph(graphFile).node(dynamicNode.name).ins.count
+    assert loadedChild.value == 7
+    assert loadedChild.desc.value == 3
+    assert loadedChild.desc.description == "Number of items"
+    assert loadedChild.desc.advanced
+    assert loadedChild.desc.semantic == "custom"
+
+
 def test_dynamic_inputs_serialized_in_todict():
     """Dynamic inputs are included in the node's serialized form."""
 

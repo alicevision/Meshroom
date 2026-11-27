@@ -805,6 +805,39 @@ def test_nodes_with_different_anyset_values_have_different_uids():
     assert node1._uid != node2._uid
 
 
+def test_duplicated_choice_keeps_values():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    anySet = srcNode.ins
+    single = anySet.insertAttribute({"name": "single", "label": "Single", "type": "ChoiceParam", "value": 2, "values": [1, 2, 4]}, 0)
+    multi = anySet.insertAttribute({"name": "multi", "label": "Multi", "type": "ChoiceParam", "value": ["a"], "values": ["a", "b"], "exclusive": False}, 1)
+
+    newSingle = dynamicNode.ins.duplicateAttribute(single)
+    assert newSingle.desc.values == [1, 2, 4]
+    assert newSingle.value == 2
+    newMulti = dynamicNode.ins.duplicateAttribute(multi)
+    assert newMulti.desc.values == ["a", "b"]
+    assert not newMulti.desc.exclusive
+    assert newMulti.value == ["a"]
+
+
+def test_clone_keeps_number_ranges():
+    assert desc.IntParam(name="i", value=1, range=(0, 10, 1)).clone().range == [0, 10, 1]
+    assert desc.FloatParam(name="f", value=0.5, range=(0.0, 1.0, 0.1)).clone().range == [0.0, 1.0, 0.1]
+
+
+def test_duplicated_number_keeps_range_after_edit():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    source = srcNode.ins.insertAttribute({"name": "number", "label": "Number", "type": "IntParam", "value": 2, "range": [0, 8, 2]}, 0)
+
+    duplicated = dynamicNode.ins.duplicateAttribute(source)
+    assert list(duplicated.desc.range) == [0, 8, 2]
+    edited = dynamicNode.ins.replaceAttribute(duplicated, dynamicNode.ins.getEditedAttributeData(duplicated, {"label": "Edited"}))
+    assert list(edited.desc.range) == [0, 8, 2]
+    assert edited.value == 2
+
+
 def test_dynamic_inputs_serialized_in_todict():
     """Dynamic inputs are included in the node's serialized form."""
 

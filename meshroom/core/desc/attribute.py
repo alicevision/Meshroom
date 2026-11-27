@@ -318,7 +318,9 @@ class ListAttribute(Attribute):
                               joinChar=self.joinChar,
                               visible=self.visible,
                               exposed=self.exposed,
-                              value=self.value
+                              value=self.value,
+                              uidIgnoreValueIfEmpty=self._uidIgnoreValueIfEmpty,
+                              validators=self.validators
                               )
 
     # Override
@@ -460,7 +462,8 @@ class GroupAttribute(Attribute):
                               joinChar=self.joinChar,
                               brackets=self.brackets,
                               visible=self.visible,
-                              exposed=self.exposed)
+                              exposed=self.exposed,
+                              validators=self.validators)
 
     # Override
     def asDict(self):
@@ -883,6 +886,8 @@ class ChoiceParam(Param):
         clone._values = list(self._values)
         clone._exclusive = self._exclusive
         clone._valueType = self._valueType
+        clone._saveValuesOverride = self._saveValuesOverride
+        clone._joinChar = self._joinChar
         return clone
 
     # Override
@@ -936,7 +941,9 @@ class StringParam(Param):
         return "", ValueTypeErrors.NONE
 
     def clone(self):
-        return Attribute.clone(self)
+        cloned = Attribute.clone(self)
+        cloned._uidIgnoreValue = self._uidIgnoreValue
+        return cloned
 
 class ColorParam(Param):
     """

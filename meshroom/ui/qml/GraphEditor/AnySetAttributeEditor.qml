@@ -96,9 +96,9 @@ Pane {
                 params["defaultValue"] = Number(defaultValue)
             else if (isMultiChoice)
                 // Only keep the default choices that are still available
-                params["defaultValue"] = defaultValue.filter(function(v) { return choiceValues().includes(v) })
+                params["defaultValue"] = defaultValue.filter(function(v) { return choiceValues().includes(String(v)) })
             else if (isChoice)
-                params["defaultValue"] = choiceValues().includes(defaultValue) ? defaultValue : choiceValues()[0]
+                params["defaultValue"] = choiceValues().includes(String(defaultValue)) ? defaultValue : choiceValues()[0]
             else
                 params["defaultValue"] = defaultValue
         }

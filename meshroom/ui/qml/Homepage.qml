@@ -5,11 +5,75 @@ import QtQuick.Layouts
 import Utils 1.0
 import MaterialIcons 2.2
 import Controls 1.0
+import Home 1.0
 
 Page {
     id: root
 
     property bool isLoading: false
+    // Path of the pipeline being loaded ("" for an empty project), undefined when none
+    property var loadingPipeline: undefined
+    // Index of the selected filter in projectFilters
+    property int projectFilter: 0
+
+    // Status filters of the project list (see projectInfo.ProjectStatus): the empty one shows all the projects
+    readonly property var projectFilters: [
+        { "label": "All projects", "icon": "grid_view", "statuses": [] },
+        { "label": "Running or scheduled", "icon": "refresh", "statuses": ["running", "scheduled"] },
+        { "label": "Computed", "icon": "check_circle_outline", "statuses": ["computed"] },
+        { "label": "Not computed or partial", "icon": "radio_button_unchecked", "statuses": ["notComputed", "partial"] },
+        { "label": "Failed", "icon": "error_outline", "statuses": ["failed"] }
+    ]
+    property bool pipelinesExpanded: true
+
+    function projectMatches(project, filter) {
+        return filter["statuses"].length === 0 || filter["statuses"].indexOf(project["info"]["status"]) >= 0
+    }
+
+    // Bordered button with an icon and a label: "Empty project", "Open..."
+    component HomeButton: Button {
+        id: homeButton
+        property string iconText: ""
+        implicitHeight: 32
+        leftPadding: 12
+        rightPadding: 12
+        hoverEnabled: true
+        contentItem: RowLayout {
+            spacing: 6
+            Label {
+                font.family: MaterialIcons.fontFamily
+                text: homeButton.iconText
+                font.pixelSize: 15
+            }
+            Label {
+                text: homeButton.text
+                font.pixelSize: 13
+            }
+        }
+        background: Rectangle {
+            radius: 5
+            color: homeButton.hovered ? Qt.lighter(palette.button, 1.08) : palette.button
+            border.color: palette.mid
+        }
+    }
+
+    // Title of a section, with a text after it (e.g. the number of items)
+    component SectionTitle: RowLayout {
+        property alias text: titleLabel.text
+        property alias details: detailsLabel.text
+        spacing: 8
+        Label {
+            id: titleLabel
+            font.pixelSize: 16
+            font.weight: Font.DemiBold
+        }
+        Label {
+            id: detailsLabel
+            Layout.alignment: Qt.AlignBaseline
+            font.pixelSize: 12
+            opacity: 0.6
+        }
+    }
 
     // Schedule an action to run after the current frame has been rendered and
     // displayed, so that visual feedback (highlight, spinner) is visible before
@@ -33,8 +97,26 @@ Page {
             MeshroomApp.addRecentProjectFile(path)
         } else {
             root.isLoading = false
-            homepageGridView.loadingIndex = -1
+            projectsGrid.loadingIndex = -1
         }
+    }
+
+    // Create a project from the pipeline template at `path`, an empty project if `path` is empty
+    function newProject(path) {
+        root.isLoading = true
+        root.loadingPipeline = path
+        root.executeAfterFrameRendered(function() {
+            mainStack.push("Application.qml")
+            _currentScene.new(path)
+        })
+    }
+
+    function openProjectAt(index, path) {
+        if (root.isLoading)
+            return
+        root.isLoading = true
+        projectsGrid.loadingIndex = index
+        root.executeAfterFrameRendered(openProject, path)
     }
 
     onVisibleChanged: {
@@ -42,509 +124,426 @@ Page {
         if (visible) {
             logo.playing = true
             isLoading = false
-            homepageGridView.loadingIndex = -1
-            pipelinesListView.loadingIndex = -1
+            loadingPipeline = undefined
+            projectsGrid.loadingIndex = -1
         }
     }
 
-    MSplitView {
-        id: splitView
-        orientation: Qt.Horizontal
-        anchors.fill: parent
+    // Read the recent projects again each time the homepage is shown, to show their current status
+    StackView.onActivated: MeshroomApp.refreshRecentProjectFiles()
 
-        Item {
-            SplitView.minimumWidth: 250
-            SplitView.preferredWidth: 330
-            SplitView.maximumWidth: 500
+    background: Rectangle { color: palette.window }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        // Sidebar: logo and version, links, sponsors
+        Rectangle {
+            // Fixed width: the layout must not shrink it when the window is resized
+            Layout.preferredWidth: 220
+            Layout.minimumWidth: 220
+            Layout.maximumWidth: 220
+            Layout.fillHeight: true
+            color: Qt.darker(palette.window, 1.15)
+
+            Rectangle {
+                anchors.right: parent.right
+                width: 1
+                height: parent.height
+                color: Qt.darker(palette.window, 1.6)
+            }
 
             ColumnLayout {
-                id: leftColumn
                 anchors.fill: parent
-                spacing: 20
+                anchors.rightMargin: 1
+                spacing: 0
 
-                AnimatedImage {
-                    id: logo
-                    property var ratio: sourceSize.width / sourceSize.height
+                Rectangle {
                     Layout.fillWidth: true
-                    fillMode: Image.PreserveAspectFit
-                    // Enforce aspect ratio of the component, as the fillMode does not do the job
-                    Layout.preferredHeight: width / ratio
-                    smooth: true
-                    source: "../img/meshroom-anim-once.gif"
-                }
+                    implicitHeight: 18 + logo.contentHeight + 6 + versionLabel.implicitHeight + 16
+                    color: Colors.meshroomBlue
+                    clip: true
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.margins: 5
-                    Layout.leftMargin: 20
-
-                    property real buttonFontSize: 14
-
-                    MaterialToolLabelButton {
-                        id: manualButton
-                        iconText: MaterialIcons.open_in_new
-                        label: "Manual"
-                        font.pointSize: parent.buttonFontSize
-                        Layout.fillWidth: true
-                        onClicked: Qt.openUrlExternally("https://meshroom-manual.readthedocs.io")
+                    // The logo and name fill the box (634, 261)-(1284, 806) of the 1920x900 animation:
+                    // scale the animation for the box to be 160 px wide, and crop around it
+                    AnimatedImage {
+                        id: logo
+                        readonly property real scale_: 160 / 650
+                        readonly property real contentHeight: 545 * scale_
+                        width: 1920 * scale_
+                        height: 900 * scale_
+                        x: parent.width / 2 - 959 * scale_
+                        y: 18 - 261 * scale_
+                        smooth: true
+                        source: "../img/meshroom-anim-once.gif"
                     }
-
-                    MaterialToolLabelButton {
-                        id: releaseNotesButton
-                        iconText: MaterialIcons.open_in_new
-                        label: "Release Notes"
-                        font.pointSize: parent.buttonFontSize
-                        Layout.fillWidth: true
-                        onClicked: Qt.openUrlExternally("https://github.com/alicevision/Meshroom/blob/develop/CHANGES.md")
-                    }
-
-                    MaterialToolLabelButton {
-                        id: websiteButton
-                        iconText: MaterialIcons.open_in_new
-                        label: "Website"
-                        font.pointSize: parent.buttonFontSize
-                        Layout.fillWidth: true
-                        onClicked: Qt.openUrlExternally("https://alicevision.org")
+                    Label {
+                        id: versionLabel
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 16
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        // Without the build details (e.g. the branch)
+                        text: Qt.application.version.split(" ")[0]
+                        font.pixelSize: 12
+                        color: "white"
                     }
                 }
 
                 ColumnLayout {
-                    id: sponsors
                     Layout.fillWidth: true
+                    Layout.leftMargin: 12
+                    Layout.rightMargin: 12
+                    Layout.topMargin: 14
+                    spacing: 2
+
+                    Repeater {
+                        model: [
+                            { "label": "Manual", "url": "https://meshroom-manual.readthedocs.io" },
+                            { "label": "Release Notes", "url": "https://github.com/alicevision/Meshroom/blob/develop/CHANGES.md" },
+                            { "label": "Website", "url": "https://alicevision.org" }
+                        ]
+
+                        delegate: ItemDelegate {
+                            id: linkDelegate
+                            Layout.fillWidth: true
+                            implicitHeight: 36
+                            leftPadding: 10
+                            hoverEnabled: true
+                            onClicked: Qt.openUrlExternally(modelData.url)
+
+                            contentItem: RowLayout {
+                                spacing: 10
+                                Label {
+                                    font.family: MaterialIcons.fontFamily
+                                    text: MaterialIcons.open_in_new
+                                    font.pixelSize: 15
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: modelData.label
+                                    font.pixelSize: 15
+                                }
+                            }
+                            background: Rectangle {
+                                radius: 5
+                                color: linkDelegate.hovered ? palette.window : "transparent"
+                            }
+                        }
+                    }
+                }
+
+                Item { Layout.fillHeight: true }
+
+                ColumnLayout {
                     Layout.alignment: Qt.AlignHCenter
-                    spacing: 5
-
-                    Item {
-                        // Empty area that expands
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                    }
+                    Layout.topMargin: 18
+                    Layout.bottomMargin: 20
+                    spacing: 10
 
                     Label {
                         Layout.alignment: Qt.AlignHCenter
                         text: "Sponsors"
+                        font.pixelSize: 12
+                        opacity: 0.6
                     }
 
-                    RowLayout {
-                        id: brandsRow
+                    Repeater {
+                        model: [
+                            [
+                                { "image": "MPC.png", "url": "https://www.mpcvfx.com/", "name": "MPC - Moving Picture Company" },
+                                { "image": "MILL.png", "url": "https://www.themill.com/", "name": "The Mill" },
+                                { "image": "MIKROS.png", "url": "https://www.mikrosanimation.com/", "name": "Mikros Animation" }
+                            ],
+                            [
+                                { "image": "logo_IRIT.png", "url": "https://www.irit.fr/en/departement/dep-hpc-simulation-optimization/reva-team", "name": "IRIT - Institut de Recherche en Informatique de Toulouse" },
+                                { "image": "logo_CTU.png", "url": "http://aag.ciirc.cvut.cz", "name": "CTU - Czech Technical University in Prague" },
+                                { "image": "logo_uio.png", "url": "https://www.mn.uio.no/ifi/english/about/organisation/dis", "name": "UiO - University of Oslo" },
+                                { "image": "logo_enpc.png", "url": "https://imagine-lab.enpc.fr", "name": "ENPC - Ecole des Ponts ParisTech" }
+                            ]
+                        ]
 
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignHCenter
-                        spacing: 20
+                        delegate: Row {
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: 14
 
-                        Image {
-                            source: "../img/MPC.png"
+                            Repeater {
+                                model: modelData
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Qt.openUrlExternally("https://www.mpcvfx.com/")
+                                delegate: Image {
+                                    source: "../img/" + modelData.image
 
-                                hoverEnabled: true
-                                ToolTip.visible: containsMouse
-                                ToolTip.text: "MPC - Moving Picture Company"
-                            }
-                        }
-
-                        Image {
-                            source: "../img/MILL.png"
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Qt.openUrlExternally("https://www.themill.com/")
-
-                                hoverEnabled: true
-                                ToolTip.visible: containsMouse
-                                ToolTip.text: "The Mill"
-                            }
-                        }
-
-                        Image {
-                            source: "../img/MIKROS.png"
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Qt.openUrlExternally("https://www.mikrosanimation.com/")
-
-                                hoverEnabled: true
-                                ToolTip.visible: containsMouse
-                                ToolTip.text: "Mikros Animation"
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        hoverEnabled: true
+                                        onClicked: Qt.openUrlExternally(modelData.url)
+                                        ToolTip.visible: containsMouse
+                                        ToolTip.text: modelData.name
+                                    }
+                                }
                             }
                         }
                     }
 
-                    RowLayout {
-                        id: academicRow
-
-                        Layout.fillWidth: true
+                    ItemDelegate {
+                        id: supportButton
                         Layout.alignment: Qt.AlignHCenter
-                        spacing: 28
-
-                        Image {
-                            source: "../img/logo_IRIT.png"
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Qt.openUrlExternally("https://www.irit.fr/en/departement/dep-hpc-simulation-optimization/reva-team")
-
-                                hoverEnabled: true
-                                ToolTip.visible: containsMouse
-                                ToolTip.text: "IRIT - Institut de Recherche en Informatique de Toulouse"
-                            }
-                        }
-
-                        Image {
-                            source: "../img/logo_CTU.png"
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Qt.openUrlExternally("http://aag.ciirc.cvut.cz")
-
-                                hoverEnabled: true
-                                ToolTip.visible: containsMouse
-                                ToolTip.text: "CTU - Czech Technical University in Prague"
-                            }
-                        }
-
-                        Image {
-                            source: "../img/logo_uio.png"
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Qt.openUrlExternally("https://www.mn.uio.no/ifi/english/about/organisation/dis")
-
-                                hoverEnabled: true
-                                ToolTip.visible: containsMouse
-                                ToolTip.text: "UiO - University of Oslo"
-                            }
-                        }
-
-                        Image {
-                            source: "../img/logo_enpc.png"
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Qt.openUrlExternally("https://imagine-lab.enpc.fr")
-
-                                hoverEnabled: true
-                                ToolTip.visible: containsMouse
-                                ToolTip.text: "ENPC - Ecole des Ponts ParisTech"
-                            }
-                        }
-                    }
-
-                    MaterialToolLabelButton {
-                        Layout.topMargin: 10
-                        Layout.bottomMargin: 10
-                        Layout.alignment: Qt.AlignHCenter
-                        label: "Support AliceVision"
-                        iconText: MaterialIcons.favorite
-
-                        // Slightly "extend" the clickable area for the button while preserving the centered layout
-                        iconItem.leftPadding: 15
-                        labelItem.rightPadding: 15
-
+                        implicitHeight: 32
+                        hoverEnabled: true
                         onClicked: Qt.openUrlExternally("https://alicevision.org/association/#donate")
+
+                        contentItem: RowLayout {
+                            spacing: 6
+                            opacity: supportButton.hovered ? 1.0 : 0.7
+                            Label {
+                                font.family: MaterialIcons.fontFamily
+                                text: MaterialIcons.favorite
+                                font.pixelSize: 14
+                            }
+                            Label {
+                                text: "Support AliceVision"
+                                font.pixelSize: 12
+                            }
+                        }
+                        background: Item {}
                     }
                 }
             }
         }
-        
-        ColumnLayout {
-            id: rightColumn
-            SplitView.minimumWidth: 300
-            SplitView.fillWidth: true
 
-            TabPanel {
-                id: tabPanel
-                tabs: ["Pipelines", "Projects"]
+        ScrollView {
+            id: mainView
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            leftPadding: 32
+            rightPadding: 32
+            topPadding: 22
+            bottomPadding: 48
+            contentWidth: availableWidth
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+            ColumnLayout {
+                width: mainView.availableWidth
+                spacing: 28
 
-                ListView {
-                    id: pipelinesListView
-                    visible: tabPanel.currentTab === 0
+                // New project: pipelines by category, collapsible, and empty project
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 14
 
-                    property int loadingIndex: -1
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
 
-                    anchors.fill: parent
-                    anchors.margins: 10
+                        // Chevron toggling the list of pipelines
+                        ItemDelegate {
+                            id: pipelinesToggle
+                            Layout.leftMargin: -6
+                            implicitHeight: 32
+                            leftPadding: 4
+                            rightPadding: 4
+                            hoverEnabled: true
+                            onClicked: root.pipelinesExpanded = !root.pipelinesExpanded
+                            ToolTip.visible: hovered
+                            ToolTip.delay: 500
+                            ToolTip.text: root.pipelinesExpanded ? "Hide the pipelines" : "Show the pipelines"
 
-                    model: [{ "name": "New Empty Project", "path": "" }].concat(MeshroomApp.pipelineTemplateFiles)
-
-                    delegate: Button {
-                        id: pipelineDelegate
-                        padding: 10
-                        width: pipelinesListView.width
-                        enabled: !root.isLoading || index === pipelinesListView.loadingIndex
-                        opacity: (!root.isLoading || index === pipelinesListView.loadingIndex) ? 1.0 : 0.4
-
-                        contentItem: RowLayout {
-                            Label {
-                                id: pipeline
-                                Layout.fillWidth: true
-                                horizontalAlignment: Text.AlignLeft
-                                verticalAlignment: Text.AlignVCenter
-                                text: modelData["name"]
+                            contentItem: Label {
+                                font.family: MaterialIcons.fontFamily
+                                text: MaterialIcons.chevron_right
+                                font.pixelSize: 18
+                                rotation: root.pipelinesExpanded ? 90 : 0
+                                Behavior on rotation { NumberAnimation { duration: 150 } }
                             }
-                            BusyIndicator {
-                                Layout.preferredWidth: 24
-                                Layout.preferredHeight: 24
-                                running: index === pipelinesListView.loadingIndex && root.isLoading
-                                visible: running
-                            }
-                        }
-
-                        // Highlight overlay shown when this pipeline is being loaded
-                        Rectangle {
-                            anchors.fill: parent
-                            color: "transparent"
-                            border.color: palette.highlight
-                            border.width: 2
-                            visible: root.isLoading && index === pipelinesListView.loadingIndex
-                        }
-
-                        Connections {
-                            target: pipelineDelegate
-                            function onClicked() {
-                                root.isLoading = true
-                                pipelinesListView.loadingIndex = index
-                                let path = modelData["path"]
-                                root.executeAfterFrameRendered(function() {
-                                    mainStack.push("Application.qml")
-                                    _currentScene.new(path)
-                                })
+                            background: Rectangle {
+                                radius: 4
+                                color: pipelinesToggle.hovered ? palette.button : "transparent"
                             }
                         }
+                        SectionTitle {
+                            text: "New project"
+                            details: pipelineList.pipelineCount + (pipelineList.pipelineCount === 1 ? " pipeline" : " pipelines")
+                        }
+                        Item { Layout.fillWidth: true }
+                        BusyIndicator {
+                            Layout.preferredWidth: 24
+                            Layout.preferredHeight: 24
+                            running: root.loadingPipeline === ""
+                            visible: running
+                        }
+                        HomeButton {
+                            iconText: MaterialIcons.add
+                            text: "Empty project"
+                            enabled: !root.isLoading
+                            onClicked: root.newProject("")
+                        }
+                    }
+
+                    PipelineList {
+                        id: pipelineList
+                        Layout.fillWidth: true
+                        visible: root.pipelinesExpanded
+                        categories: MeshroomApp.pipelineTemplateCategories
+                        loadingPath: root.loadingPipeline
+                        onPipelineSelected: function(path) { root.newProject(path) }
                     }
                 }
 
-                GridView {
-                    id: homepageGridView
-                    visible: tabPanel.currentTab === 1
-                    anchors.fill: parent
-                    anchors.topMargin: cellHeight * 0.1
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 16
 
-                    property int loadingIndex: -1
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
 
-                    cellWidth: 195
-                    cellHeight: cellWidth
-                    anchors.margins: 10
+                        SectionTitle {
+                            text: "Projects"
+                            details: MeshroomApp.recentProjectFiles.length + " total"
+                        }
 
-                    model: {
-                        // Request latest thumbnail paths
-                        if (mainStack.currentItem instanceof Homepage)
-                            MeshroomApp.refreshRecentProjectFiles()
-                        return [{"path": null, "thumbnail": null, "status": null}].concat(MeshroomApp.recentProjectFiles)
+                        // Segmented control filtering the projects by status, with the number of projects of each filter
+                        Rectangle {
+                            implicitWidth: filtersRow.implicitWidth + 4
+                            implicitHeight: filtersRow.implicitHeight + 4
+                            radius: 6
+                            color: Qt.darker(palette.window, 1.15)
+                            border.color: palette.mid
+
+                            RowLayout {
+                                id: filtersRow
+                                anchors.centerIn: parent
+                                spacing: 2
+
+                                Repeater {
+                                    model: root.projectFilters
+
+                                    delegate: AbstractButton {
+                                        id: filterButton
+                                        readonly property bool selected: root.projectFilter === index
+                                        readonly property int count: MeshroomApp.recentProjectFiles.filter(p => root.projectMatches(p, modelData)).length
+
+                                        implicitHeight: 28
+                                        implicitWidth: filterContent.implicitWidth + 18
+                                        hoverEnabled: true
+                                        onClicked: root.projectFilter = index
+
+                                        ToolTip.visible: hovered
+                                        ToolTip.delay: 300
+                                        ToolTip.text: modelData.label + " (" + count + ")"
+
+                                        contentItem: Item {
+                                            RowLayout {
+                                                id: filterContent
+                                                anchors.centerIn: parent
+                                                spacing: 5
+                                                Label {
+                                                    font.family: MaterialIcons.fontFamily
+                                                    text: MaterialIcons[modelData.icon]
+                                                    font.pixelSize: 15
+                                                    color: filterButton.selected ? palette.highlightedText
+                                                                                 : (Colors.projectStatusColors[modelData.statuses[0]] || palette.text)
+                                                }
+                                                Label {
+                                                    text: filterButton.count
+                                                    font.pixelSize: 12
+                                                    color: filterButton.selected ? palette.highlightedText : palette.text
+                                                }
+                                            }
+                                        }
+                                        background: Rectangle {
+                                            radius: 4
+                                            color: filterButton.selected ? palette.highlight : (filterButton.hovered ? palette.button : "transparent")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        HomeButton {
+                            iconText: MaterialIcons.folder_open
+                            text: "Open…"
+                            enabled: !root.isLoading
+                            ToolTip.visible: hovered
+                            ToolTip.delay: 500
+                            ToolTip.text: "Open a .mg project (Ctrl+O)"
+                            onClicked: {
+                                initFileDialogFolder(openFileDialog)
+                                openFileDialog.open()
+                            }
+                        }
                     }
 
-                    // Update grid item when corresponding thumbnail is computed
-                    Connections {
-                        target: ThumbnailCache
-                        function onThumbnailCreated(imgSource, callerID) {
-                            let item = homepageGridView.itemAtIndex(callerID);  // item is an Image
-                            if (item && item.source === imgSource) {
-                                item.updateThumbnail()
-                                return
-                            }
-                            // fallback in case the Image cellID changed
-                            for (let idx = 0; idx < homepageGridView.count; idx++) {
-                                item = homepageGridView.itemAtIndex(idx)
+                    Rectangle {
+                        Layout.fillWidth: true
+                        visible: projectsGrid.count === 0
+                        implicitHeight: emptyProjectsLabel.implicitHeight + 80
+                        radius: 6
+                        color: "transparent"
+                        border.color: palette.mid
+
+                        Label {
+                            id: emptyProjectsLabel
+                            anchors.centerIn: parent
+                            text: MeshroomApp.recentProjectFiles.length ? "No project matches." : "No recent project."
+                            font.pixelSize: 13
+                            opacity: 0.6
+                        }
+                    }
+
+                    GridView {
+                        id: projectsGrid
+                        Layout.fillWidth: true
+                        // Each cell holds a card and the gap on its right: the view is one gap wider than the
+                        // content, so that the cards of the last column end on its right edge
+                        Layout.rightMargin: -gap
+                        // The grid grows with its content: the page scrolls, not the grid
+                        Layout.preferredHeight: contentHeight
+                        interactive: false
+
+                        property int loadingIndex: -1
+                        readonly property int gap: 14
+                        // Columns of at least 214 px sharing the width
+                        readonly property int columns: Math.max(1, Math.floor(width / (214 + gap)))
+                        readonly property real cardWidth: width / columns - gap
+
+                        cellWidth: width / columns
+                        cellHeight: Math.round((cardWidth - 2) * 3 / 4) + 2 + 57 + gap
+
+                        model: MeshroomApp.recentProjectFiles.filter(p => root.projectMatches(p, root.projectFilters[root.projectFilter]))
+
+                        // Update grid item when corresponding thumbnail is computed
+                        Connections {
+                            target: ThumbnailCache
+                            function onThumbnailCreated(imgSource, callerID) {
+                                let item = projectsGrid.itemAtIndex(callerID)
                                 if (item && item.source === imgSource) {
                                     item.updateThumbnail()
+                                    return
                                 }
-                            }
-                        }
-                    }
-
-                    delegate: Column {
-                        id: projectContent
-
-                        width: homepageGridView.cellWidth
-                        height: homepageGridView.cellHeight
-                        opacity: (!root.isLoading || index === homepageGridView.loadingIndex) ? 1.0 : 0.4
-
-                        property var source: modelData["thumbnail"] ? Filepath.stringToUrl(modelData["thumbnail"]) : ""
-                        property int retryCount: 0
-                        property bool thumbnailBusy: false
-
-                        function updateThumbnail() {
-                            thumbnail.source = ThumbnailCache.thumbnail(source, index)
-                        }
-
-                        onSourceChanged: {
-                            retryCount = 0
-                            thumbnailBusy = (source != "")
-                            updateThumbnail()
-                        }
-
-                        // Periodically retry loading the thumbnail until it is available or max retries is reached.
-                        Timer {
-                            id: retryTimer
-                            interval: 2000
-                            repeat: true
-                            running: homepageGridView.visible
-                                     && projectContent.source != ""
-                                     && thumbnail.status !== Image.Ready
-                                     && thumbnail.status !== Image.Error
-                                     && projectContent.retryCount < 15
-                            onTriggered: {
-                                projectContent.retryCount++
-                                if (projectContent.retryCount >= 15) {
-                                    projectContent.thumbnailBusy = false
-                                } else {
-                                    projectContent.updateThumbnail()
+                                // fallback in case the item index changed
+                                for (let idx = 0; idx < projectsGrid.count; idx++) {
+                                    item = projectsGrid.itemAtIndex(idx)
+                                    if (item && item.source === imgSource) {
+                                        item.updateThumbnail()
+                                    }
                                 }
                             }
                         }
 
-                        Button {
-                            id: projectDelegate
-                            height: homepageGridView.cellHeight * 0.95 - project.height
-                            width: homepageGridView.cellWidth * 0.9
+                        delegate: ProjectCard {
+                            width: projectsGrid.cardWidth
+                            height: projectsGrid.cellHeight - projectsGrid.gap
+                            project: modelData
+                            cardIndex: index
+                            loading: root.isLoading && index === projectsGrid.loadingIndex
+                            opacity: (!root.isLoading || loading) ? 1.0 : 0.4
 
-                            // Handle case where the file is missing
-                            property bool fileExists: modelData["status"] != 0
-                            opacity: fileExists ? 1.0 : 0.3
-
-                            ToolTip.visible: hovered
-                            ToolTip.text: modelData["path"] ? modelData["path"] : "Open browser to select a project file"
-
-                            font.family: MaterialIcons.fontFamily
-                            font.pointSize: 24
-
-                            text: {
-                                if (modelData["path"]) {
-                                    // The thumbnail exists but is empty, which means there was an error when generating it (e.g. missing file, unsupported format, etc.)
-                                    if (modelData["thumbnail"] && thumbnail.status === Image.Error) {
-                                        return MaterialIcons.image_not_supported
-                                    }
-                                    // The thumbnail exists and is valid, no need to display an icon
-                                    else if (modelData["thumbnail"]) {
-                                        return ""
-                                    }
-                                    // There is no image in the file, so no thumbnail to display
-                                    else {
-                                        return MaterialIcons.description
-                                    }
-                                }
-                                // Item with no path is the "Open Project" button
-                                return MaterialIcons.folder_open
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                hoverEnabled: true
-
-                                onClicked: function(mouse) {
-
-                                    if (root.isLoading) return
-
-                                    if (mouse.button === Qt.RightButton) {
-
-                                        if (!modelData["path"]) { return }
-
-                                        projectContextMenu.x = mouse.x
-                                        projectContextMenu.y = mouse.y
-                                        projectContextMenu.open()
-                                        return
-                                    }
-                                        
-                                    if (!modelData["path"]) {
-                                        initFileDialogFolder(openFileDialog)
-                                        openFileDialog.open()
-                                    } 
-                                    
-                                    else {
-                                        root.isLoading = true
-                                        homepageGridView.loadingIndex = index
-                                        let path = modelData["path"]
-                                        root.executeAfterFrameRendered(openProject, path)
-                                    }
-                                }
-                            }
-
-                            Menu {
-                                id: projectContextMenu
-
-                                MenuItem {
-                                    enabled: projectDelegate.fileExists && !root.isLoading
-                                    text: "Open"
-                                    onTriggered: {
-                                        root.isLoading = true
-                                        homepageGridView.loadingIndex = index
-                                        let path = modelData["path"]
-                                        root.executeAfterFrameRendered(openProject, path)
-                                    }
-                                }
-
-                                MenuItem {
-                                    text: "Copy Path"
-                                    onTriggered: {                                        
-                                        Clipboard.clear()
-                                        Clipboard.setText(modelData["path"])
-                                    }
-                                }
-
-                                MenuItem {
-                                    text: "Delete"
-                                    onTriggered: {
-                                        MeshroomApp.removeRecentProjectFile(modelData["path"])
-                                    }
-                                }
-                            }
-
-                            Image {
-                                id: thumbnail
-                                visible: modelData["thumbnail"]
-                                cache: false
-                                asynchronous: true
-
-                                fillMode: Image.PreserveAspectCrop
-
-                                width: projectDelegate.width
-                                height: projectDelegate.height
-
-                                onStatusChanged: {
-                                    if (status === Image.Ready || status === Image.Error) {
-                                        projectContent.thumbnailBusy = false
-                                    }
-                                }
-                            }
-
-                            BusyIndicator {
-                                anchors.centerIn: parent
-                                running: (homepageGridView.visible && projectContent.thumbnailBusy) || (root.isLoading && index === homepageGridView.loadingIndex)
-                                visible: running
-                            }
-
-                            // Highlight overlay shown when this project is being loaded
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "transparent"
-                                border.color: palette.highlight
-                                border.width: 2
-                                visible: root.isLoading && index === homepageGridView.loadingIndex
-                            }
-                        }
-                        Label {
-                            id: project
-                            anchors.horizontalCenter: projectDelegate.horizontalCenter
-                            horizontalAlignment: Text.AlignHCenter
-                            width: projectDelegate.width
-                            elide: Text.ElideMiddle
-                            text: modelData["path"] ? Filepath.basename(modelData["path"]) : "Open Project"
-                            maximumLineCount: 1
-                            font.pointSize: 10
+                            onOpenRequested: root.openProjectAt(index, modelData["path"])
+                            onRemoveRequested: MeshroomApp.removeRecentProjectFile(modelData["path"])
                         }
                     }
                 }

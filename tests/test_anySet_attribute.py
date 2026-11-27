@@ -49,14 +49,18 @@ def test_anyset_desc_clone():
     """Cloning an AnySet descriptor creates a distinct AnySet descriptor with the same properties."""
     d = AnySetDesc(name="customInputs", label="Custom Inputs", description="Some description",
                    commandLineGroup="customGroup", advanced=True, semantic="someSemantic", enabled=False,
-                   visible=False, exposed=True)
+                   visible=False, exposed=True, editable=False)
     clone = d.clone()
 
     assert clone is not d
     assert isinstance(clone, AnySetDesc)
     for prop in ("name", "label", "description", "commandLineGroup", "advanced", "semantic", "enabled",
-                 "visible", "exposed", "items"):
+                 "visible", "exposed", "editable", "items"):
         assert getattr(clone, prop) == getattr(d, prop), prop
+
+
+def test_anyset_desc_is_editable_by_default():
+    assert AnySetDesc(name="customInputs").editable
 
 
 def test_duplicate_anyset_into_anyset():
@@ -170,39 +174,6 @@ def test_anyset_attribute_can_be_restored_with_edges():
     assert dynamicNode.ins.input.inputLink is srcNode.input
 
 
-def test_rename_anyset_attribute_updates_name_label_and_keeps_edges():
-    graph, dynamicNode = initGraphAndNode()
-    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
-
-    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
-    srcNode.input.connectTo(dynamicNode.ins.input)
-
-    dynamicNode.ins.renameAttribute(dynamicNode.ins.input, "customInput", "Custom Input")
-
-    assert dynamicNode.ins.input is None
-    assert isinstance(dynamicNode.ins.customInput, Attribute)
-    assert dynamicNode.ins.customInput.name == "customInput"
-    assert dynamicNode.ins.customInput.label == "Custom Input"
-    assert dynamicNode.ins.customInput.isLink
-    assert dynamicNode.ins.customInput.inputLink is srcNode.input
-    assert graph.attribute(f"{dynamicNode.ins.fullName}.customInput") is dynamicNode.ins.customInput
-
-
-def test_rename_anyset_attribute_rejects_duplicate_name():
-    graph, dynamicNode = initGraphAndNode()
-    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
-
-    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
-    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
-
-    try:
-        dynamicNode.ins.renameAttribute(dynamicNode.ins.input_0, "input", "Input")
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("Renaming an AnySet child to an existing name should fail.")
-
-
 def test_move_anyset_attribute_updates_order():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
@@ -223,9 +194,261 @@ def test_move_anyset_attribute_updates_order():
     assert [attribute.name for attribute in dynamicNode.ins.value] == initialOrder
 
 
+def test_new_anyset_attribute_data_has_unique_name_and_defaults():
+    graph, dynamicNode = initGraphAndNode()
+
+    floatData = dynamicNode.ins.getNewAttributeData("FloatParam")
+    assert floatData["name"] == "float"
+    assert floatData["type"] == "FloatParam"
+    dynamicNode.ins.insertAttribute(floatData, 0)
+
+    floatData0 = dynamicNode.ins.getNewAttributeData("FloatParam")
+    assert floatData0["name"] == "float_0"
+    floatAttr0 = dynamicNode.ins.insertAttribute(floatData0, 1)
+    assert floatAttr0.label == "Float 0"
+    assert floatAttr0.desc.range == [0.0, 1.0, 0.01]
+    assert floatAttr0.isDefault
+
+    choiceAttr = dynamicNode.ins.insertAttribute(dynamicNode.ins.getNewAttributeData("ChoiceParam"), 2)
+    assert choiceAttr.desc.values == ["optionA", "optionB"]
+
+    try:
+        dynamicNode.ins.getNewAttributeData("AnySet")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Only parameter types can be created from the UI.")
+
+    # Every type offered by the menu model can be created
+    for item in dynamicNode.ins.newAttributeTypes:
+        assert dynamicNode.ins.insertAttribute(dynamicNode.ins.getNewAttributeData(item["type"]), 0).type == item["type"]
+
+
+def test_edit_anyset_attribute_updates_description_and_keeps_position():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    anySet.insertAttribute(anySet.getNewAttributeData("StringParam"), 0)
+    intAttr = anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 1)
+    anySet.insertAttribute(anySet.getNewAttributeData("BoolParam"), 2)
+
+    data = anySet.getEditedAttributeData(intAttr, {
+        "name": "downscale", "label": "Downscale", "description": "Downscale factor",
+        "advanced": True, "defaultValue": "2", "range": [1, 8.0, 1]
+    })
+    newAttr = anySet.replaceAttribute(intAttr, data)
+
+    assert [attribute.name for attribute in anySet.value] == ["string", "downscale", "bool"]
+    assert anySet.int is None
+    assert newAttr.label == "Downscale"
+    assert newAttr.desc.description == "Downscale factor"
+    assert newAttr.desc.advanced
+    assert newAttr.desc.range == [1, 8, 1]
+    # The attribute was at its default value: it follows the new default value
+    assert newAttr.value == 2
+    assert newAttr.isDefault
+
+
+def test_edit_anyset_attribute_keeps_modified_value():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    choiceAttr = anySet.insertAttribute(anySet.getNewAttributeData("ChoiceParam"), 0)
+    choiceAttr.value = "optionB"
+
+    data = anySet.getEditedAttributeData(choiceAttr, {"defaultValue": "low", "values": ["low", "optionB"]})
+    newAttr = anySet.replaceAttribute(choiceAttr, data)
+
+    assert newAttr.desc.values == ["low", "optionB"]
+    assert newAttr.desc.value == "low"
+    assert newAttr.value == "optionB"
+    assert not newAttr.isDefault
+
+
+def test_edit_anyset_choice_values_drops_unavailable_value():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    choiceAttr = anySet.insertAttribute(anySet.getNewAttributeData("ChoiceParam"), 0)
+    choiceAttr.value = "optionB"
+    multiChoiceAttr = anySet.insertAttribute({"name": "multi", "label": "Multi", "type": "ChoiceParam",
+                                              "value": ["a", "b"], "values": ["a", "b", "c"], "exclusive": False}, 1)
+
+    choiceData = anySet.getEditedAttributeData(choiceAttr, {"defaultValue": "y", "values": ["x", "y"]})
+    multiChoiceData = anySet.getEditedAttributeData(multiChoiceAttr, {"values": ["b", "c"]})
+
+    # The current value is no longer available: the choice follows its default value
+    assert anySet.replaceAttribute(choiceAttr, choiceData).value == "y"
+    assert anySet.replaceAttribute(multiChoiceAttr, multiChoiceData).value == ["b"]
+
+
+def test_edit_anyset_attribute_rejects_invalid_parameters():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    anySet.insertAttribute(anySet.getNewAttributeData("FloatParam"), 0)
+    stringAttr = anySet.insertAttribute(anySet.getNewAttributeData("StringParam"), 1)
+    floatAttr = anySet.float
+
+    for parameters in ({"name": "float"}, {"name": "1invalid"}, {"label": " "}):
+        try:
+            anySet.getEditedAttributeData(stringAttr, parameters)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"Editing with {parameters} should fail.")
+
+    try:
+        anySet.getEditedAttributeData(floatAttr, {"defaultValue": "notANumber"})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("An invalid default value should be rejected.")
+
+
+def test_edit_anyset_attribute_ignores_parameters_of_other_types():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    intAttr = anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 0)
+    stringAttr = anySet.insertAttribute(anySet.getNewAttributeData("StringParam"), 1)
+
+    intData = anySet.getEditedAttributeData(intAttr, {"label": "New", "values": ["a"]})
+    assert intData["label"] == "New" and "values" not in intData
+    stringData = anySet.getEditedAttributeData(stringAttr, {"label": "New", "range": [0, 10, 1]})
+    assert stringData["label"] == "New" and "range" not in stringData
+
+
+def test_edited_anyset_attribute_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    floatAttr = anySet.insertAttribute(anySet.getNewAttributeData("FloatParam"), 0)
+    floatAttr = anySet.replaceAttribute(floatAttr, anySet.getEditedAttributeData(floatAttr, {
+        "name": "blend", "label": "Blend Weight", "description": "Weight of the secondary input",
+        "advanced": True, "defaultValue": 0.5, "range": [0.0, 2.0, 0.1]
+    }))
+    floatAttr.value = 0.65
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+
+    loadedAttr = loadGraph(graphFile).node(dynamicNode.name).ins.blend
+    assert loadedAttr.label == "Blend Weight"
+    assert loadedAttr.desc.description == "Weight of the secondary input"
+    assert loadedAttr.desc.advanced
+    assert loadedAttr.desc.range == [0.0, 2.0, 0.1]
+    assert loadedAttr.desc.value == 0.5
+    assert loadedAttr.value == 0.65
+    assert not loadedAttr.isDefault
+
+
+def test_edit_anyset_attribute_keeps_edges(tmp_path):
+    """Editing and renaming connected children reconnects their edges, as inputs, as outputs and on their own children."""
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    dstNode = graph.addNewNode("DynamicNode")
+    srcFloat = srcNode.outs.insertAttribute(srcNode.outs.getNewAttributeData("FloatParam"), 0)
+
+    stringAttr = dynamicNode.ins.insertAttribute(dynamicNode.ins.getNewAttributeData("StringParam"), 0)
+    vectorAttr = dynamicNode.ins.duplicateAttribute(graph.addNewNode("Position").xyz)
+    outputAttr = dynamicNode.outs.insertAttribute(dynamicNode.outs.getNewAttributeData("StringParam"), 0)
+    srcNode.code.connectTo(stringAttr)
+    srcFloat.connectTo(vectorAttr.x)
+    outputAttr.connectTo(dstNode.code)
+
+    for anySet, attribute, name in [
+        (dynamicNode.ins, stringAttr, "text"),
+        (dynamicNode.ins, vectorAttr, "offset"),
+        (dynamicNode.outs, outputAttr, "result"),
+    ]:
+        data = anySet.getEditedAttributeData(attribute, {"name": name, "label": name.capitalize()})
+        assert anySet.replaceAttributeWithEdges(attribute, data).name == name
+
+    def checkEdges(graph):
+        node = graph.node(dynamicNode.name)
+        assert sorted(attribute.name for attribute in node.ins.value) == ["offset", "text"]
+        assert node.ins.text.inputLink is graph.node(srcNode.name).code
+        assert node.ins.offset.x.inputLink is graph.node(srcNode.name).outs.float
+        assert graph.node(dstNode.name).code.inputLink is node.outs.result
+        assert len(graph.edges) == 3
+
+    checkEdges(graph)
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    checkEdges(loadGraph(graphFile))
+
+
+def test_edit_anyset_attribute_failure_keeps_attribute_and_edges():
+    """When the edited attribute cannot be created, the AnySet and the edges are left unchanged."""
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    anySet = dynamicNode.ins
+    anySet.insertAttribute(anySet.getNewAttributeData("BoolParam"), 0)
+    stringAttr = anySet.insertAttribute(anySet.getNewAttributeData("StringParam"), 1)
+    anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 2)
+    srcNode.code.connectTo(stringAttr)
+
+    data = anySet.getEditedAttributeData(stringAttr, {"name": "text"})
+    data["type"] = "UnknownParam"
+    try:
+        anySet.replaceAttributeWithEdges(stringAttr, data)
+    except AttributeError:
+        pass
+    else:
+        raise AssertionError("An attribute of an unknown type should not be created.")
+
+    assert [attribute.name for attribute in anySet.value] == ["bool", "string", "int"]
+    assert anySet.string is stringAttr
+    assert stringAttr.inputLink is srcNode.code
+    assert len(graph.edges) == 1
+
+
+def test_edit_anyset_group_and_list_keep_values():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    vectorAttr = anySet.duplicateAttribute(graph.addNewNode("Position").xyz)
+    vectorAttr.x.value = 3.0
+    elementDesc = {"name": "float", "label": "Float", "type": "FloatParam", "value": 0.0}
+    listAttr = anySet.insertAttribute({"name": "list", "label": "List", "type": "ListAttribute", "value": [], "elementDesc": elementDesc}, 1)
+    listAttr.append(1.5)
+
+    vectorData = anySet.getEditedAttributeData(vectorAttr, {"name": "offset", "label": "Offset"})
+    newVector = anySet.replaceAttribute(vectorAttr, vectorData)
+    assert newVector.label == "Offset"
+    assert newVector.x.value == 3.0
+
+    newList = anySet.replaceAttribute(listAttr, anySet.getEditedAttributeData(listAttr, {"description": "Weights"}))
+    assert newList.desc.description == "Weights"
+    assert newList.desc.elementDesc.type == "FloatParam"
+    assert [element.value for element in newList.value] == [1.5]
+
+
 # ---------------------------------------------------------------------------
 # Serialization / deserialization tests
 # ---------------------------------------------------------------------------
+
+def test_upgrading_compatibility_node_keeps_anyset_children_and_edges(tmp_path):
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    intChild = dynamicNode.ins.insertAttribute({"name": "int", "label": "Int", "type": "IntParam", "value": 0}, 0)
+    intChild.value = 7
+    stringChild = dynamicNode.ins.insertAttribute({"name": "string", "label": "String", "type": "StringParam", "value": ""}, 1)
+    srcNode.code.connectTo(stringChild)
+
+    # A UID that does not match the node makes it a compatibility node, as with a file saved by an older version
+    graphFile = tmp_path / "graph.mg"
+    graph.save(str(graphFile))
+    graphContent = json.loads(graphFile.read_text())
+    graphContent["graph"][dynamicNode.name]["uid"] = "olderUid"
+    graphFile.write_text(json.dumps(graphContent))
+
+    loadedGraph = loadGraph(str(graphFile))
+    assert isinstance(loadedGraph.node(dynamicNode.name), CompatibilityNode)
+
+    upgradedNode = loadedGraph.upgradeNode(dynamicNode.name)
+    assert [child.name for child in upgradedNode.ins.value] == ["int", "string"]
+    assert upgradedNode.ins.int.value == 7
+    assert upgradedNode.ins.string.inputLink is loadedGraph.node(srcNode.name).code
+
 
 def test_duplicated_attributes_are_added_at_the_end():
     graph, dynamicNode = initGraphAndNode()
@@ -233,6 +456,353 @@ def test_duplicated_attributes_are_added_at_the_end():
     for attribute in (srcNode.stringParam, srcNode.intParam, srcNode.boolParam):
         dynamicNode.ins.duplicateAttribute(attribute)
     assert [attribute.name for attribute in dynamicNode.ins.value] == ["stringParam", "intParam", "boolParam"]
+
+
+def test_anyset_group_values_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    groupAttr = dynamicNode.ins.duplicateAttribute(graph.addNewNode("Position").xyz)
+    groupAttr.x.value = 0.3
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedAttr = loadGraph(graphFile).node(dynamicNode.name).ins.xyz
+    assert loadedAttr.x.value == 0.3
+    assert loadedAttr.x.desc.value == 0.0
+
+
+def test_anyset_child_description_restored_after_load(tmp_path):
+    graph, dynamicNode = initGraphAndNode()
+    child = dynamicNode.ins.insertAttribute({
+        "name": "count", "label": "Count", "type": "IntParam", "value": 7, "defaultValue": 3,
+        "description": "Number of items", "advanced": True, "semantic": "custom"
+    }, 0)
+    assert child.desc.value == 3
+    assert child.value == 7
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedChild = loadGraph(graphFile).node(dynamicNode.name).ins.count
+    assert loadedChild.value == 7
+    assert loadedChild.desc.value == 3
+    assert loadedChild.desc.description == "Number of items"
+    assert loadedChild.desc.advanced
+    assert loadedChild.desc.semantic == "custom"
+
+
+
+def test_anyset_linked_attribute_keeps_default_value(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    anySet = dynamicNode.ins
+    stringAttr = anySet.insertAttribute(anySet.getNewAttributeData("StringParam"), 0)
+    stringAttr = anySet.replaceAttribute(stringAttr, anySet.getEditedAttributeData(stringAttr, {"defaultValue": "hello"}))
+    srcNode.code.connectTo(stringAttr)
+
+    # When restored from its serialized data, as when undoing an edition or a removal
+    data = stringAttr.asDict()
+    graph.removeEdge(stringAttr)
+    assert anySet.replaceAttribute(stringAttr, data).desc.value == "hello"
+
+    # When saved and loaded
+    srcNode.code.connectTo(anySet.string)
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedGraph = loadGraph(graphFile)
+    loadedAttr = loadedGraph.node(dynamicNode.name).ins.string
+    assert loadedAttr.desc.value == "hello"
+    loadedGraph.removeEdge(loadedAttr)
+    assert loadedAttr.value == "hello"
+
+
+def test_edit_anyset_nested_group_keeps_values(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    groupAttr = anySet.duplicateAttribute(graph.addNewNode("NestedTest").xyz)
+    groupAttr.x.value = 0.3
+    groupAttr.test.y.value = 0.4
+
+    newGroup = anySet.replaceAttribute(groupAttr, anySet.getEditedAttributeData(groupAttr, {"label": "New"}))
+    assert newGroup.label == "New"
+    assert newGroup.x.value == 0.3
+    assert newGroup.test.y.value == 0.4
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedAttr = loadGraph(graphFile).node(dynamicNode.name).ins.xyz
+    assert loadedAttr.x.value == 0.3
+    assert loadedAttr.test.y.value == 0.4
+
+
+def test_edit_anyset_group_keeps_default_values_of_items():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    srcFloat = srcNode.outs.insertAttribute(srcNode.outs.getNewAttributeData("FloatParam"), 0)
+    anySet = dynamicNode.ins
+
+    # An item without any default value does not get its current value as default value
+    sizeAttr = anySet.insertAttribute({"name": "size", "label": "Size", "type": "Size2d"}, 0)
+    sizeAttr.width.value = 7.0
+    newSize = anySet.replaceAttribute(sizeAttr, anySet.getEditedAttributeData(sizeAttr, {"label": "New"}))
+    assert newSize.width.value == 7.0
+    assert newSize.width.desc.value is None
+    assert not newSize.width.isDefault
+
+    # An item with a link does not get the link expression as default value
+    groupAttr = anySet.duplicateAttribute(graph.addNewNode("Position").xyz)
+    srcFloat.connectTo(groupAttr.x)
+    newGroup = anySet.replaceAttributeWithEdges(groupAttr, anySet.getEditedAttributeData(groupAttr, {"label": "New"}))
+    assert newGroup.x.desc.value == 0.0
+    assert newGroup.x.isLink
+
+
+def test_edit_anyset_list_keeps_edges_of_elements(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    dstNode = graph.addNewNode("DynamicNode")
+    anySet = dynamicNode.ins
+    elementDesc = {"name": "string", "label": "String", "type": "StringParam", "value": ""}
+    listAttr = anySet.insertAttribute({"name": "list", "label": "List", "type": "ListAttribute", "value": [], "elementDesc": elementDesc}, 0)
+    listAttr.extend(["a", "b"])
+    srcNode.code.connectTo(listAttr.at(0))
+    listAttr.at(1).connectTo(dstNode.code)
+
+    newList = anySet.replaceAttributeWithEdges(listAttr, anySet.getEditedAttributeData(listAttr, {"name": "renamed"}))
+
+    def edgeNames(graph):
+        return sorted((edge.src.fullName, edge.dst.fullName) for edge in graph.edges.values())
+
+    expected = sorted([
+        (srcNode.code.fullName, f"{dynamicNode.name}.ins.renamed[0]"),
+        (f"{dynamicNode.name}.ins.renamed[1]", dstNode.code.fullName),
+    ])
+    assert edgeNames(graph) == expected
+    assert newList.at(0).inputLink is srcNode.code
+    assert dstNode.code.inputLink is newList.at(1)
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    assert edgeNames(loadGraph(graphFile)) == expected
+
+
+def test_edit_anyset_attribute_rejects_invalid_ranges():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    intAttr = anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 0)
+
+    for valueRange in ([10, 0, 1], [5, 5, 1], [0, 10, 0], [0, 10]):
+        try:
+            anySet.getEditedAttributeData(intAttr, {"range": valueRange})
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"The range {valueRange} should be rejected.")
+
+    assert anySet.getEditedAttributeData(intAttr, {"range": []})
+
+
+def test_edit_anyset_attribute_without_changes_keeps_same_data():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    for attributeType, defaultValue, otherParameters in [
+        ("StringParam", "", {}),
+        ("IntParam", 0, {"range": [0, 10, 1]}),
+        ("FloatParam", 0.5, {"range": [0.0, 1.0, 0.01]}),
+        ("ChoiceParam", "optionA", {"values": ["optionA", "optionB"]}),
+    ]:
+        attribute = anySet.insertAttribute(anySet.getNewAttributeData(attributeType), 0)
+        # The parameters sent by the edition form
+        parameters = {"name": attribute.name, "label": attribute.label, "description": "", "advanced": False,
+                      "defaultValue": defaultValue, **otherParameters}
+        assert anySet.getEditedAttributeData(attribute, parameters) == attribute.asDict()
+
+    # Also when the value differs from the default value
+    anySet.int.value = 5
+    parameters = {"name": "int", "label": anySet.int.label, "defaultValue": 0, "range": [0, 10, 1]}
+    assert anySet.getEditedAttributeData(anySet.int, parameters) == anySet.int.asDict()
+
+    # A number without a range, e.g. copied from a node attribute declared without one
+    noRange = anySet.insertAttribute({"name": "noRange", "label": "No Range", "type": "IntParam", "value": 3}, 0)
+    parameters = {"name": "noRange", "label": "No Range", "description": "", "advanced": False,
+                  "defaultValue": 3, "range": []}
+    assert anySet.getEditedAttributeData(noRange, parameters) == noRange.asDict()
+
+
+@pytest.mark.parametrize("attributeDesc", [
+    desc.FloatParam(name="child", label="Child", description="", value=1.0, keyable=True, keyType="viewId"),
+    desc.Point2d(name="child", label="Child", description=""),
+    desc.Point2d(name="child", label="Child", description="", keyable=True, keyType="viewId"),
+    desc.Line2d(name="child", label="Child", description=""),
+    desc.Rectangle(name="child", label="Child", description=""),
+    desc.Circle(name="child", label="Child", description=""),
+    desc.ShapeList(shape=desc.Point2d(name="point", label="Point", description=""), name="child", label="Child", description=""),
+    desc.ShapeList(shape=desc.Point2d(name="point", label="Point", description="", keyable=True, keyType="viewId"), name="child", label="Child", description=""),
+])
+def test_anyset_shape_and_keyable_children_can_be_edited_and_loaded(attributeDesc, tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    child = attributeFactory(attributeDesc.clone(), None, False, dynamicNode, root=anySet)
+    anySet.value.insert(0, child)
+
+    expected = {**child.asDict(), "label": "Edited"}
+
+    edited = anySet.replaceAttribute(child, anySet.getEditedAttributeData(child, {"label": "Edited"}))
+    assert edited.asDict() == expected
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    assert loadGraph(graphFile).node(dynamicNode.name).ins.child.asDict() == expected
+
+
+def test_edit_default_value_of_keyable_anyset_child_keeps_it_keyable():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    attributeDesc = desc.FloatParam(name="child", label="Child", description="", value=1.0, keyable=True, keyType="viewId")
+    child = attributeFactory(attributeDesc, None, False, dynamicNode, root=anySet)
+    anySet.value.insert(0, child)
+
+    edited = anySet.replaceAttribute(child, anySet.getEditedAttributeData(child, {"defaultValue": 2.0}))
+    assert edited.keyable
+    assert edited.desc.value == 2.0
+
+
+def test_edit_anyset_attribute_ignores_default_value_that_is_not_editable():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+
+    def addChild(attributeDesc):
+        child = attributeFactory(attributeDesc, None, False, dynamicNode, root=anySet)
+        anySet.value.insert(anySet.value.count, child)
+        return child
+
+    computedDefault = addChild(desc.IntParam(name="computed", label="Computed", description="", value=lambda attr: 3))
+    noDefault = addChild(desc.FloatParam(name="noDefault", label="No Default", description="", value=None))
+
+    newAttr = anySet.replaceAttribute(computedDefault, anySet.getEditedAttributeData(computedDefault, {"label": "New", "defaultValue": -1}))
+    assert newAttr.label == "New"
+    assert newAttr.value == 3
+
+    newAttr = anySet.replaceAttribute(noDefault, anySet.getEditedAttributeData(noDefault, {"label": "New", "defaultValue": float("nan")}))
+    assert newAttr.label == "New"
+    assert newAttr.value == 0.0
+
+
+def test_edit_anyset_attribute_keeps_value_from_before_the_link():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    srcFloat = srcNode.outs.insertAttribute(srcNode.outs.getNewAttributeData("FloatParam"), 0)
+    anySet = dynamicNode.ins
+
+    intAttr = anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 0)
+    intAttr.value = 7
+    srcInt = srcNode.outs.insertAttribute(srcNode.outs.getNewAttributeData("IntParam"), 1)
+    srcInt.connectTo(intAttr)
+    groupAttr = anySet.duplicateAttribute(graph.addNewNode("Position").xyz)
+    groupAttr.x.value = 0.3
+    srcFloat.connectTo(groupAttr.x)
+
+    newInt = anySet.replaceAttributeWithEdges(intAttr, anySet.getEditedAttributeData(intAttr, {"label": "New"}))
+    newGroup = anySet.replaceAttributeWithEdges(groupAttr, anySet.getEditedAttributeData(groupAttr, {"label": "New"}))
+    assert newInt.isLink
+    assert newGroup.x.isLink
+
+    graph.removeEdge(newInt)
+    graph.removeEdge(newGroup.x)
+    assert newInt.value == 7
+    assert newGroup.x.value == 0.3
+
+
+def test_edit_anyset_attribute_keeps_link_of_whole_group():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("Position")
+    anySet = dynamicNode.ins
+    groupAttr = anySet.duplicateAttribute(srcNode.xyz)
+    srcNode.xyz.connectTo(groupAttr)
+
+    newGroup = anySet.replaceAttributeWithEdges(groupAttr, anySet.getEditedAttributeData(groupAttr, {"label": "New"}))
+    assert newGroup.inputLink is srcNode.xyz
+    assert [item.name for item in newGroup.value] == ["x", "y", "z"]
+
+
+def test_edit_anyset_linked_list_stays_disconnected():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    elementDesc = {"name": "string", "label": "String", "type": "StringParam", "value": ""}
+    listData = {"label": "List", "type": "ListAttribute", "value": [], "elementDesc": elementDesc}
+    srcList = srcNode.ins.insertAttribute({"name": "src", **listData}, 0)
+    srcList.extend(["a", "b"])
+    linkedList = dynamicNode.ins.insertAttribute({"name": "linked", **listData}, 0)
+    srcList.connectTo(linkedList)
+
+    editedList = dynamicNode.ins.replaceAttributeWithEdges(
+        linkedList, dynamicNode.ins.getEditedAttributeData(linkedList, {"label": "Edited"}))
+    assert editedList.inputLink is srcList
+
+    graph.removeEdge(editedList)
+    editedList.append("c")
+
+    assert not editedList.isLink
+    assert len(graph.edges) == 0
+    assert [element.value for element in editedList.value] == ["c"]
+
+
+def test_connected_edge_names_include_list_elements():
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    dstNode = graph.addNewNode("DynamicNode")
+    elementDesc = {"name": "string", "label": "String", "type": "StringParam", "value": ""}
+    listAttr = dynamicNode.ins.insertAttribute({"name": "list", "label": "List", "type": "ListAttribute", "value": [], "elementDesc": elementDesc}, 0)
+    listAttr.extend(["a", "b"])
+    srcNode.code.connectTo(listAttr.at(0))
+    listAttr.at(1).connectTo(dstNode.code)
+
+    assert sorted(dynamicNode.ins.connectedEdgeNames(listAttr)) == sorted([
+        (srcNode.code.fullName, listAttr.at(0).fullName),
+        (listAttr.at(1).fullName, dstNode.code.fullName),
+    ])
+
+
+def test_changing_anyset_children_changes_node_uid():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    seenUids = [dynamicNode._uid]
+
+    def assertUidChanged():
+        assert dynamicNode._uid not in seenUids
+        seenUids.append(dynamicNode._uid)
+
+    child = anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 0)
+    assertUidChanged()
+
+    child.value = 5
+    assertUidChanged()
+
+    child = anySet.replaceAttributeWithEdges(child, anySet.getEditedAttributeData(child, {"name": "renamed"}))
+    assertUidChanged()
+
+    anySet.removeAttribute(child)
+    assert dynamicNode._uid == seenUids[0]
+
+
+def test_nodes_with_different_anyset_values_have_different_uids():
+    graph, node1 = initGraphAndNode()
+    node2 = graph.addNewNode("DynamicNode")
+    child1 = node1.ins.insertAttribute(node1.ins.getNewAttributeData("IntParam"), 0)
+    child2 = node2.ins.insertAttribute(node2.ins.getNewAttributeData("IntParam"), 0)
+    assert node1._uid == node2._uid
+
+    child1.value = 1
+    child2.value = 9
+    assert node1._uid != node2._uid
 
 
 def test_dynamic_inputs_serialized_in_todict():
@@ -511,10 +1081,10 @@ def test_anyset_uid_depends_on_children_types():
     stringNode = graph.addNewNode("DynamicNode")
 
     intNode.ins.duplicateAttribute(srcNode.intParam)
-    intNode.ins.renameAttribute(intNode.ins.intParam, "param", "Param")
+    intNode.ins.replaceAttributeWithEdges(intNode.ins.intParam, intNode.ins.getEditedAttributeData(intNode.ins.intParam, {"name": "param", "label": "Param"}))
     intNode.ins.param.value = 5
     stringNode.ins.duplicateAttribute(srcNode.stringParam)
-    stringNode.ins.renameAttribute(stringNode.ins.stringParam, "param", "Param")
+    stringNode.ins.replaceAttributeWithEdges(stringNode.ins.stringParam, stringNode.ins.getEditedAttributeData(stringNode.ins.stringParam, {"name": "param", "label": "Param"}))
     stringNode.ins.param.value = "5"
 
     assert intNode.ins.uid() != stringNode.ins.uid()
@@ -641,7 +1211,7 @@ def test_anyset_structural_changes_update_node_uid():
     assert [attribute.name for attribute in dynamicNode.ins.value] == ["intParam", "floatParam"]
 
     uidBefore = dynamicNode._uid
-    dynamicNode.ins.renameAttribute(dynamicNode.ins.intParam, "renamedParam", "Renamed Param")
+    dynamicNode.ins.replaceAttributeWithEdges(dynamicNode.ins.intParam, dynamicNode.ins.getEditedAttributeData(dynamicNode.ins.intParam, {"name": "renamedParam", "label": "Renamed Param"}))
     assert dynamicNode._uid != uidBefore, "Renaming a child should update the node UID"
 
     uidBefore = dynamicNode._uid
@@ -1156,7 +1726,7 @@ def test_output_anyset_schema_contributes_to_node_uid():
     graph.update()
     assert dynamicNode._uid == uidBefore, "The value of an output child should not contribute to the node UID"
 
-    dynamicNode.outs.renameAttribute(dynamicNode.outs.a, "renamed", "Renamed")
+    dynamicNode.outs.replaceAttributeWithEdges(dynamicNode.outs.a, dynamicNode.outs.getEditedAttributeData(dynamicNode.outs.a, {"name": "renamed", "label": "Renamed"}))
     assert dynamicNode._uid != uidBefore, "Renaming an output child should update the node UID"
 
     uidBefore = dynamicNode._uid
@@ -1231,7 +1801,7 @@ def test_input_linked_to_output_anyset_child_depends_on_producer_uid_after_load(
 
 
 def renameOutputChild(node):
-    node.outs.renameAttribute(node.outs.a, "b", "b")
+    node.outs.replaceAttributeWithEdges(node.outs.a, node.outs.getEditedAttributeData(node.outs.a, {"name": "b", "label": "b"}))
 
 
 def removeOutputChild(node):
@@ -1252,7 +1822,7 @@ def addOtherOutputChild(node):
 
 
 def renameNestedOutputChild(anySet):
-    anySet.renameAttribute(anySet.a, "b", "b")
+    anySet.replaceAttributeWithEdges(anySet.a, anySet.getEditedAttributeData(anySet.a, {"name": "b", "label": "b"}))
 
 
 def removeNestedOutputChild(anySet):
@@ -1380,10 +1950,10 @@ def test_output_anyset_schema_restored_finds_computed_results(graphSavedOnDisk):
     graph.update()
     computedUid = node._uid
 
-    node.outs.renameAttribute(node.outs.a, "b", "b")
+    node.outs.replaceAttributeWithEdges(node.outs.a, node.outs.getEditedAttributeData(node.outs.a, {"name": "b", "label": "b"}))
     assert node.globalStatus == "NONE"
 
-    node.outs.renameAttribute(node.outs.b, "a", "a")
+    node.outs.replaceAttributeWithEdges(node.outs.b, node.outs.getEditedAttributeData(node.outs.b, {"name": "a", "label": "a"}))
     assert node._uid == computedUid
     assert node.globalStatus == "SUCCESS"
     assert node.outs.a.value == 7

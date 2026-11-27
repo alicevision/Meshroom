@@ -253,7 +253,9 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             name="inputs",
             label="Inputs",
             description="All the parameters exposed in the GraphInput of the given Scene file",
-            exposed=True
+            exposed=True,
+            # The children are created from the scene: user-added ones would not be part of it
+            editable=False
         )
     ]
 
@@ -262,7 +264,9 @@ class ComputeMeshroomScene(desc.CommandLineNode):
             name="outputs",
             label="Outputs",
             description="All the parameters exposed in the GraphOutput of the given Scene file",
-            exposed=True
+            exposed=True,
+            # The children are created from the scene: user-added ones would not be part of it
+            editable=False
         )
     ]
 
@@ -277,6 +281,8 @@ class ComputeMeshroomScene(desc.CommandLineNode):
         """ Append a copy of each scene attribute to 'anySet', named after its full name in the scene. """
         for attr in attributes:
             attrDesc = attr.asDict()
+            # The value set in the scene is the default of the exposed attribute, not the scene's own default
+            attrDesc.pop('defaultValue', None)
             attrDesc['name'] = encodeAttributeName(attr.fullName)
             if attr.isLink:
                 # A link expression refers to a node of the scene: copy the value it resolves to

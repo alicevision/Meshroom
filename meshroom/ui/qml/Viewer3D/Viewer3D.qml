@@ -58,16 +58,6 @@ Item {
         ]]
     ]
 
-    // LayerList receiving each supported file extension
-    readonly property var layerListByExtension: ({
-        ".abc": collection.sfmData,
-        ".usda": collection.sfmData,
-        ".sfm": collection.sfmData,
-        ".obj": collection.meshes,
-        ".glb": collection.meshes,
-        ".exr": collection.depthmaps
-    })
-
     focus: true
 
     Keys.onPressed: function(event) {
@@ -480,14 +470,15 @@ Item {
     }
 
     /**
-     * Add @p source to the LayerList matching its file extension (see layerListByExtension), under
-     * the optional @p label. If @p source was read from @p attribute, the layer is removed when that
-     * attribute or its node changes. Does nothing if the extension is not supported.
+     * Add @p source to the LayerList matching its file extension (see SceneObjectCollection.layerListFor), under
+     * the optional @p label. If @p source was read from @p attribute, the layer waits until the
+     * attribute's node is computed and follows the attribute (see LayerList). Does nothing if the
+     * extension is not supported.
      * Returns true if the file was loaded, false if its extension is not supported.
      */
     function view(source, label = undefined, attribute = undefined)
     {
-        const layerList = layerListByExtension[Filepath.extension(source)]
+        const layerList = collection.layerListFor(source)
         if (!layerList)
         {
             return false
@@ -499,8 +490,9 @@ Item {
     }
 
     /**
-     * View the file referenced by a computed node's File @p attribute, if any.
-     * If the node has an editable bounding box (e.g. Meshing), also display it, even if the node is not computed.
+     * View the file referenced by the File @p attribute of a node, if any. If the node is not computed,
+     * the layer waits and is loaded as soon as the node is computed.
+     * If the node has an editable bounding box (e.g. Meshing), also display it.
      * Used when dropping/selecting a node output attribute onto the 3D viewer.
      * Returns true if the attribute or the bounding box was actually viewed, false otherwise.
      */
@@ -513,12 +505,12 @@ Item {
             viewed = true
         }
 
-        if (attribute.desc.type === "File" && attribute.node.isComputed)
+        if (attribute.desc.type === "File")
         {
             const source = resolveViewTemplate(attribute.value)
             if (source)
             {
-                const layerList = layerListByExtension[Filepath.extension(source)]
+                const layerList = collection.layerListFor(source)
                 viewed = view(source, `${attribute.node.label}.${attribute.label}`, attribute) || viewed
                 // A templated attribute shows one view at a time: drop the mesh of the previous view
                 if (layerList && source !== attribute.value)

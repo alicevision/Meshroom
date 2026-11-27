@@ -35,6 +35,10 @@ nodes_mode_parser = subparsers.add_parser(
 nodes_mode_parser.add_argument("-n", "--name", type=str, help="Get infos for a specific node.")
 nodes_mode_parser.add_argument("--default_value", action="store_true", help="Display input default value.")
 
+# Conversion nodes info subparser
+conversions_mode_parser = subparsers.add_parser(
+    "conversions", help="Display conversion nodes info.")
+
 # Pipeline info subparser
 pipeline_mode_parser = subparsers.add_parser(
     "pipelines", help="Display pipelines info.")
@@ -112,6 +116,22 @@ def get_all_node_info(args, nodePlugins):
             print(f"    - {name}")
 
 
+# ===== CONVERSIONS =====
+def get_conversions_info(args):
+    import meshroom.core
+    from meshroom.core.desc import ConversionNode
+    meshroom.setupEnvironment()
+    meshroom.core.initPlugins()
+    meshroom.core.initNodes()
+    nodeDescs = [provider.nodeDescClass for provider in meshroom.core.pluginManager.getNodeDescProviders().values()
+                 if issubclass(provider.nodeDescClass, ConversionNode)]
+    print(f"Available Conversion Nodes ({len(nodeDescs)}):")
+    # Same order as the one used to pick the default conversion when connecting attributes
+    for nodeDesc in sorted(nodeDescs, key=lambda d: (-d.priority, d.__name__)):
+        srcType, dstType = nodeDesc.getInputDesc().type, nodeDesc.getOutputDesc().type
+        print(f"  - {nodeDesc.__name__:20} {srcType} -> {dstType} (priority {nodeDesc.priority})")
+
+
 # ===== PIPELINES =====
 def get_pipelines_info(args):
     import meshroom.core
@@ -169,6 +189,8 @@ if __name__ == "__main__":
         get_version(args)
     elif args.command == "nodeinfo":
         get_nodes_info(args)
+    elif args.command == "conversions":
+        get_conversions_info(args)
     elif args.command == "pipelines":
         get_pipelines_info(args)
     else:

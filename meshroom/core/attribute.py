@@ -793,6 +793,19 @@ class Attribute(BaseObject):
             return any(edge.src is self for edge in self.node.graph.edges.values())
         return any(self._isSelfOrAncestorOf(edge.src) for edge in self.node.graph.edges.values())
 
+    def _getConversionNodes(self) -> list:
+        """
+        Return the conversion nodes converting the value received by this attribute or by its elements or children.
+        """
+        # Safety check to avoid evaluation errors
+        if self.isOutput or not self.node.graph or not self.node.graph.edges:
+            return []
+        if not self._hasChildAttributes:
+            edge = self._getInputEdge()
+            return [edge.src.node] if edge and edge.src.node.isConversionNode else []
+        return [edge.src.node for edge in self.node.graph.edges.values()
+                if edge.src.node.isConversionNode and self._isSelfOrAncestorOf(edge.dst)]
+
     def _getFlatStaticChildren(self) -> list[Attribute]:
         """
         Return a list of all the attributes that refer to this Attribute as their parent through the
@@ -973,6 +986,8 @@ class Attribute(BaseObject):
     hasAnyInputLinks = Property(bool, _hasAnyInputLinks, notify=inputLinksChanged)
     # Whether the attribute or any of its elements or children is linked by another attribute.
     hasAnyOutputLinks = Property(bool, _hasAnyOutputLinks, notify=outputLinksChanged)
+    # The conversion nodes converting the value received by the attribute or any of its elements or children.
+    conversionNodes = Property(Variant, _getConversionNodes, notify=inputLinksChanged)
 
     # The list of attributes that refer to this one as their parent.
     flatStaticChildrenChanged = Signal()  # AnySet's children list can change on runtime

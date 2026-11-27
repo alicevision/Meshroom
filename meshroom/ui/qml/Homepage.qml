@@ -342,7 +342,7 @@ Page {
                     model: {
                         // Request latest thumbnail paths
                         if (mainStack.currentItem instanceof Homepage)
-                            MeshroomApp.updateRecentProjectFilesThumbnails()
+                            MeshroomApp.refreshRecentProjectFiles()
                         return [{"path": null, "thumbnail": null, "status": null}].concat(MeshroomApp.recentProjectFiles)
                     }
 

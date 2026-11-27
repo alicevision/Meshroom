@@ -1,9 +1,9 @@
 import logging
 import os
 import argparse
-import json
 import sys
 from enum import Enum
+from threading import Thread
 
 from PySide6 import __version__ as PySideVersion
 from PySide6 import QtCore
@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import pluginManager
-from meshroom.core.desc import NodeVersionTypeEnum
+from meshroom.core.desc import MrNodeType, NodeVersionTypeEnum
 from meshroom.core.graphIO import getTemplateInfo
 from meshroom.core.plugins.local.taskQueue import PluginTaskQueue
 from meshroom.core.submitter import BaseSubmitter
@@ -35,7 +35,7 @@ from meshroom.ui.dockLayoutManager import DockLayoutManager
 from meshroom.ui.components.shapes import SurveyPointViewerHelper, ShapeFilesHelper, ShapeViewerHelper
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.scene import Scene
-from meshroom.ui import templateInfo
+from meshroom.ui import projectInfo, templateInfo
 from meshroom.ui.utils import QmlInstantEngine
 from meshroom.ui import commands
 
@@ -272,14 +272,17 @@ class MeshroomApp(QApplication):
         meshroom.core.initPlugins()
         meshroom.core.initNodes()
 
-        # Initialize the list of recent project files
+        self._templateCategoryColors = templateInfo.loadCategoryColors()
+        self._pipelineTemplates = None  # list of the registered templates with their metadata, read on first access
+
+        # Initialize the list of recent project files: they are read in a thread when the homepage is shown
         self._recentProjectFiles = self._getRecentProjectFilesFromSettings()
         self._recentTemplateFiles = self._getRecentTemplateFilesFromSettings()
-        self._templateCategoryColors = templateInfo.loadCategoryColors()
-        # Flag set to True if, for all the project files in the list, thumbnails have been retrieved when they
-        # are available. If set to False, then all the paths in the list are accurate, but some thumbnails might
-        # be retrievable
-        self._updatedRecentProjectFilesThumbnails = True
+        # Id of the last read request of each project file: the result of an older one is dropped
+        self._projectInfoRequests = {}
+        self._lastProjectInfoRequest = 0
+        self._refreshRequest = 0  # id of the running refresh of all the recent projects, 0 if none
+        self._projectInfosRead.connect(self._applyProjectInfos, QtCore.Qt.QueuedConnection)
 
         # Register components for QML before instantiating the engine
         components.registerTypes()
@@ -435,14 +438,40 @@ class MeshroomApp(QApplication):
         self.engine.deleteLater()
 
     def _pipelineTemplateFiles(self):
-        templates = []
-        for key in sorted(meshroom.core.pipelineTemplates.keys()):
-            # Use uppercase letters in the names as separators to format the templates' name nicely
-            # e.g: the template "panoramaHdr" will be shown as "Panorama Hdr" in the menu
-            name = templateInfo.defaultTemplateLabel(key)
-            variant = {"name": name, "key": key, "path": meshroom.core.pipelineTemplates[key]}
-            templates.append(variant)
-        return templates
+        """ Return the registered templates as {"name", "key", "path", "label", "category", "color", "icon",
+        "description"}, sorted by key.
+
+        The name is derived from the key, so it is unique; the label is the one of the template metadata, the name
+        when it has none. The template files are read once, then again after `reloadTemplateList`.
+        """
+        if self._pipelineTemplates is None:
+            self._pipelineTemplates = []
+            for key in sorted(meshroom.core.pipelineTemplates.keys()):
+                # A broken template file must not prevent the application from starting
+                try:
+                    info = getTemplateInfo(key)
+                except Exception as e:
+                    logging.warning(f"Could not read the metadata of the template '{key}': {e}")
+                    info = {}
+
+                def text(field):
+                    # Template headers can be edited by hand: ignore values that are not text
+                    value = info.get(field)
+                    return value.strip() if isinstance(value, str) else ""
+
+                # e.g: the template "panoramaHdr" is named "Panorama Hdr"
+                name = templateInfo.defaultTemplateLabel(key)
+                self._pipelineTemplates.append({
+                    "name": name,
+                    "key": key,
+                    "label": text("label") or name,
+                    "path": meshroom.core.pipelineTemplates[key],
+                    "category": text("category"),
+                    "color": templateInfo.categoryColor(text("category"), self._templateCategoryColors),
+                    "icon": text("icon"),
+                    "description": text("description"),
+                })
+        return self._pipelineTemplates
 
     def _pipelineTemplateNames(self):
         return [p["name"] for p in self.pipelineTemplateFiles]
@@ -450,6 +479,7 @@ class MeshroomApp(QApplication):
     @Slot()
     def reloadTemplateList(self):
         meshroom.core.initPipelines()
+        self._pipelineTemplates = None
         self.pipelineTemplateFilesChanged.emit()
 
     @Slot(result="QVariantList")
@@ -478,6 +508,11 @@ class MeshroomApp(QApplication):
     def defaultTemplateLabel(self, key: str) -> str:
         return templateInfo.defaultTemplateLabel(key)
 
+    @Slot("QVariantList", int, "QVariantList", result="QVariantList")
+    def layoutPipelineCategories(self, categories: list, columns: int, expanded: list) -> list:
+        """ Return the rows of pipeline categories of the homepage for `columns` columns (see templateInfo.layoutCategories). """
+        return templateInfo.layoutCategories(categories, columns, expanded)
+
     @Slot(str, result="QVariantList")
     def searchTemplateIcons(self, query: str) -> list:
         """ Return the names of the MaterialIcons matching all the words of `query`. """
@@ -493,47 +528,49 @@ class MeshroomApp(QApplication):
     def showMessage(self, message, status=None, duration=5000):
         self._messageController.sendMessage(message, status, duration)
 
-    def _retrieveThumbnailPath(self, filepath: str) -> str:
+    @staticmethod
+    def _isComputableNodeType(nodeType: str) -> bool:
+        """ Return whether nodes of type `nodeType` are computed. Unknown types (missing plugin) are counted. """
+        provider = pluginManager.getNodeDescProviders().get(nodeType)
+        if provider is None:
+            return True
+        return provider.nodeDescClass._mrNodeType in (MrNodeType.NODE, MrNodeType.COMMANDLINE)
+
+    @classmethod
+    def _readProjectInfo(cls, path: str) -> dict:
+        """ Return the `projectInfo.readProjectInfo` of the project file at `path`, only the MISSING status if the file
+        is missing. Slow on network storage (it reads the status files of all the nodes): called from a thread. """
+        if not os.path.isfile(path):
+            return {"status": projectInfo.ProjectStatus.MISSING}
+        return projectInfo.readProjectInfo(path, cls._isComputableNodeType)
+
+    def _projectFileEntry(self, path: str, info: dict = None) -> dict:
         """
-        Given the path of a project file, load this file and try to retrieve the path to its thumbnail, i.e. its
-        first viewpoint image.
-
-        Args:
-            filepath: the path of the project file to retrieve the thumbnail from
-
-        Returns:
-            The path to the thumbnail if it could be found, an empty string otherwise
+        Return the entry of the recent project file at `path`: {"path", "status" (FileStatus value), "thumbnail",
+        "info" (`_readProjectInfo`: image count, computation status...), "pipeline" (the label of the template it was
+        created from, empty if unknown), "pipelineColor" (the color of the template category)}.
+        Without `info`, the project file is not read yet: "info" is empty until `_readProjectInfosAsync` reads it.
+        The template is matched by its key only: templates of different plugins sharing a key are not told apart.
         """
-        try:
-            with open(filepath) as file:
-                fileData = json.load(file)
-
-            graphData = fileData.get("graph", {})
-            for node in graphData.values():
-                if node.get("nodeType") != "CameraInit":
-                    continue
-                if viewpoints := node.get("inputs", {}).get("viewpoints"):
-                    return viewpoints[0].get("path", "")
-
-        except FileNotFoundError:
-            logging.info(f"File {filepath} not found on disk.")
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            logging.info(f"Error while loading file {filepath}.")
-        except KeyError as err:
-            logging.info(f"The following key does not exist: {str(err)}")
-        except Exception as err:
-            logging.info(f"Exception: {str(err)}")
-
-        return ""
+        if info is None:
+            exists = os.path.isfile(path)
+            info = {}
+        else:
+            exists = info["status"] != projectInfo.ProjectStatus.MISSING
+        entry = {"path": path, "status": (FileStatus.EXISTS if exists else FileStatus.MISSING).value,
+                 "thumbnail": info.get("thumbnail", ""), "info": info}
+        source = info.get("sourceTemplate") or {}
+        template = next((t for t in self.pipelineTemplateFiles if t["key"] == source.get("name")), None)
+        entry["pipeline"] = template["label"] if template else templateInfo.defaultTemplateLabel(source.get("name", ""))
+        entry["pipelineColor"] = template["color"] if template else templateInfo.UNCATEGORIZED_COLOR
+        return entry
 
     def _getRecentProjectFilesFromSettings(self) -> list[dict[str, str]]:
         """
-        Read the list of recent project files from the QSettings, retrieve their filepath, and if it exists, their
-        thumbnail.
+        Read the list of recent project files from the QSettings, without reading the files.
 
         Returns:
-            The list containing dictionaries of the form {"path": "/path/to/project/file", "thumbnail":
-            "/path/to/thumbnail"} based on the recent projects stored in the QSettings.
+            The list of the recent projects stored in the QSettings, as returned by `_projectFileEntry` without info.
         """
         projects = []
         settings = QSettings()
@@ -543,9 +580,7 @@ class MeshroomApp(QApplication):
             settings.setArrayIndex(i)
             path = settings.value("filepath")
             if path:
-                fileStatus = FileStatus.EXISTS if os.path.isfile(path) else FileStatus.MISSING
-                p = {"path": path, "thumbnail": self._retrieveThumbnailPath(path), "status": fileStatus.value}
-                projects.append(p)
+                projects.append(self._projectFileEntry(path))
         settings.endArray()
         settings.endGroup()
         return projects
@@ -571,22 +606,62 @@ class MeshroomApp(QApplication):
         settings.endGroup()
         return templates
 
-    @Slot()
-    def updateRecentProjectFilesThumbnails(self) -> None:
-        """
-        If there are thumbnails that may be retrievable (meaning the list of projects has been updated minimally),
-        update the list of recent project files by reading the QSettings and retrieving the thumbnails if they are
-        available.
-        """
-        if not self._updatedRecentProjectFilesThumbnails:
-            self._updateRecentProjectFilesThumbnails()
-            self._updatedRecentProjectFilesThumbnails = True
+    def _readProjectInfosAsync(self, paths: list) -> int:
+        """ Read the project files at `paths` in a thread, then update their entries with `_applyProjectInfos`.
 
-    def _updateRecentProjectFilesThumbnails(self) -> None:
-        for project in self._recentProjectFiles:
-            path = project["path"]
-            project["thumbnail"] = self._retrieveThumbnailPath(path)
-            project["status"] = os.path.isfile(path)
+        A project file is read again only if it was modified since its last read or if it was being computed:
+        the status of a project computed without saving it is not updated. Return the id of the read request.
+        """
+        self._lastProjectInfoRequest += 1
+        request = self._lastProjectInfoRequest
+        for path in paths:
+            self._projectInfoRequests[path] = request
+        knownInfos = {p["path"]: p["info"] for p in self._recentProjectFiles if p["info"]}
+        activeStatuses = (projectInfo.ProjectStatus.RUNNING, projectInfo.ProjectStatus.SCHEDULED)
+
+        def read():
+            infos = {}
+            for path in paths:
+                info = knownInfos.get(path, {})
+                try:
+                    modified = int(os.path.getmtime(path) * 1000)
+                except OSError:
+                    modified = None
+                if modified is None or info.get("modified") != modified or info.get("status") in activeStatuses:
+                    # An unexpected error must not prevent the other projects from being updated
+                    try:
+                        info = self._readProjectInfo(path)
+                    except Exception:
+                        logging.exception(f"Could not read the project file {path}")
+                        info = {"status": projectInfo.ProjectStatus.UNKNOWN}
+                infos[path] = info
+            self._projectInfosRead.emit(request, infos)
+
+        # Daemon: a read still running on network storage must not prevent Meshroom from closing
+        Thread(target=read, daemon=True).start()
+        return request
+
+    def _applyProjectInfos(self, request: int, infos: dict) -> None:
+        """ Update the entries of the project files read by `request`, except the ones read again since. """
+        if request == self._refreshRequest:
+            self._refreshRequest = 0
+        paths = [path for path, r in self._projectInfoRequests.items() if r == request and path in infos]
+        for path in paths:
+            del self._projectInfoRequests[path]
+        # Only the changed entries are updated: an update recreates all the project cards of the homepage
+        changed = {p["path"] for p in self._recentProjectFiles if p["path"] in paths and p["info"] != infos[p["path"]]}
+        if not changed:
+            return
+        self._recentProjectFiles = [self._projectFileEntry(p["path"], infos[p["path"]]) if p["path"] in changed else p
+                                    for p in self._recentProjectFiles]
+        self.recentProjectFilesChanged.emit()
+
+    @Slot()
+    def refreshRecentProjectFiles(self) -> None:
+        """ Read the recent project files again in a thread to update their computation status, thumbnail and info.
+        Ignored while the previous refresh is still running. """
+        if not self._refreshRequest:
+            self._refreshRequest = self._readProjectInfosAsync([p["path"] for p in self._recentProjectFiles])
 
     @Slot(str)
     @Slot(QUrl)
@@ -596,8 +671,7 @@ class MeshroomApp(QApplication):
         The function ensures that the file is not present more than once in the list and trims it so it
         never exceeds a set number of projects.
         QSettings are updated accordingly.
-        The update of the list of recent projects files is minimal: the filepath is added, but there is no
-        attempt to retrieve its corresponding thumbnail.
+        The added project file is read in a thread to show its thumbnail and info.
 
         Args:
             projectFile (str or QUrl): path to the project file to add to the list
@@ -607,14 +681,13 @@ class MeshroomApp(QApplication):
         # Get the list of recent projects without re-reading the QSettings
         projects = self._recentProjectFiles
 
-        # Checks whether the path is already in the list of recent projects
+        # Move the entry to the top of the list if it is already in it (its info is shown until it is read again)
         filepaths = [p["path"] for p in projects]
         if projectFileNorm in filepaths:
-            idx = filepaths.index(projectFileNorm)
-            del projects[idx]  # If so, delete its entry
-
-        # Insert the newest entry at the top of the list
-        projects.insert(0, {"path": projectFileNorm, "thumbnail": "", "status": FileStatus.EXISTS})
+            entry = projects.pop(filepaths.index(projectFileNorm))
+        else:
+            entry = self._projectFileEntry(projectFileNorm)
+        projects.insert(0, entry)
 
         # Only keep the first 40 projects
         maxNbProjects = 40
@@ -634,8 +707,8 @@ class MeshroomApp(QApplication):
 
         # Update the final list of recent projects
         self._recentProjectFiles = projects
-        self._updatedRecentProjectFilesThumbnails = False  # Thumbnails may not be up-to-date
         self.recentProjectFilesChanged.emit()
+        self._readProjectInfosAsync([projectFileNorm])
 
     @Slot(str)
     @Slot(QUrl)
@@ -904,10 +977,17 @@ class MeshroomApp(QApplication):
     licensesModel = Property("QVariantList", _licensesModel, constant=True)
     pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
+    # Emitted from a thread with the id of a read request and the info of its project files by path
+    _projectInfosRead = Signal(int, object)
     recentTemplateFilesChanged = Signal()
     recentImportedImagesFoldersChanged = Signal()
     pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames, notify=pipelineTemplateFilesChanged)
+    # Templates grouped by category for the homepage: [{"name", "color", "templates"}]
+    pipelineTemplateCategories = Property("QVariantList",
+                                          lambda self: templateInfo.groupByCategory(self.pipelineTemplateFiles,
+                                                                                    self._templateCategoryColors.keys()),
+                                          notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", lambda self: self._recentProjectFiles, notify=recentProjectFilesChanged)
     recentTemplateFiles = Property("QVariantList", lambda self: self._recentTemplateFiles, notify=recentTemplateFilesChanged)
     recentImportedImagesFolders = Property("QVariantList", _recentImportedImagesFolders, notify=recentImportedImagesFoldersChanged)

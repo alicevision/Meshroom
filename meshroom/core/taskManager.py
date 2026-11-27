@@ -577,8 +577,9 @@ class TaskManager(BaseObject):
 
         graph.updateMonitoredFiles()
 
-        flowEdges = graph.flowEdges(startNodes=toNodes)
-        edgesToProcess = set(edgesToProcess).intersection(flowEdges)
+        # No transitive reduction (flowEdges) here: it runs on the full graph, so it can drop a dependency
+        # whose longer path goes through already computed nodes, absent from edgesToProcess.
+        edgesToProcess = set(edgesToProcess)
 
         logging.info(f"Nodes to process: {nodesToProcess}")
         logging.info(f"Edges to process: {edgesToProcess}")

@@ -18,7 +18,7 @@ Panel {
     property var plugin: null
     property bool actionsEnabled: true  // Whether the install / update / remove buttons can be used.
     readonly property bool isExternalPlugin: !!plugin && ["REZ", "PATH", "BUILTIN"].indexOf(plugin.typeName) !== -1
-    readonly property var updateRecord: root.plugin ? _pluginManager.getUpdateRecord(root.plugin) : null
+    readonly property var updateRecord: !!root.plugin && PluginUtils.isInstalled(root.plugin) ? _pluginManager.getUpdateRecord(root.plugin) : null
     readonly property bool isPending: root.plugin ? _pluginTaskQueue.pendingPlugins.includes(root.plugin.name) : false
 
     // Signals

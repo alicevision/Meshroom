@@ -1208,6 +1208,15 @@ class UIGraph(QObject):
                 conversionNodes.append(edge.dst.node)
         return [node for node in dict.fromkeys(conversionNodes) if node not in nodes]
 
+    def _withInternalConversionNodes(self, nodes: Iterable[Node]) -> list[Node]:
+        """
+        Return `nodes` without their conversion nodes, plus the conversion nodes connecting two of them.
+        Conversion nodes are not displayed, so they follow the nodes they connect, not the selection.
+        """
+        nodes = [node for node in nodes if not node.isConversionNode]
+        return nodes + [node for node in self._getAttachedConversionNodes(nodes, outputs=False)
+                        if node.inputAttribute.isLink and node.inputAttribute.inputLink.node in nodes]
+
     @Slot()
     def removeSelectedNodes(self):
         """ Remove selected nodes from the graph. """
@@ -1517,7 +1526,7 @@ class UIGraph(QObject):
     @Slot()
     def disconnectSelectedNodes(self):
         with self.groupedGraphModification("Disconnect Nodes"):
-            selectedNodes = self.getSelectedNodes()
+            selectedNodes = self._withInternalConversionNodes(self.getSelectedNodes())
             for edge in self._graph.edges[:]:
                 # Remove only the edges which are coming or going out of the current selection
                 if edge.src.node in selectedNodes and edge.dst.node in selectedNodes:
@@ -1867,10 +1876,7 @@ class UIGraph(QObject):
         """
         if not self._nodeSelection.hasSelection():
             return ""
-        # Conversion nodes are not displayed: only keep the ones between the copied nodes
-        nodes = [node for node in self.getSelectedNodes() if not node.isConversionNode]
-        nodes += [node for node in self._getAttachedConversionNodes(nodes, outputs=False)
-                  if node.inputAttribute.isLink and node.inputAttribute.inputLink.node in nodes]
+        nodes = self._withInternalConversionNodes(self.getSelectedNodes())
         graphData = self._graph.serializePartial(nodes)
         return json.dumps(graphData, indent=4)
 

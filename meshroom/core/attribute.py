@@ -17,6 +17,7 @@ from meshroom.core.desc.validators import NotEmptyValidator
 from meshroom.core import desc, hashValue
 
 from meshroom.core.desc import Attribute as AttributeDescription
+from meshroom.core.desc.attribute import convertToLabel
 
 from meshroom.core.keyValues import KeyValues
 from meshroom.core.exception import InvalidEdgeError
@@ -2092,6 +2093,21 @@ class AnySet(GroupAttribute):
             attribute._isOutput = True
             attribute._desc._isDynamicValue = True
 
+    # Attributes that can be created from the UI, by description type: (menu label, description parameters)
+    _newAttributeTypes = {
+        "StringParam": ("String", {"value": ""}),
+        "IntParam": ("Integer", {"value": 0, "range": [0, 10, 1]}),
+        "FloatParam": ("Float", {"value": 0.5, "range": [0.0, 1.0, 0.01]}),
+        "BoolParam": ("Boolean", {"value": False}),
+        "ChoiceParam": ("Choice", {"value": "optionA", "values": ["optionA", "optionB"]}),
+        "File": ("File", {"value": ""}),
+        "ColorParam": ("Color", {"value": "#2a82da"}),
+    }
+    # Model of the menu adding a child: [{"type", "label"}]
+    newAttributeTypes = Property(Variant, lambda self: [{"type": attributeType, "label": label}
+                                                        for attributeType, (label, _) in AnySet._newAttributeTypes.items()],
+                                 constant=True)
+
     def duplicateAttribute(self, attribute: Attribute, isOutput: bool|None=None) -> Attribute:
         """ Create an attribute as child of the current, with the same description as the given one.
             Duplicated name's are handled by _renameAttributeDescriptionInPlace()
@@ -2193,6 +2209,133 @@ class AnySet(GroupAttribute):
         self._onChildrenChanged()
         return restoredAttribute
 
+    def _validateAttributeName(self, name: str, attribute: Attribute | None = None) -> None:
+        """Raise a ValueError if 'name' is not a valid name for a child, or if it is already used by
+        another child than 'attribute'."""
+        if not self._attributeNameRegex.match(name):
+            raise ValueError(f"Invalid attribute name: '{name}'.")
+        if (attribute is None or name != attribute.name) and name in self._value.keys():
+            raise ValueError(f"Attribute name '{name}' already exists in '{self.fullName}'.")
+
+    def getNewAttributeData(self, attributeType: str) -> dict:
+        """ Return the serialized data of a new child attribute
+
+        Args:
+            attributeType: the description type of the attribute (e.g. "FloatParam").
+
+        Returns:
+            The serialized attribute, with a unique name derived from its type and default parameters.
+        """
+        if attributeType not in self._newAttributeTypes:
+            raise ValueError(f"Unsupported attribute type: '{attributeType}'.")
+
+        name, _ = self._uniqueAttributeName(attributeType.replace("Param", "").lower())
+        return {
+            "name": name,
+            "label": convertToLabel(name),
+            "type": attributeType,
+            **copy.deepcopy(self._newAttributeTypes[attributeType][1])
+        }
+
+    def getEditedAttributeData(self, attribute: Attribute, parameters: dict) -> dict:
+        """ Return the serialized data of a child attribute with its description parameters edited.
+        The current value is kept, unless the attribute is at its default value.
+
+        Args:
+            attribute: the child attribute to edit.
+            parameters: the edited parameters, among a list of chosen parameters
+
+        Returns:
+            The serialized attribute
+        """
+        if attribute not in self._value:
+            raise ValueError(f"Attribute '{attribute.fullName}' is not a child of '{self.fullName}'.")
+
+        editedParameters = self._validatedParameters(attribute.desc, parameters)
+        data = {**attribute.asDict(), **editedParameters}
+
+        self._validateAttributeName(data["name"], attribute)
+        if not data["label"]:
+            raise ValueError("Attribute label cannot be empty.")
+
+        # An attribute at its default value follows the new one; a keyable one keeps its key values
+        if "defaultValue" in editedParameters and attribute.isDefault and not attribute.isLink and not attribute.keyable:
+            data["value"] = data["defaultValue"]
+
+        # A choice only keeps the values that are still available
+        if "values" in editedParameters and not attribute.isLink and not attribute.keyable:
+            if not data["exclusive"]:
+                data["value"] = [value for value in data["value"] if value in data["values"]]
+            elif data["value"] not in data["values"]:
+                defaultValue = data.get("defaultValue")
+                data["value"] = defaultValue if defaultValue in data["values"] else next(iter(data["values"]), data["value"])
+
+        # Same form as asDict(), which leaves out these parameters when they are not set
+        if "defaultValue" in data and data["defaultValue"] == data["value"]:
+            del data["defaultValue"]
+        return {key: value for key, value in data.items() if value or key not in ("description", "advanced")}
+
+    @classmethod
+    def _validatedParameters(cls, attributeDesc: AttributeDescription, parameters: dict) -> dict:
+        """ Return the description parameters of a child attribute that can be edited, in their serialized form. """
+
+        def stripped(text):
+            return str(text).strip()
+
+        converters = {
+            "name": stripped,
+            "label": stripped,
+            "description": stripped,
+            "advanced": bool,
+            "values": list,
+            "defaultValue": attributeDesc.validateValue,
+            "range": lambda valueRange: cls._validatedRange(attributeDesc, valueRange),
+        }
+        # A default value computed by a function or set at runtime is not editable
+        if callable(attributeDesc.value) or attributeDesc.value is None:
+            del converters["defaultValue"]
+        # The choice values and the range only exist on some types
+        if not isinstance(attributeDesc, desc.ChoiceParam):
+            del converters["values"]
+        if not hasattr(attributeDesc, "range"):
+            del converters["range"]
+        return {key: converters[key](value) for key, value in parameters.items() if key in converters}
+
+    @staticmethod
+    def _validatedRange(attributeDesc: AttributeDescription, valueRange: list) -> list:
+        """ Return the validated values of a range, either empty or [min, max, step]. """
+        values = [attributeDesc.validateValue(value) for value in valueRange]
+        if values and not (len(values) == 3 and values[0] < values[1] and values[2] > 0):
+            raise ValueError(f"Invalid range: {values}.")
+        return values
+
+    def replaceAttribute(self, attribute: Attribute, serializedAttribute: dict) -> Attribute | None:
+        """Replace a child attribute by the one restored from 'serializedAttribute', at the same position."""
+        if attribute not in self._value:
+            raise ValueError(f"Attribute '{attribute.fullName}' is not a child of '{self.fullName}'.")
+        self._validateAttributeName(serializedAttribute.get("name", ""), attribute)
+
+        index = list(self._value).index(attribute)
+        self._value.remove(attribute)
+        newAttribute = None
+        try:
+            newAttribute = self.insertAttribute(serializedAttribute, index)
+        finally:
+            # Restore the original attribute if the new one could not be created
+            if newAttribute is None:
+                self._value.insert(index, attribute)
+                self._onChildrenChanged()
+        return newAttribute
+
+    def _uniqueAttributeName(self, name: str, indexPattern: str = "{name}_{index}") -> tuple:
+        """ Return a name derived from 'name' that no child uses yet, and the index added to it (-1 if 'name' is free). """
+        index = -1
+        uniqueName = name
+        while uniqueName in self._value.keys():
+            index += 1
+            uniqueName = indexPattern.format(name=name, index=index)
+        return uniqueName, index
+
     def _renameAttributeDescriptionInPlace(self, attributeDesc: AttributeDescription, indexPattern:str="{name}_{index}"):
         """ If an attribute already exists with the same name,
             the attributeDescription name and label are indexed with a suffix using the givnen pattern "{name}_{index}" by default"
@@ -2201,13 +2344,7 @@ class AnySet(GroupAttribute):
         if indexPattern is None:
             indexPattern = "{name}_{index}"
 
-        duplicateIndex = -1
-        newAttributeName = attributeDesc.name
-        while newAttributeName in self._value.keys():
-            duplicateIndex += 1
-            newAttributeName = indexPattern.format(name=attributeDesc.name, index=duplicateIndex)
-
-        attributeDesc._name = newAttributeName
+        attributeDesc._name, duplicateIndex = self._uniqueAttributeName(attributeDesc.name, indexPattern)
         if duplicateIndex != -1:
             attributeDesc._label = indexPattern.format(name=attributeDesc._label, index=duplicateIndex)
 

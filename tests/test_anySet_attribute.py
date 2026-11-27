@@ -223,6 +223,171 @@ def test_move_anyset_attribute_updates_order():
     assert [attribute.name for attribute in dynamicNode.ins.value] == initialOrder
 
 
+def test_new_anyset_attribute_data_has_unique_name_and_defaults():
+    graph, dynamicNode = initGraphAndNode()
+
+    floatData = dynamicNode.ins.getNewAttributeData("FloatParam")
+    assert floatData["name"] == "float"
+    assert floatData["type"] == "FloatParam"
+    dynamicNode.ins.insertAttribute(floatData, 0)
+
+    floatData0 = dynamicNode.ins.getNewAttributeData("FloatParam")
+    assert floatData0["name"] == "float_0"
+    floatAttr0 = dynamicNode.ins.insertAttribute(floatData0, 1)
+    assert floatAttr0.label == "Float 0"
+    assert floatAttr0.desc.range == [0.0, 1.0, 0.01]
+    assert floatAttr0.isDefault
+
+    choiceAttr = dynamicNode.ins.insertAttribute(dynamicNode.ins.getNewAttributeData("ChoiceParam"), 2)
+    assert choiceAttr.desc.values == ["optionA", "optionB"]
+
+    try:
+        dynamicNode.ins.getNewAttributeData("AnySet")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Only parameter types can be created from the UI.")
+
+    # Every type offered by the menu model can be created
+    for item in dynamicNode.ins.newAttributeTypes:
+        assert dynamicNode.ins.insertAttribute(dynamicNode.ins.getNewAttributeData(item["type"]), 0).type == item["type"]
+
+
+def test_edit_anyset_attribute_updates_description_and_keeps_position():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    anySet.insertAttribute(anySet.getNewAttributeData("StringParam"), 0)
+    intAttr = anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 1)
+    anySet.insertAttribute(anySet.getNewAttributeData("BoolParam"), 2)
+
+    data = anySet.getEditedAttributeData(intAttr, {
+        "name": "downscale", "label": "Downscale", "description": "Downscale factor",
+        "advanced": True, "defaultValue": "2", "range": [1, 8.0, 1]
+    })
+    newAttr = anySet.replaceAttribute(intAttr, data)
+
+    assert [attribute.name for attribute in anySet.value] == ["string", "downscale", "bool"]
+    assert anySet.int is None
+    assert newAttr.label == "Downscale"
+    assert newAttr.desc.description == "Downscale factor"
+    assert newAttr.desc.advanced
+    assert newAttr.desc.range == [1, 8, 1]
+    # The attribute was at its default value: it follows the new default value
+    assert newAttr.value == 2
+    assert newAttr.isDefault
+
+
+def test_edit_anyset_attribute_keeps_modified_value():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    choiceAttr = anySet.insertAttribute(anySet.getNewAttributeData("ChoiceParam"), 0)
+    choiceAttr.value = "optionB"
+
+    data = anySet.getEditedAttributeData(choiceAttr, {"defaultValue": "low", "values": ["low", "optionB"]})
+    newAttr = anySet.replaceAttribute(choiceAttr, data)
+
+    assert newAttr.desc.values == ["low", "optionB"]
+    assert newAttr.desc.value == "low"
+    assert newAttr.value == "optionB"
+    assert not newAttr.isDefault
+
+
+def test_edit_anyset_choice_values_drops_unavailable_value():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    choiceAttr = anySet.insertAttribute(anySet.getNewAttributeData("ChoiceParam"), 0)
+    choiceAttr.value = "optionB"
+    multiChoiceAttr = anySet.insertAttribute({"name": "multi", "label": "Multi", "type": "ChoiceParam",
+                                              "value": ["a", "b"], "values": ["a", "b", "c"], "exclusive": False}, 1)
+
+    choiceData = anySet.getEditedAttributeData(choiceAttr, {"defaultValue": "y", "values": ["x", "y"]})
+    multiChoiceData = anySet.getEditedAttributeData(multiChoiceAttr, {"values": ["b", "c"]})
+
+    # The current value is no longer available: the choice follows its default value
+    assert anySet.replaceAttribute(choiceAttr, choiceData).value == "y"
+    assert anySet.replaceAttribute(multiChoiceAttr, multiChoiceData).value == ["b"]
+
+
+def test_edit_anyset_attribute_rejects_invalid_parameters():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    anySet.insertAttribute(anySet.getNewAttributeData("FloatParam"), 0)
+    stringAttr = anySet.insertAttribute(anySet.getNewAttributeData("StringParam"), 1)
+    floatAttr = anySet.float
+
+    for parameters in ({"name": "float"}, {"name": "1invalid"}, {"label": " "}):
+        try:
+            anySet.getEditedAttributeData(stringAttr, parameters)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"Editing with {parameters} should fail.")
+
+    try:
+        anySet.getEditedAttributeData(floatAttr, {"defaultValue": "notANumber"})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("An invalid default value should be rejected.")
+
+
+def test_edit_anyset_attribute_ignores_parameters_of_other_types():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    intAttr = anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 0)
+    stringAttr = anySet.insertAttribute(anySet.getNewAttributeData("StringParam"), 1)
+
+    intData = anySet.getEditedAttributeData(intAttr, {"label": "New", "values": ["a"]})
+    assert intData["label"] == "New" and "values" not in intData
+    stringData = anySet.getEditedAttributeData(stringAttr, {"label": "New", "range": [0, 10, 1]})
+    assert stringData["label"] == "New" and "range" not in stringData
+
+
+def test_edited_anyset_attribute_restored_after_load(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    floatAttr = anySet.insertAttribute(anySet.getNewAttributeData("FloatParam"), 0)
+    floatAttr = anySet.replaceAttribute(floatAttr, anySet.getEditedAttributeData(floatAttr, {
+        "name": "blend", "label": "Blend Weight", "description": "Weight of the secondary input",
+        "advanced": True, "defaultValue": 0.5, "range": [0.0, 2.0, 0.1]
+    }))
+    floatAttr.value = 0.65
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+
+    loadedAttr = loadGraph(graphFile).node(dynamicNode.name).ins.blend
+    assert loadedAttr.label == "Blend Weight"
+    assert loadedAttr.desc.description == "Weight of the secondary input"
+    assert loadedAttr.desc.advanced
+    assert loadedAttr.desc.range == [0.0, 2.0, 0.1]
+    assert loadedAttr.desc.value == 0.5
+    assert loadedAttr.value == 0.65
+    assert not loadedAttr.isDefault
+
+
+def test_edit_anyset_group_and_list_keep_values():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    vectorAttr = anySet.duplicateAttribute(graph.addNewNode("Position").xyz)
+    vectorAttr.x.value = 3.0
+    elementDesc = {"name": "float", "label": "Float", "type": "FloatParam", "value": 0.0}
+    listAttr = anySet.insertAttribute({"name": "list", "label": "List", "type": "ListAttribute", "value": [], "elementDesc": elementDesc}, 1)
+    listAttr.append(1.5)
+
+    vectorData = anySet.getEditedAttributeData(vectorAttr, {"name": "offset", "label": "Offset"})
+    newVector = anySet.replaceAttribute(vectorAttr, vectorData)
+    assert newVector.label == "Offset"
+    assert newVector.x.value == 3.0
+
+    newList = anySet.replaceAttribute(listAttr, anySet.getEditedAttributeData(listAttr, {"description": "Weights"}))
+    assert newList.desc.description == "Weights"
+    assert newList.desc.elementDesc.type == "FloatParam"
+    assert [element.value for element in newList.value] == [1.5]
+
+
 # ---------------------------------------------------------------------------
 # Serialization / deserialization tests
 # ---------------------------------------------------------------------------
@@ -290,6 +455,158 @@ def test_anyset_child_description_restored_after_load(tmp_path):
     assert loadedChild.desc.description == "Number of items"
     assert loadedChild.desc.advanced
     assert loadedChild.desc.semantic == "custom"
+
+
+
+def test_anyset_linked_attribute_keeps_default_value(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    srcNode = graph.addNewNode("DynamicNode")
+    anySet = dynamicNode.ins
+    stringAttr = anySet.insertAttribute(anySet.getNewAttributeData("StringParam"), 0)
+    stringAttr = anySet.replaceAttribute(stringAttr, anySet.getEditedAttributeData(stringAttr, {"defaultValue": "hello"}))
+    srcNode.code.connectTo(stringAttr)
+
+    # When restored from its serialized data, as when undoing an edition or a removal
+    data = stringAttr.asDict()
+    graph.removeEdge(stringAttr)
+    assert anySet.replaceAttribute(stringAttr, data).desc.value == "hello"
+
+    # When saved and loaded
+    srcNode.code.connectTo(anySet.string)
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedGraph = loadGraph(graphFile)
+    loadedAttr = loadedGraph.node(dynamicNode.name).ins.string
+    assert loadedAttr.desc.value == "hello"
+    loadedGraph.removeEdge(loadedAttr)
+    assert loadedAttr.value == "hello"
+
+
+def test_edit_anyset_nested_group_keeps_values(tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    groupAttr = anySet.duplicateAttribute(graph.addNewNode("NestedTest").xyz)
+    groupAttr.x.value = 0.3
+    groupAttr.test.y.value = 0.4
+
+    newGroup = anySet.replaceAttribute(groupAttr, anySet.getEditedAttributeData(groupAttr, {"label": "New"}))
+    assert newGroup.label == "New"
+    assert newGroup.x.value == 0.3
+    assert newGroup.test.y.value == 0.4
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    loadedAttr = loadGraph(graphFile).node(dynamicNode.name).ins.xyz
+    assert loadedAttr.x.value == 0.3
+    assert loadedAttr.test.y.value == 0.4
+
+
+def test_edit_anyset_attribute_rejects_invalid_ranges():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    intAttr = anySet.insertAttribute(anySet.getNewAttributeData("IntParam"), 0)
+
+    for valueRange in ([10, 0, 1], [5, 5, 1], [0, 10, 0], [0, 10]):
+        try:
+            anySet.getEditedAttributeData(intAttr, {"range": valueRange})
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"The range {valueRange} should be rejected.")
+
+    assert anySet.getEditedAttributeData(intAttr, {"range": []})
+
+
+def test_edit_anyset_attribute_without_changes_keeps_same_data():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    for attributeType, defaultValue, otherParameters in [
+        ("StringParam", "", {}),
+        ("IntParam", 0, {"range": [0, 10, 1]}),
+        ("FloatParam", 0.5, {"range": [0.0, 1.0, 0.01]}),
+        ("ChoiceParam", "optionA", {"values": ["optionA", "optionB"]}),
+    ]:
+        attribute = anySet.insertAttribute(anySet.getNewAttributeData(attributeType), 0)
+        # The parameters sent by the edition form
+        parameters = {"name": attribute.name, "label": attribute.label, "description": "", "advanced": False,
+                      "defaultValue": defaultValue, **otherParameters}
+        assert anySet.getEditedAttributeData(attribute, parameters) == attribute.asDict()
+
+    # Also when the value differs from the default value
+    anySet.int.value = 5
+    parameters = {"name": "int", "label": anySet.int.label, "defaultValue": 0, "range": [0, 10, 1]}
+    assert anySet.getEditedAttributeData(anySet.int, parameters) == anySet.int.asDict()
+
+    # A number without a range, e.g. copied from a node attribute declared without one
+    noRange = anySet.insertAttribute({"name": "noRange", "label": "No Range", "type": "IntParam", "value": 3}, 0)
+    parameters = {"name": "noRange", "label": "No Range", "description": "", "advanced": False,
+                  "defaultValue": 3, "range": []}
+    assert anySet.getEditedAttributeData(noRange, parameters) == noRange.asDict()
+
+
+@pytest.mark.parametrize("attributeDesc", [
+    desc.FloatParam(name="child", label="Child", description="", value=1.0, keyable=True, keyType="viewId"),
+    desc.Point2d(name="child", label="Child", description=""),
+    desc.Point2d(name="child", label="Child", description="", keyable=True, keyType="viewId"),
+    desc.Line2d(name="child", label="Child", description=""),
+    desc.Rectangle(name="child", label="Child", description=""),
+    desc.Circle(name="child", label="Child", description=""),
+    desc.ShapeList(shape=desc.Point2d(name="point", label="Point", description=""), name="child", label="Child", description=""),
+    desc.ShapeList(shape=desc.Point2d(name="point", label="Point", description="", keyable=True, keyType="viewId"), name="child", label="Child", description=""),
+])
+def test_anyset_shape_and_keyable_children_can_be_edited_and_loaded(attributeDesc, tmp_path):
+    from meshroom.core.graph import loadGraph
+
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    child = attributeFactory(attributeDesc.clone(), None, False, dynamicNode, root=anySet)
+    anySet.value.insert(0, child)
+
+    expected = {**child.asDict(), "label": "Edited"}
+
+    edited = anySet.replaceAttribute(child, anySet.getEditedAttributeData(child, {"label": "Edited"}))
+    assert edited.asDict() == expected
+
+    graphFile = str(tmp_path / "graph.mg")
+    graph.save(graphFile)
+    assert loadGraph(graphFile).node(dynamicNode.name).ins.child.asDict() == expected
+
+
+def test_edit_default_value_of_keyable_anyset_child_keeps_it_keyable():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+    attributeDesc = desc.FloatParam(name="child", label="Child", description="", value=1.0, keyable=True, keyType="viewId")
+    child = attributeFactory(attributeDesc, None, False, dynamicNode, root=anySet)
+    anySet.value.insert(0, child)
+
+    edited = anySet.replaceAttribute(child, anySet.getEditedAttributeData(child, {"defaultValue": 2.0}))
+    assert edited.keyable
+    assert edited.desc.value == 2.0
+
+
+def test_edit_anyset_attribute_ignores_default_value_that_is_not_editable():
+    graph, dynamicNode = initGraphAndNode()
+    anySet = dynamicNode.ins
+
+    def addChild(attributeDesc):
+        child = attributeFactory(attributeDesc, None, False, dynamicNode, root=anySet)
+        anySet.value.insert(anySet.value.count, child)
+        return child
+
+    computedDefault = addChild(desc.IntParam(name="computed", label="Computed", description="", value=lambda attr: 3))
+    noDefault = addChild(desc.FloatParam(name="noDefault", label="No Default", description="", value=None))
+
+    newAttr = anySet.replaceAttribute(computedDefault, anySet.getEditedAttributeData(computedDefault, {"label": "New", "defaultValue": -1}))
+    assert newAttr.label == "New"
+    assert newAttr.value == 3
+
+    newAttr = anySet.replaceAttribute(noDefault, anySet.getEditedAttributeData(noDefault, {"label": "New", "defaultValue": float("nan")}))
+    assert newAttr.label == "New"
+    assert newAttr.value == 0.0
 
 
 def test_dynamic_inputs_serialized_in_todict():

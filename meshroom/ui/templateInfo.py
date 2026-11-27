@@ -5,6 +5,7 @@ Qt-free so that it can be unit tested without a UI.
 import colorsys
 import json
 import logging
+import math
 import os
 import re
 import zlib
@@ -27,6 +28,10 @@ DEFAULT_ICONS = (
 )
 # Fields edited by the Save As Template dialog; any other key of an existing templateInfo is kept
 EDITABLE_FIELDS = ("label", "category", "icon", "description")
+
+# Homepage pipeline list: rows shown per category before "Show all", and columns a category can take
+CATEGORY_MAX_ROWS = 6
+CATEGORY_MAX_SPAN = 2
 
 # Saturation and lightness of the hashed category colors
 HASH_SATURATION = 0.65
@@ -86,6 +91,109 @@ def mergeCategories(*categoryLists: Iterable[str]) -> List[str]:
             if category and category.lower() not in merged:
                 merged[category.lower()] = category
     return list(merged.values())
+
+
+def groupByCategory(templates: Iterable[dict], builtinCategories: Iterable[str]) -> List[dict]:
+    """ Group the `templates` ({"name", "category", "color", ...}) by category, case-insensitively.
+
+    Categories are sorted with the `builtinCategories` first in their order (and spelling), then the others by name, and the
+    uncategorised templates last. Templates are sorted by "label" (or "name" without label).
+
+    Returns:
+        list: [{"name": category name ("" for uncategorised), "color": its color, "templates": [template, ...]}]
+    """
+    groups = {}
+    for template in templates:
+        category = (template.get("category") or "").strip()
+        groups.setdefault(category.lower(), {"name": category, "color": template.get("color", UNCATEGORIZED_COLOR),
+                                             "templates": []})["templates"].append(template)
+    builtinNames = [c.strip() for c in builtinCategories]
+    builtin = [c.lower() for c in builtinNames]
+    for key, group in groups.items():
+        if key in builtin:
+            group["name"] = builtinNames[builtin.index(key)]
+
+    def categoryKey(key):
+        if not key:
+            return (2, 0, "")
+        if key in builtin:
+            return (0, builtin.index(key), key)
+        return (1, 0, key)
+
+    result = [groups[key] for key in sorted(groups, key=categoryKey)]
+    for group in result:
+        group["templates"].sort(key=lambda t: (t.get("label") or t.get("name", "")).lower())
+    return result
+
+
+def layoutCategories(categories: Iterable[dict], columns: int, expanded: Iterable[str] = (),
+                     maxRows: int = CATEGORY_MAX_ROWS, maxSpan: int = CATEGORY_MAX_SPAN) -> List[List[dict]]:
+    """ Lay out the category groups of `groupByCategory` in rows of `columns` columns, so that the pipelines use the
+    width instead of making one tall column.
+
+    Each category asks for ceil(count / maxRows) columns (at most `maxSpan`), the categories are packed in order into rows,
+    and the free columns at the end of a row go to the category still hiding the most pipelines, else to the tallest one.
+    A category with more pipelines than `span * maxRows` shows one pipeline less, for a "Show remaining" item.
+    When categories are named in `expanded` (case-insensitive), only those are laid out, each on a whole row with all
+    their pipelines.
+
+    Returns:
+        list: rows of [{"name", "color", "count", "templates": templates shown, "remaining": pipelines not shown,
+              "span": columns, "rows": rows, "expanded": bool, "truncated": bool}]
+    """
+    columns = max(1, columns)
+    maxRows = max(2, maxRows)
+    expanded = {name.lower() for name in expanded}
+    if any(category["name"].lower() in expanded for category in categories):
+        categories = [category for category in categories if category["name"].lower() in expanded]
+    blocks = []
+    for category in categories:
+        count = len(category["templates"])
+        isExpanded = category["name"].lower() in expanded
+        span = columns if isExpanded else max(1, min(maxSpan, columns, math.ceil(count / maxRows)))
+        blocks.append({"category": category, "count": count, "span": span, "expanded": isExpanded})
+
+    rows, row, used = [], [], 0
+    for block in blocks:
+        if row and used + block["span"] > columns:
+            rows.append(row)
+            row, used = [], 0
+        row.append(block)
+        used += block["span"]
+    if row:
+        rows.append(row)
+
+    for row in rows:
+        free = columns - sum(block["span"] for block in row)
+        while free > 0:
+            growable = [b for b in row if not b["expanded"] and b["span"] < b["count"]]
+            if not growable:
+                break
+            # Most hidden pipelines first, then the tallest block
+            best = max(growable, key=lambda b: (b["count"] - b["span"] * maxRows, math.ceil(b["count"] / b["span"])))
+            best["span"] += 1
+            free -= 1
+
+    result = []
+    for row in rows:
+        resultRow = []
+        for block in row:
+            templates, count, span = block["category"]["templates"], block["count"], block["span"]
+            truncated = not block["expanded"] and count > span * maxRows
+            shown = templates[:span * maxRows - 1] if truncated else templates
+            resultRow.append({
+                "name": block["category"]["name"],
+                "color": block["category"]["color"],
+                "count": count,
+                "templates": shown,
+                "remaining": count - len(shown),
+                "span": span,
+                "rows": maxRows if truncated else max(1, math.ceil(count / span)),
+                "expanded": block["expanded"],
+                "truncated": truncated,
+            })
+        result.append(resultRow)
+    return result
 
 
 def defaultTemplateLabel(key: str) -> str:

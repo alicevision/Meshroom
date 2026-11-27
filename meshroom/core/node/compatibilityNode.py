@@ -222,6 +222,14 @@ class CompatibilityNode(BaseNode):
                     return None
             return attrDesc
 
+        # A list is homogeneous: match its first element like an attribute, so that a linked element
+        # (serialized as a link expression) or a group element holding links is accepted
+        if isinstance(attrDesc, desc.ListAttribute) and isinstance(value, list) and value:
+            elementDesc = attrDesc.elementDesc
+            if CompatibilityNode.attributeDescFromName([elementDesc], elementDesc.name, value[0], strict) is None:
+                return None
+            return attrDesc
+
         # If it passes the 'matchDescription' test
         if attrDesc.matchDescription(value, strict):
             return attrDesc

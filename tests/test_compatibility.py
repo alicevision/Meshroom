@@ -780,6 +780,39 @@ def test_attributeTypeChangeCreatesCompatibilityNode(graphSavedOnDisk, template,
     assert loadedNode.boolToGroup.a.value == 0
 
 
+class LinkedListElementsNode(desc.Node):
+    """ Node with a list of integers and a list of groups, whose elements can be linked. """
+    inputs = [
+        desc.IntParam(name="int", label="Int", description="", value=3, range=None),
+        desc.ListAttribute(name="ints", label="Ints", description="",
+                           elementDesc=desc.IntParam(name="i", label="i", description="", value=0, range=None)),
+        desc.ListAttribute(name="groups", label="Groups", description="",
+                           elementDesc=desc.GroupAttribute(name="g", label="g", description="", items=[
+                               desc.IntParam(name="a", label="a", description="", value=0, range=None),
+                           ])),
+    ]
+    outputs = []
+
+
+def test_linkedListElementsDoNotCreateCompatibilityNodes(graphSavedOnDisk):
+    """ A linked list element, or a linked child of a group inside a list, is serialized as a link expression
+    that does not match the element type: it must still match the node description. """
+    with registeredNodeTypes([LinkedListElementsNode]):
+        graph: Graph = graphSavedOnDisk
+        source = graph.addNewNode(LinkedListElementsNode.__name__)
+        target = graph.addNewNode(LinkedListElementsNode.__name__)
+        target.ints.append(0)
+        target.groups.append({"a": 0})
+        graph.addEdge(source.int, target.ints.at(0))
+        graph.addEdge(source.int, target.groups.at(0).a)
+        graph.save()
+
+        graph = loadGraph(graph.filepath, strictCompatibility=True)
+        target = graph.node(target.name)
+        assert target.ints.at(0).inputLink == graph.node(source.name).int
+        assert target.groups.at(0).a.value == 3
+
+
 class TestGraphLoadingWithStrictCompatibility:
 
     def test_failsOnUnknownNodeType(self, graphSavedOnDisk):

@@ -18,7 +18,8 @@ from meshroom.core import Version, submitters, hashValue
 from meshroom.core.attribute import Attribute, AnySet, ListAttribute, GroupAttribute
 from meshroom.core.exception import GraphCompatibilityError, InvalidEdgeError, StopGraphVisit, StopBranchVisit, CyclicDependencyError
 from meshroom.core.files import MESHROOM_PROJECT_EXTENSION, isTemplateFile
-from meshroom.core.graphIO import GraphIO, GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer
+from meshroom.core.graphIO import (GraphIO, getTemplateSource, templateInfoFromHeader,
+                                  GraphSerializer, TemplateGraphSerializer, PartialGraphSerializer)
 from meshroom.core.node import BaseNode, Status, Node, CompatibilityNode, GRAPH_INPUT_NODE_TYPE, GRAPH_OUTPUT_NODE_TYPE
 from meshroom.core.nodeFactory import nodeFactory, getNodeConstructor
 from meshroom.core.mtyping import PathLike
@@ -298,6 +299,12 @@ class Graph(BaseObject):
             keepOutputNodes = copyOutputs
 
         self._deserialize(Graph._loadGraphData(filepath))
+        # Only a registered template is recorded as the source of the project
+        sourceTemplate = getTemplateSource(filepath)
+        if sourceTemplate:
+            self.header[GraphIO.Keys.SourceTemplate] = sourceTemplate
+        else:
+            self.header.pop(GraphIO.Keys.SourceTemplate, None)
 
         # Creating nodes from a template is conceptually similar to explicit node creation,
         # therefore the nodes descriptors' "onNodeCreated" callback is triggered for each
@@ -1847,6 +1854,27 @@ class Graph(BaseObject):
             return
         self._templateFilepath = newFilepath
         self.templateFilepathChanged.emit()
+
+    @property
+    def templateInfo(self) -> Dict[str, Any]:
+        """ A copy of the template metadata ("label", "category", "icon", ...) written when saving this graph as a template.
+
+        Raises:
+            ValueError: if the metadata loaded from the file is invalid.
+        """
+        return templateInfoFromHeader(self.header, self._templateFilepath or self._filepath or "the current graph")
+
+    def setTemplateInfo(self, info: Optional[Dict[str, Any]]):
+        """ Set the template metadata written when saving this graph as a template; empty or None removes it.
+
+        Raises:
+            ValueError: if the metadata loaded from the file is invalid: it is kept for the user to fix it in the file.
+        """
+        self.templateInfo  # Raises on invalid metadata, which must not be overwritten
+        if info:
+            self.header[GraphIO.Keys.TemplateInfo] = dict(info)
+        else:
+            self.header.pop(GraphIO.Keys.TemplateInfo, None)
 
     def updateInternals(self, startNodes=None, force=False):
         nodes, edges = self.dfsOnFinish(startNodes=startNodes)

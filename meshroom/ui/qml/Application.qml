@@ -181,27 +181,34 @@ Page {
         }
     }
 
-    Platform.FileDialog {
+    SaveTemplateDialog {
         id: saveTemplateDialog
+        palette: root.palette
 
-        signal closed(var result)
+        /**
+         * Open the dialog pre-filled with the info of the current graph:
+         * on the opened template file if any, otherwise in the default save folder.
+         */
+        function openForCurrentGraph() {
+            const templatePath = _currentScene.graph ? _currentScene.graph.templateFilepath : ""
+            if (!templatePath)
+                initFileDialogFolder(saveTemplateDialog)
+            openWith(templatePath, _currentScene.templateInfo())
+        }
 
-        title: "Save Template"
-        nameFilters: ["Meshroom Templates (*.mgt)"]
-        defaultSuffix: ".mgt"
-        fileMode: Platform.FileDialog.SaveFile
-        onAccepted: {
-            if (!validateFilepathForSave(currentFile, saveTemplateDialog))
-            {
-                return;
+        onSaveRequested: function(fileUrl, info) {
+            // A QML url is passed to the Filepath string slots as "file://...": work on the local path
+            const filePath = Filepath.urlToString(fileUrl)
+            // Check if the user has access to the directory where the template is to be saved
+            if (!Filepath.accessible(Filepath.dirname(filePath))) {
+                const warningDialog = permissionsDialog.createObject(root, {"filepath": filePath})
+                warningDialog.closed.connect(saveTemplateDialog.open)
+                warningDialog.open()
+                return
             }
-
-            // Only save a valid template
-            _currentScene.saveAsTemplate(currentFile)
-            closed(Platform.Dialog.Accepted)
+            _currentScene.saveAsTemplate(fileUrl, info)
             MeshroomApp.reloadTemplateList()
         }
-        onRejected: closed(Platform.Dialog.Rejected)
     }
 
     Platform.FileDialog {
@@ -876,10 +883,7 @@ Page {
                             context: Qt.ApplicationShortcut
                             onActivated: saveAsTemplateAction.triggered()
                         }
-                        onTriggered: {
-                            initFileDialogFolder(saveTemplateDialog)
-                            saveTemplateDialog.open()
-                        }
+                        onTriggered: saveTemplateDialog.openForCurrentGraph()
                     }
                 }
                 MenuSeparator { }
@@ -1530,8 +1534,12 @@ Page {
                     font.pointSize: 11
                     padding: 2
                     checked: true
-                    ToolTip.text: `Current graph is a template: ${templateFilePath}`
+                    ToolTip.text: `Current graph is a template: ${templateFilePath}\nClick to edit its info.`
                     ToolTip.visible: hovered
+                    onClicked: {
+                        checked = true
+                        saveTemplateDialog.openForCurrentGraph()
+                    }
                 }
             }
 

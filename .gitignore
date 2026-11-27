@@ -27,6 +27,7 @@ __pycache__
 !*Config.json
 !.vscode/launch.json
 !/meshroom/core/plugins/registries/*.json
+!/meshroom/ui/config/*.json
 
 # datas or personal files
 /data

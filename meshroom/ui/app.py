@@ -601,15 +601,14 @@ class MeshroomApp(QApplication):
     def _readProjectInfosAsync(self, paths: list) -> int:
         """ Read the project files at `paths` in a thread, then update their entries with `_applyProjectInfos`.
 
-        A project file is read again only if it was modified since its last read or if it was being computed:
-        the status of a project computed without saving it is not updated. Return the id of the read request.
+        A computed project is read again only if it was modified since its last read: computing does not modify the
+        project file, so the other ones are always read again. Return the id of the read request.
         """
         self._lastProjectInfoRequest += 1
         request = self._lastProjectInfoRequest
         for path in paths:
             self._projectInfoRequests[path] = request
         knownInfos = {p["path"]: p["info"] for p in self._recentProjectFiles if p["info"]}
-        activeStatuses = (projectInfo.ProjectStatus.RUNNING, projectInfo.ProjectStatus.SCHEDULED)
 
         def read():
             infos = {}
@@ -619,7 +618,7 @@ class MeshroomApp(QApplication):
                     modified = int(os.path.getmtime(path) * 1000)
                 except OSError:
                     modified = None
-                if modified is None or info.get("modified") != modified or info.get("status") in activeStatuses:
+                if modified is None or info.get("modified") != modified or info.get("status") != projectInfo.ProjectStatus.COMPUTED:
                     # An unexpected error must not prevent the other projects from being updated
                     try:
                         info = self._readProjectInfo(path)

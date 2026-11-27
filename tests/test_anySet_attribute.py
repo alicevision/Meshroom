@@ -170,39 +170,6 @@ def test_anyset_attribute_can_be_restored_with_edges():
     assert dynamicNode.ins.input.inputLink is srcNode.input
 
 
-def test_rename_anyset_attribute_updates_name_label_and_keeps_edges():
-    graph, dynamicNode = initGraphAndNode()
-    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
-
-    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
-    srcNode.input.connectTo(dynamicNode.ins.input)
-
-    dynamicNode.ins.renameAttribute(dynamicNode.ins.input, "customInput", "Custom Input")
-
-    assert dynamicNode.ins.input is None
-    assert isinstance(dynamicNode.ins.customInput, Attribute)
-    assert dynamicNode.ins.customInput.name == "customInput"
-    assert dynamicNode.ins.customInput.label == "Custom Input"
-    assert dynamicNode.ins.customInput.isLink
-    assert dynamicNode.ins.customInput.inputLink is srcNode.input
-    assert graph.attribute(f"{dynamicNode.ins.fullName}.customInput") is dynamicNode.ins.customInput
-
-
-def test_rename_anyset_attribute_rejects_duplicate_name():
-    graph, dynamicNode = initGraphAndNode()
-    srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
-
-    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
-    dynamicNode.ins.duplicateAttribute(srcNode.input, isOutput=False)
-
-    try:
-        dynamicNode.ins.renameAttribute(dynamicNode.ins.input_0, "input", "Input")
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("Renaming an AnySet child to an existing name should fail.")
-
-
 def test_move_anyset_attribute_updates_order():
     graph, dynamicNode = initGraphAndNode()
     srcNode = graph.addNewNode("Ls", input="/fakeDirectory")
@@ -1110,10 +1077,10 @@ def test_anyset_uid_depends_on_children_types():
     stringNode = graph.addNewNode("DynamicNode")
 
     intNode.ins.duplicateAttribute(srcNode.intParam)
-    intNode.ins.renameAttribute(intNode.ins.intParam, "param", "Param")
+    intNode.ins.replaceAttributeWithEdges(intNode.ins.intParam, intNode.ins.getEditedAttributeData(intNode.ins.intParam, {"name": "param", "label": "Param"}))
     intNode.ins.param.value = 5
     stringNode.ins.duplicateAttribute(srcNode.stringParam)
-    stringNode.ins.renameAttribute(stringNode.ins.stringParam, "param", "Param")
+    stringNode.ins.replaceAttributeWithEdges(stringNode.ins.stringParam, stringNode.ins.getEditedAttributeData(stringNode.ins.stringParam, {"name": "param", "label": "Param"}))
     stringNode.ins.param.value = "5"
 
     assert intNode.ins.uid() != stringNode.ins.uid()
@@ -1240,7 +1207,7 @@ def test_anyset_structural_changes_update_node_uid():
     assert [attribute.name for attribute in dynamicNode.ins.value] == ["intParam", "floatParam"]
 
     uidBefore = dynamicNode._uid
-    dynamicNode.ins.renameAttribute(dynamicNode.ins.intParam, "renamedParam", "Renamed Param")
+    dynamicNode.ins.replaceAttributeWithEdges(dynamicNode.ins.intParam, dynamicNode.ins.getEditedAttributeData(dynamicNode.ins.intParam, {"name": "renamedParam", "label": "Renamed Param"}))
     assert dynamicNode._uid != uidBefore, "Renaming a child should update the node UID"
 
     uidBefore = dynamicNode._uid
@@ -1755,7 +1722,7 @@ def test_output_anyset_schema_contributes_to_node_uid():
     graph.update()
     assert dynamicNode._uid == uidBefore, "The value of an output child should not contribute to the node UID"
 
-    dynamicNode.outs.renameAttribute(dynamicNode.outs.a, "renamed", "Renamed")
+    dynamicNode.outs.replaceAttributeWithEdges(dynamicNode.outs.a, dynamicNode.outs.getEditedAttributeData(dynamicNode.outs.a, {"name": "renamed", "label": "Renamed"}))
     assert dynamicNode._uid != uidBefore, "Renaming an output child should update the node UID"
 
     uidBefore = dynamicNode._uid
@@ -1830,7 +1797,7 @@ def test_input_linked_to_output_anyset_child_depends_on_producer_uid_after_load(
 
 
 def renameOutputChild(node):
-    node.outs.renameAttribute(node.outs.a, "b", "b")
+    node.outs.replaceAttributeWithEdges(node.outs.a, node.outs.getEditedAttributeData(node.outs.a, {"name": "b", "label": "b"}))
 
 
 def removeOutputChild(node):
@@ -1851,7 +1818,7 @@ def addOtherOutputChild(node):
 
 
 def renameNestedOutputChild(anySet):
-    anySet.renameAttribute(anySet.a, "b", "b")
+    anySet.replaceAttributeWithEdges(anySet.a, anySet.getEditedAttributeData(anySet.a, {"name": "b", "label": "b"}))
 
 
 def removeNestedOutputChild(anySet):
@@ -1979,10 +1946,10 @@ def test_output_anyset_schema_restored_finds_computed_results(graphSavedOnDisk):
     graph.update()
     computedUid = node._uid
 
-    node.outs.renameAttribute(node.outs.a, "b", "b")
+    node.outs.replaceAttributeWithEdges(node.outs.a, node.outs.getEditedAttributeData(node.outs.a, {"name": "b", "label": "b"}))
     assert node.globalStatus == "NONE"
 
-    node.outs.renameAttribute(node.outs.b, "a", "a")
+    node.outs.replaceAttributeWithEdges(node.outs.b, node.outs.getEditedAttributeData(node.outs.b, {"name": "a", "label": "a"}))
     assert node._uid == computedUid
     assert node.globalStatus == "SUCCESS"
     assert node.outs.a.value == 7

@@ -37,6 +37,7 @@ RowLayout {
     signal inAttributeClicked(var srcItem, var mouse, var inAttributes)
     signal outAttributeClicked(var srcItem, var mouse, var outAttributes)
     signal showInViewer(var attr)
+    signal editAnySetAttributeRequested(var attr)
 
     Connections {
         target: attribute
@@ -46,12 +47,9 @@ RowLayout {
     }
 
     Component {
-        id: removeAnySetAttributeMenuComp
+        id: anySetChildMenuComp
         Menu {
             id: anySetMenu
-
-            property real preferredX: 0
-            property real preferredY: 0
 
             MenuItem {
                 text: "Move Up"
@@ -65,90 +63,10 @@ RowLayout {
             }
             MenuSeparator {}
             MenuItem {
-                text: "Rename Attribute"
-                enabled: root.isAnySetChild
-                onTriggered: {
-                    var dialog = renameAnySetAttributeDialogComp.createObject(Overlay.overlay, {
-                        "targetAttribute": attribute,
-                        "preferredX": anySetMenu.preferredX,
-                        "preferredY": anySetMenu.preferredY
-                    })
-                    dialog.open()
-                }
+                text: "Edit Attribute..."
+                enabled: root.isAnySetChild && !root.readOnly
+                onTriggered: root.editAnySetAttributeRequested(attribute)
             }
-            MenuItem {
-                text: "Remove Attribute"
-                enabled: root.isAnySetChild
-                onTriggered: _currentScene.removeAnySetAttribute(attribute)
-            }
-        }
-    }
-
-    Component {
-        id: renameAnySetAttributeDialogComp
-        Dialog {
-            id: renameDialog
-
-            property var targetAttribute: null
-            property real preferredX: 0
-            property real preferredY: 0
-
-            title: "Rename Attribute"
-            modal: true
-            parent: Overlay.overlay
-            contentWidth: 280
-            x: parent ? Math.max(0, Math.min(preferredX, parent.width - width)) : 0
-            y: parent ? Math.max(0, Math.min(preferredY, parent.height - height)) : 0
-            standardButtons: Dialog.Ok | Dialog.Cancel
-            closePolicy: Popup.CloseOnEscape
-
-            GridLayout {
-                columns: 2
-                columnSpacing: 8
-                rowSpacing: 8
-                width: renameDialog.contentWidth
-
-                Label {
-                    text: "Name"
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                }
-                TextField {
-                    id: nameField
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: renameDialog.targetAttribute ? renameDialog.targetAttribute.name : ""
-                    selectByMouse: true
-                    validator: RegularExpressionValidator { regularExpression: /^[A-Za-z_][A-Za-z0-9_]*$/ }
-                    onAccepted: renameDialog.accept()
-                }
-
-                Label {
-                    text: "Label"
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                }
-                TextField {
-                    id: labelField
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    text: renameDialog.targetAttribute ? renameDialog.targetAttribute.label : ""
-                    selectByMouse: true
-                    onAccepted: renameDialog.accept()
-                }
-            }
-
-            onOpened: {
-                nameField.forceActiveFocus()
-                nameField.selectAll()
-            }
-
-            onAccepted: {
-                if (targetAttribute && nameField.acceptableInput && labelField.text.trim() !== "") {
-                    _currentScene.renameAnySetAttribute(targetAttribute, nameField.text.trim(), labelField.text.trim())
-                }
-                destroy()
-            }
-
-            onRejected: destroy()
         }
     }
 
@@ -244,8 +162,6 @@ RowLayout {
                     property Component menuComp: Menu {
                         id: paramMenu
 
-                        property real preferredX: 0
-                        property real preferredY: 0
                         property bool isFileAttribute: attribute.type === "File"
                         property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.evalValue)
 
@@ -334,22 +250,9 @@ RowLayout {
                         MenuItem {
                             visible: root.isAnySetChild
                             height: visible ? implicitHeight : 0
-                            text: "Rename Attribute"
-                            onTriggered: {
-                                var dialog = renameAnySetAttributeDialogComp.createObject(Overlay.overlay, {
-                                    "targetAttribute": attribute,
-                                    "preferredX": paramMenu.preferredX,
-                                    "preferredY": paramMenu.preferredY
-                                })
-                                dialog.open()
-                            }
-                        }
-
-                        MenuItem {
-                            visible: root.isAnySetChild
-                            height: visible ? implicitHeight : 0
-                            text: "Remove Attribute"
-                            onTriggered: _currentScene.removeAnySetAttribute(attribute)
+                            text: "Edit Attribute..."
+                            enabled: !root.readOnly
+                            onTriggered: root.editAnySetAttributeRequested(attribute)
                         }
 
                     }
@@ -358,9 +261,6 @@ RowLayout {
                         forceActiveFocus()
                         if (mouse.button == Qt.RightButton) {
                             var menu = menuComp.createObject(parameterLabel)
-                            var position = parameterMA.mapToItem(Overlay.overlay, mouse.x, mouse.y)
-                            menu.preferredX = position.x
-                            menu.preferredY = position.y
                             menu.parent = parameterLabel
                             menu.popup()
                         }
@@ -773,6 +673,8 @@ RowLayout {
                 id: groupItem
                 spacing: 0
                 property bool expanded: true
+                readonly property bool isAnySet: attribute.type === "AnySet"
+                property var childrenEditor: null
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -790,7 +692,10 @@ RowLayout {
                         text: attribute.label
                         font.bold: true
                         font.pointSize: 8
+                        // Shrink and elide rather than overflow in a narrow panel
                         Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        Layout.maximumWidth: groupItem.isAnySet ? Math.ceil(implicitWidth) : Number.POSITIVE_INFINITY
                         elide: Text.ElideRight
                         padding: 3
 
@@ -812,10 +717,7 @@ RowLayout {
                             hoverEnabled: true
                             onClicked: function(mouse) {
                                 if (mouse.button == Qt.RightButton && root.isAnySetChild) {
-                                    var menu = removeAnySetAttributeMenuComp.createObject(labelMA)
-                                    var position = labelMA.mapToItem(Overlay.overlay, mouse.x, mouse.y)
-                                    menu.preferredX = position.x
-                                    menu.preferredY = position.y
+                                    var menu = anySetChildMenuComp.createObject(labelMA)
                                     menu.parent = labelMA
                                     menu.popup()
                                     return
@@ -825,6 +727,56 @@ RowLayout {
                             onDoubleClicked: function(mouse) { root.doubleClicked(mouse, root.attribute) }
                         }
                     }
+
+                    Label {
+                        visible: groupItem.isAnySet
+                        text: attribute.value.count + (attribute.value.count === 1 ? " attribute" : " attributes")
+                        color: Colors.lightgrey
+                        font.pointSize: 8
+                        leftPadding: 4
+                        rightPadding: 4
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        Layout.maximumWidth: Math.ceil(implicitWidth)
+                    }
+
+                    ToolButton {
+                        id: addAnySetAttributeButton
+                        visible: groupItem.isAnySet
+                        enabled: !root.readOnly
+                        text: MaterialIcons.add_circle_outline
+                        font.family: MaterialIcons.fontFamily
+                        font.pointSize: 11
+                        padding: 2
+                        ToolTip.text: "Add Attribute"
+                        ToolTip.visible: hovered && !addAnySetAttributeMenu.visible
+                        onClicked: addAnySetAttributeMenu.popup(addAnySetAttributeButton, 0, addAnySetAttributeButton.height)
+
+                        Menu {
+                            id: addAnySetAttributeMenu
+
+                            function addAttribute(attributeType) {
+                                groupItem.expanded = true
+                                var newAttribute = _currentScene.addAnySetAttribute(attribute, attributeType)
+                                // Edit the description of the new attribute right away, under its row
+                                if (newAttribute && groupItem.childrenEditor) {
+                                    groupItem.childrenEditor.editedAnySetCreationMode = true
+                                    groupItem.childrenEditor.editedAnySetAttribute = newAttribute
+                                }
+                            }
+
+                            Repeater {
+                                model: groupItem.isAnySet ? attribute.newAttributeTypes : []
+                                delegate: MenuItem {
+                                    text: modelData.label
+                                    onTriggered: addAnySetAttributeMenu.addAttribute(modelData.type)
+                                }
+                            }
+                        }
+                    }
+
+                    Item { Layout.fillWidth: groupItem.isAnySet }
                 }
 
                 Component.onCompleted: {
@@ -840,6 +792,7 @@ RowLayout {
                                                })
                     obj.Layout.fillWidth = true;
                     obj.Layout.leftMargin = 8;
+                    groupItem.childrenEditor = obj;
                     obj.attributeDoubleClicked.connect(
                         function(mouse, attr) {
                             root.doubleClicked(mouse, attr)
@@ -922,6 +875,20 @@ RowLayout {
                 checked = Qt.binding(function() { return root.isAutoValue })
             }
         }
+    }
+
+    // Remove button for AnySet children
+    ToolButton {
+        visible: root.isAnySetChild
+        enabled: !root.readOnly
+        text: MaterialIcons.remove_circle_outline
+        font.family: MaterialIcons.fontFamily
+        font.pointSize: 11
+        padding: 2
+        Layout.alignment: Qt.AlignTop
+        ToolTip.text: "Remove Attribute"
+        ToolTip.visible: hovered
+        onClicked: _currentScene.removeAnySetAttribute(attribute)
     }
 
     // Add or remove key button for keyable attribute

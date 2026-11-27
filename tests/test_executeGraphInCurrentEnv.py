@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+import ctypes
 import logging
 import os
 import sys
@@ -97,7 +98,11 @@ class PrintOutput(desc.Node):
     def processChunk(self, chunk):
         print("python stdout")
         print("python stderr", file=sys.stderr)
-        os.write(1, b"native stdout\n")
+        if sys.platform == "win32":
+            os.write(1, b"native stdout\n")
+        else:
+            # Buffered by the C library, as the output of a DCC
+            ctypes.CDLL(None).printf(b"native stdout\n")
         os.write(2, b"native stderr\n")
 
 

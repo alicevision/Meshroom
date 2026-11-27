@@ -2327,6 +2327,83 @@ class AnySet(GroupAttribute):
                 self._onChildrenChanged()
         return newAttribute
 
+    @staticmethod
+    def _isSameOrChildName(attributeName: str, parentName: str) -> bool:
+        """Return whether 'attributeName' is 'parentName', or the name of an attribute inside it."""
+        return attributeName == parentName or attributeName.startswith((parentName + ".", parentName + "["))
+
+    def connectedEdgeNames(self, attribute: Attribute) -> list:
+        """Return the (source, destination) full names of the edges of a child and of the attributes
+        inside it, group items and list elements included."""
+        name = attribute.fullName
+        return [
+            (edge.src.fullName, edge.dst.fullName)
+            for edge in self.node.graph.edges.values()
+            if self._isSameOrChildName(edge.src.fullName, name) or self._isSameOrChildName(edge.dst.fullName, name)
+        ]
+
+    def linkedValues(self, attribute: Attribute, edgeNames: list) -> dict:
+        """Return the values that a child and the attributes inside it had before being linked, by full name.
+        A serialized attribute only holds its link expression, so these values are lost when it is restored."""
+        graph = self.node.graph
+        return {
+            dstName: graph.anyAttribute(dstName)._value
+            for _, dstName in edgeNames
+            if self._isSameOrChildName(dstName, attribute.fullName)
+            and not isinstance(graph.anyAttribute(dstName), (GroupAttribute, ListAttribute))
+        }
+
+    def restoreEdges(self, edgeNames: list, linkedValues: dict, renamed=lambda name: name) -> None:
+        """
+        Connect the edges of a restored child, and restore the values its attributes had before being linked.
+
+        Args:
+            edgeNames: the edges, as (source, destination) full names given by connectedEdgeNames().
+            linkedValues: the values before the links, given by linkedValues().
+            renamed: returns the current full name of an attribute from its name in 'edgeNames'.
+        """
+        graph = self.node.graph
+        for srcName, dstName in edgeNames:
+            srcAttr = graph.anyAttribute(renamed(srcName))
+            dstAttr = graph.anyAttribute(renamed(dstName))
+            if srcAttr is None or dstAttr is None:
+                continue
+            graph.addEdge(srcAttr, dstAttr)
+            # The edge replaces the link expression, which would connect the attribute again later
+            dstAttr._linkExpression = None
+            if dstName in linkedValues:
+                dstAttr._value = linkedValues[dstName]
+
+    def replaceAttributeWithEdges(self, attribute: Attribute, serializedAttribute: dict) -> Attribute | None:
+        """
+        Replace a child attribute like replaceAttribute(), and reconnect the edges of the child and of its own
+        children to the new attribute, following its new name.
+        If the new attribute cannot be created, the original attribute is kept with its edges.
+
+        Returns:
+            The new attribute, or None if it could not be created.
+        """
+        graph = self.node.graph
+        oldPrefix = attribute.fullName
+
+        edgeNames = self.connectedEdgeNames(attribute)
+        linkedValues = self.linkedValues(attribute, edgeNames)
+
+        # The edges are removed from the replaced attribute, and restored even if the replacement fails
+        for _, dstName in edgeNames:
+            graph.removeEdge(graph.anyAttribute(dstName))
+        newAttribute = None
+        try:
+            newAttribute = self.replaceAttribute(attribute, serializedAttribute)
+        finally:
+            newPrefix = newAttribute.fullName if newAttribute is not None else oldPrefix
+
+            def renamed(attributeName):
+                return newPrefix + attributeName[len(oldPrefix):] if self._isSameOrChildName(attributeName, oldPrefix) else attributeName
+
+            self.restoreEdges(edgeNames, linkedValues, renamed)
+        return newAttribute
+
     def _uniqueAttributeName(self, name: str, indexPattern: str = "{name}_{index}") -> tuple:
         """ Return a name derived from 'name' that no child uses yet, and the index added to it (-1 if 'name' is free). """
         index = -1

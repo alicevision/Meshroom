@@ -628,11 +628,23 @@ Item {
                     property var src: {
                         return getAttributePin(edge.src, root._attributeToDelegate)
                         }
+                    // Conversion nodes are not displayed: the edge entering a conversion node goes straight to the
+                    // converted attribute, and the edge leaving it is hidden
+                    readonly property bool fromConversion: Boolean(edge.src && edge.src.node.isConversionNode)
+                    readonly property bool toConversion: Boolean(edge.dst && edge.dst.node.isConversionNode)
+                    // The attribute displayed at the end of the edge
+                    readonly property var dstAttribute: {
+                        if (toConversion) {
+                            const outputLinks = edge.dst.node.outputAttribute.outputLinks
+                            return outputLinks.length > 0 ? outputLinks[0] : null
+                        }
+                        return edge.dst
+                    }
                     property var dst: {
-                        return getAttributePin(edge.dst, root._attributeToDelegate)
+                        return getAttributePin(dstAttribute, root._attributeToDelegate)
                         }
                     property bool isValidEdge: src != null && dst != null
-                    visible: isValidEdge && src.visible && dst.visible
+                    visible: isValidEdge && src.visible && dst.visible && !fromConversion
 
                     property var loopSource: edge.src && edge.src.root && edge.src.root.value ? edge.src.root : null
                     property bool forLoop: src != null && dst != null &&
@@ -647,7 +659,7 @@ Item {
                     loopSize: forLoop ? loopSource.value.count : 0
 
                     iteration: forLoop ? loopSource.value.indexOf(edge.src) : 0
-                    color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
+                    color: dstAttribute === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
                     thickness: {
                         if (forLoop) {
                             return (inFocus) ? 4 : 3
@@ -1315,7 +1327,19 @@ Item {
                         }
                     }
 
-                    sourceComponent: object.isBackdropNode ? backdropComponent : nodeComponent
+                    Component {
+                        id: conversionComponent
+                        // Conversion nodes are not displayed: their edges go to the converted attribute
+                        Item {
+                            property var node: object
+                            readonly property bool isConversionNode: true
+                            visible: false
+                            x: node.x
+                            y: node.y
+                        }
+                    }
+
+                    sourceComponent: object.isBackdropNode ? backdropComponent : object.isConversionNode ? conversionComponent : nodeComponent
 
                     onLoaded: {
                         nodeLoader.z = Qt.binding(function() { return nodeLoader.item ? nodeLoader.item.z : 0 })

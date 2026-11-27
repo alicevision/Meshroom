@@ -23,7 +23,8 @@ SelectionLine {
         const mappedP2 = mapToItem(container, selectionP2);
         for (var i = 0; i < modelInstantiator.count; ++i) {
             const delegate = modelInstantiator.itemAt(i);
-            if (delegate.intersectsSegment(mappedP1, mappedP2)) {
+            // Hidden edges cannot be cut (e.g. the edges leaving conversion nodes)
+            if (delegate.visible && delegate.intersectsSegment(mappedP1, mappedP2)) {
                 selectedIndices.push(i);
             }
         }

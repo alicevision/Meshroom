@@ -22,7 +22,8 @@ SelectionBox {
         const mappedSelectionRect = mapToItem(container, selectionRect)
         for (var i = 0; i < modelInstantiator.count; ++i) {
             const delegate = modelInstantiator.getItemAt(i)
-            if (!delegate)
+            // Conversion nodes are not displayed
+            if (!delegate || delegate.isConversionNode)
                 continue
             // For backdrop nodes, only select when the selection rect intersects the titlebar.
             const delegateRect = Qt.rect(delegate.x, delegate.y, delegate.width, delegate.isBackdropNode ? delegate.headerHeight : delegate.height)
